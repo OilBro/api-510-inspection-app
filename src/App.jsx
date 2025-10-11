@@ -542,6 +542,1482 @@ function App() {
             </div>
           </div>
         )
+      case 'thickness':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <h2 className="text-xl font-semibold mb-4 flex items-center">
+                <BarChart3 className="mr-2 h-5 w-5 text-orange-600" />
+                Thickness Measurement Location (TML) Analysis
+              </h2>
+              <p className="text-gray-600 mb-6">Comprehensive thickness data analysis and corrosion assessment</p>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* TML Data Entry */}
+                <div className="bg-orange-50 p-6 rounded-lg border border-orange-200">
+                  <h3 className="text-lg font-semibold mb-4 text-orange-800">TML Data Entry & Import</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">TML Location ID *</label>
+                      <input 
+                        type="text" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        placeholder="e.g., TML-001, Shell-N1, Head-E2"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Current Thickness (inches)</label>
+                        <input 
+                          type="number" 
+                          step="0.001"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          placeholder="0.350"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Previous Thickness (inches)</label>
+                        <input 
+                          type="number" 
+                          step="0.001"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          placeholder="0.375"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Measurement Date</label>
+                        <input 
+                          type="date" 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Previous Date</label>
+                        <input 
+                          type="date" 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Component Location</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        <option value="">Select component</option>
+                        <option value="shell">Cylindrical Shell</option>
+                        <option value="head-top">Top Head</option>
+                        <option value="head-bottom">Bottom Head</option>
+                        <option value="nozzle">Nozzle</option>
+                        <option value="manway">Manway</option>
+                        <option value="support">Support Attachment</option>
+                      </select>
+                    </div>
+                    
+                    <div className="flex space-x-2">
+                      <button className="flex-1 bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 transition-colors">
+                        Add TML Reading
+                      </button>
+                      <button className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors">
+                        Import Excel Data
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Corrosion Analysis */}
+                <div className="bg-red-50 p-6 rounded-lg border border-red-200">
+                  <h3 className="text-lg font-semibold mb-4 text-red-800">Corrosion Rate Analysis</h3>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-white rounded-lg border border-red-200">
+                      <h5 className="font-semibold text-red-800 mb-2">Statistical Summary</h5>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-600">Mean Thickness:</span>
+                          <span className="font-bold ml-2">0.352 inches</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Min Thickness:</span>
+                          <span className="font-bold ml-2">0.340 inches</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Max Thickness:</span>
+                          <span className="font-bold ml-2">0.365 inches</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Std Deviation:</span>
+                          <span className="font-bold ml-2">0.008 inches</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Service Years</label>
+                      <input 
+                        type="number" 
+                        step="0.1"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                        placeholder="5.2"
+                      />
+                    </div>
+                    
+                    <button className="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition-colors">
+                      Calculate Corrosion Rate
+                    </button>
+                    
+                    <div className="p-4 bg-red-100 rounded-lg border border-red-300">
+                      <h5 className="font-semibold text-red-800 mb-2">Corrosion Analysis Results</h5>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span>General Corrosion Rate:</span>
+                          <span className="font-bold">2.4 mils/year</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Maximum Local Rate:</span>
+                          <span className="font-bold">3.8 mils/year</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Corrosion Type:</span>
+                          <span className="font-bold">General + Localized</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Trend:</span>
+                          <span className="font-bold text-red-600">Increasing</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* TML Data Table */}
+              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 mt-6">
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">TML Measurement History</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse border border-gray-300">
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="border border-gray-300 px-4 py-2 text-left">TML ID</th>
+                        <th className="border border-gray-300 px-4 py-2 text-left">Component</th>
+                        <th className="border border-gray-300 px-4 py-2 text-left">Current (in)</th>
+                        <th className="border border-gray-300 px-4 py-2 text-left">Previous (in)</th>
+                        <th className="border border-gray-300 px-4 py-2 text-left">Loss (mils)</th>
+                        <th className="border border-gray-300 px-4 py-2 text-left">Rate (mils/yr)</th>
+                        <th className="border border-gray-300 px-4 py-2 text-left">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="border border-gray-300 px-4 py-2">TML-001</td>
+                        <td className="border border-gray-300 px-4 py-2">Shell</td>
+                        <td className="border border-gray-300 px-4 py-2">0.352</td>
+                        <td className="border border-gray-300 px-4 py-2">0.375</td>
+                        <td className="border border-gray-300 px-4 py-2">23</td>
+                        <td className="border border-gray-300 px-4 py-2">2.4</td>
+                        <td className="border border-gray-300 px-4 py-2">
+                          <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs">Monitor</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="border border-gray-300 px-4 py-2">TML-002</td>
+                        <td className="border border-gray-300 px-4 py-2">Shell</td>
+                        <td className="border border-gray-300 px-4 py-2">0.340</td>
+                        <td className="border border-gray-300 px-4 py-2">0.375</td>
+                        <td className="border border-gray-300 px-4 py-2">35</td>
+                        <td className="border border-gray-300 px-4 py-2">3.8</td>
+                        <td className="border border-gray-300 px-4 py-2">
+                          <span className="px-2 py-1 bg-red-100 text-red-800 rounded text-xs">Critical</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="border border-gray-300 px-4 py-2">TML-003</td>
+                        <td className="border border-gray-300 px-4 py-2">Head</td>
+                        <td className="border border-gray-300 px-4 py-2">0.365</td>
+                        <td className="border border-gray-300 px-4 py-2">0.375</td>
+                        <td className="border border-gray-300 px-4 py-2">10</td>
+                        <td className="border border-gray-300 px-4 py-2">1.1</td>
+                        <td className="border border-gray-300 px-4 py-2">
+                          <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">Good</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Remaining Life Assessment */}
+              <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 mt-6">
+                <h3 className="text-lg font-semibold mb-4 text-blue-800">Remaining Life Assessment</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="bg-white p-4 rounded-lg border border-blue-200">
+                    <h5 className="font-semibold text-blue-800 mb-2">Current Status</h5>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Min Current Thickness:</span>
+                        <span className="font-bold">0.340 inches</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Required Thickness:</span>
+                        <span className="font-bold">0.271 inches</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Available for Corrosion:</span>
+                        <span className="font-bold">0.069 inches</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white p-4 rounded-lg border border-blue-200">
+                    <h5 className="font-semibold text-blue-800 mb-2">Life Calculation</h5>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Corrosion Rate:</span>
+                        <span className="font-bold">3.8 mils/year</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Safety Factor:</span>
+                        <span className="font-bold">2.0</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Remaining Life:</span>
+                        <span className="font-bold text-blue-600">9.1 years</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white p-4 rounded-lg border border-blue-200">
+                    <h5 className="font-semibold text-blue-800 mb-2">Next Actions</h5>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Next Inspection:</span>
+                        <span className="font-bold">4.5 years</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Retirement Date:</span>
+                        <span className="font-bold">2033</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Priority:</span>
+                        <span className="font-bold text-orange-600">Medium</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex space-x-4 mt-6">
+                <button className="flex-1 bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 transition-colors">
+                  Generate TML Report
+                </button>
+                <button className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                  Export to Excel
+                </button>
+                <button className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors">
+                  Save Analysis
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      case 'external':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <h2 className="text-xl font-semibold mb-4 flex items-center">
+                <Eye className="mr-2 h-5 w-5 text-purple-600" />
+                External Visual Inspection
+              </h2>
+              <p className="text-gray-600 mb-6">Comprehensive external assessment and visual inspection findings</p>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* General Condition Assessment */}
+                <div className="bg-purple-50 p-6 rounded-lg border border-purple-200">
+                  <h3 className="text-lg font-semibold mb-4 text-purple-800">General Condition Assessment</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Overall Condition *</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <option value="">Select overall condition</option>
+                        <option value="excellent">Excellent - No visible defects</option>
+                        <option value="good">Good - Minor cosmetic issues</option>
+                        <option value="fair">Fair - Some deterioration present</option>
+                        <option value="poor">Poor - Significant deterioration</option>
+                        <option value="critical">Critical - Immediate attention required</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Inspection Date *</label>
+                      <input 
+                        type="date" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Inspector Name *</label>
+                      <input 
+                        type="text" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        placeholder="Inspector certification and name"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Weather Conditions</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <option value="">Select weather conditions</option>
+                        <option value="clear">Clear and Dry</option>
+                        <option value="overcast">Overcast</option>
+                        <option value="light-rain">Light Rain</option>
+                        <option value="heavy-rain">Heavy Rain</option>
+                        <option value="snow">Snow</option>
+                        <option value="fog">Fog/Limited Visibility</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Corrosion Assessment */}
+                <div className="bg-red-50 p-6 rounded-lg border border-red-200">
+                  <h3 className="text-lg font-semibold mb-4 text-red-800">Corrosion Assessment</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">General Corrosion Level</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                        <option value="">Select corrosion level</option>
+                        <option value="none">None Visible</option>
+                        <option value="light">Light Surface Corrosion</option>
+                        <option value="moderate">Moderate Corrosion</option>
+                        <option value="heavy">Heavy Corrosion</option>
+                        <option value="severe">Severe Corrosion</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Pitting Observed</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                        <option value="">Select pitting level</option>
+                        <option value="none">No Pitting</option>
+                        <option value="minor">Minor Pitting (&lt;1mm deep)</option>
+                        <option value="moderate">Moderate Pitting (1-3mm deep)</option>
+                        <option value="severe">Severe Pitting (&gt;3mm deep)</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Corrosion Under Insulation (CUI)</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                        <option value="">Select CUI assessment</option>
+                        <option value="not-applicable">Not Applicable - No Insulation</option>
+                        <option value="no-evidence">No Evidence of CUI</option>
+                        <option value="suspected">CUI Suspected</option>
+                        <option value="confirmed">CUI Confirmed</option>
+                        <option value="extensive">Extensive CUI</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Corrosion Location Details</label>
+                      <textarea 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                        rows="3"
+                        placeholder="Describe specific locations and extent of corrosion..."
+                      ></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Structural Assessment */}
+              <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 mt-6">
+                <h3 className="text-lg font-semibold mb-4 text-blue-800">Structural Assessment</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <h5 className="font-semibold text-blue-800 mb-3">Supports & Foundations</h5>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Support Condition</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                          <option value="">Select condition</option>
+                          <option value="good">Good</option>
+                          <option value="fair">Fair</option>
+                          <option value="poor">Poor</option>
+                          <option value="critical">Critical</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Foundation Settlement</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                          <option value="">Select settlement level</option>
+                          <option value="none">No Settlement</option>
+                          <option value="minor">Minor Settlement</option>
+                          <option value="moderate">Moderate Settlement</option>
+                          <option value="severe">Severe Settlement</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h5 className="font-semibold text-blue-800 mb-3">Attachments & Nozzles</h5>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Nozzle Condition</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                          <option value="">Select condition</option>
+                          <option value="good">Good</option>
+                          <option value="fair">Fair</option>
+                          <option value="poor">Poor</option>
+                          <option value="critical">Critical</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Piping Stress</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                          <option value="">Select stress level</option>
+                          <option value="acceptable">Acceptable</option>
+                          <option value="moderate">Moderate Stress</option>
+                          <option value="high">High Stress</option>
+                          <option value="excessive">Excessive Stress</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h5 className="font-semibold text-blue-800 mb-3">Insulation & Coatings</h5>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Insulation Condition</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                          <option value="">Select condition</option>
+                          <option value="good">Good</option>
+                          <option value="fair">Fair</option>
+                          <option value="poor">Poor</option>
+                          <option value="missing">Missing/Damaged</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Coating Condition</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                          <option value="">Select condition</option>
+                          <option value="good">Good</option>
+                          <option value="fair">Fair</option>
+                          <option value="poor">Poor</option>
+                          <option value="failed">Failed</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Defects and Findings */}
+              <div className="bg-yellow-50 p-6 rounded-lg border border-yellow-200 mt-6">
+                <h3 className="text-lg font-semibold mb-4 text-yellow-800">Defects and Findings</h3>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Defect Type</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                        <option value="">Select defect type</option>
+                        <option value="corrosion">Corrosion</option>
+                        <option value="crack">Crack</option>
+                        <option value="dent">Dent/Deformation</option>
+                        <option value="leak">Leak</option>
+                        <option value="weld-defect">Weld Defect</option>
+                        <option value="support-issue">Support Issue</option>
+                        <option value="coating-failure">Coating Failure</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Severity Level</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                        <option value="">Select severity</option>
+                        <option value="low">Low - Monitor</option>
+                        <option value="medium">Medium - Plan Repair</option>
+                        <option value="high">High - Repair Soon</option>
+                        <option value="critical">Critical - Immediate Action</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Location Description</label>
+                    <input 
+                      type="text" 
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                      placeholder="e.g., Shell at 3 o'clock, 5 feet from bottom"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Detailed Description</label>
+                    <textarea 
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                      rows="3"
+                      placeholder="Provide detailed description of the defect, dimensions, and any immediate concerns..."
+                    ></textarea>
+                  </div>
+                  
+                  <div className="flex space-x-2">
+                    <button className="flex-1 bg-yellow-600 text-white py-2 px-4 rounded-md hover:bg-yellow-700 transition-colors">
+                      Add Finding
+                    </button>
+                    <button className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors">
+                      Attach Photo
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Recommendations */}
+              <div className="bg-green-50 p-6 rounded-lg border border-green-200 mt-6">
+                <h3 className="text-lg font-semibold mb-4 text-green-800">Recommendations & Next Actions</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Immediate Actions Required</label>
+                    <textarea 
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      rows="2"
+                      placeholder="List any immediate actions required based on inspection findings..."
+                    ></textarea>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Future Monitoring Requirements</label>
+                    <textarea 
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      rows="2"
+                      placeholder="Specify areas requiring increased monitoring or special attention..."
+                    ></textarea>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Next External Inspection Date</label>
+                    <input 
+                      type="date" 
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex space-x-4 mt-6">
+                <button className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors">
+                  Generate External Inspection Report
+                </button>
+                <button className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                  Save Inspection Data
+                </button>
+                <button className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors">
+                  Export Findings
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      case 'internal':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <h2 className="text-xl font-semibold mb-4 flex items-center">
+                <Search className="mr-2 h-5 w-5 text-teal-600" />
+                Internal Inspection Assessment
+              </h2>
+              <p className="text-gray-600 mb-6">Comprehensive internal inspection findings and assessment</p>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Entry and Preparation */}
+                <div className="bg-teal-50 p-6 rounded-lg border border-teal-200">
+                  <h3 className="text-lg font-semibold mb-4 text-teal-800">Entry Preparation & Safety</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Entry Permit Status *</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        <option value="">Select permit status</option>
+                        <option value="approved">Approved and Valid</option>
+                        <option value="pending">Pending Approval</option>
+                        <option value="expired">Expired</option>
+                        <option value="not-required">Not Required</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Atmosphere Testing</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        <option value="">Select test status</option>
+                        <option value="safe">Safe for Entry</option>
+                        <option value="monitoring">Continuous Monitoring Required</option>
+                        <option value="unsafe">Unsafe - Entry Prohibited</option>
+                        <option value="not-tested">Not Tested</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Cleaning Method</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        <option value="">Select cleaning method</option>
+                        <option value="water-wash">Water Washing</option>
+                        <option value="chemical-clean">Chemical Cleaning</option>
+                        <option value="steam-clean">Steam Cleaning</option>
+                        <option value="mechanical">Mechanical Cleaning</option>
+                        <option value="solvent">Solvent Cleaning</option>
+                        <option value="none">No Cleaning Required</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Inspection Method</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        <option value="">Select inspection method</option>
+                        <option value="visual">Visual Inspection</option>
+                        <option value="visual-ndt">Visual + NDT</option>
+                        <option value="remote">Remote Visual (RVI)</option>
+                        <option value="robotic">Robotic Inspection</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Internal Condition Assessment */}
+                <div className="bg-orange-50 p-6 rounded-lg border border-orange-200">
+                  <h3 className="text-lg font-semibold mb-4 text-orange-800">Internal Condition Assessment</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Overall Internal Condition</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        <option value="">Select overall condition</option>
+                        <option value="excellent">Excellent - Like New</option>
+                        <option value="good">Good - Minor Wear</option>
+                        <option value="fair">Fair - Moderate Deterioration</option>
+                        <option value="poor">Poor - Significant Issues</option>
+                        <option value="critical">Critical - Immediate Action Required</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Internal Corrosion</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        <option value="">Select corrosion level</option>
+                        <option value="none">No Corrosion</option>
+                        <option value="light">Light General Corrosion</option>
+                        <option value="moderate">Moderate Corrosion</option>
+                        <option value="heavy">Heavy Corrosion</option>
+                        <option value="severe">Severe Localized Corrosion</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Deposit/Scale Buildup</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        <option value="">Select buildup level</option>
+                        <option value="none">No Deposits</option>
+                        <option value="light">Light Deposits</option>
+                        <option value="moderate">Moderate Buildup</option>
+                        <option value="heavy">Heavy Buildup</option>
+                        <option value="severe">Severe Fouling</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Weld Joint Condition</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        <option value="">Select weld condition</option>
+                        <option value="good">Good - No Issues</option>
+                        <option value="fair">Fair - Minor Indications</option>
+                        <option value="poor">Poor - Significant Issues</option>
+                        <option value="critical">Critical - Repair Required</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Detailed Findings */}
+              <div className="bg-red-50 p-6 rounded-lg border border-red-200 mt-6">
+                <h3 className="text-lg font-semibold mb-4 text-red-800">Detailed Internal Findings</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h5 className="font-semibold text-red-800 mb-3">Shell Assessment</h5>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Shell Condition</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                          <option value="">Select condition</option>
+                          <option value="good">Good</option>
+                          <option value="fair">Fair</option>
+                          <option value="poor">Poor</option>
+                          <option value="critical">Critical</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Thickness Loss Areas</label>
+                        <textarea 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                          rows="2"
+                          placeholder="Describe areas of thickness loss..."
+                        ></textarea>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h5 className="font-semibold text-red-800 mb-3">Head Assessment</h5>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Head Condition</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                          <option value="">Select condition</option>
+                          <option value="good">Good</option>
+                          <option value="fair">Fair</option>
+                          <option value="poor">Poor</option>
+                          <option value="critical">Critical</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Knuckle Region</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                          <option value="">Select condition</option>
+                          <option value="good">Good</option>
+                          <option value="fair">Fair</option>
+                          <option value="poor">Poor</option>
+                          <option value="critical">Critical</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Internal Recommendations */}
+              <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 mt-6">
+                <h3 className="text-lg font-semibold mb-4 text-blue-800">Internal Inspection Recommendations</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Required Follow-up Actions</label>
+                    <textarea 
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      rows="3"
+                      placeholder="List required follow-up actions based on internal inspection findings..."
+                    ></textarea>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Next Internal Inspection Interval</label>
+                    <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <option value="">Select interval</option>
+                      <option value="5">5 Years</option>
+                      <option value="10">10 Years</option>
+                      <option value="15">15 Years</option>
+                      <option value="20">20 Years</option>
+                      <option value="custom">Custom Interval</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Special Monitoring Requirements</label>
+                    <textarea 
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      rows="2"
+                      placeholder="Specify any special monitoring or in-lieu inspection requirements..."
+                    ></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex space-x-4 mt-6">
+                <button className="flex-1 bg-teal-600 text-white py-2 px-4 rounded-md hover:bg-teal-700 transition-colors">
+                  Generate Internal Inspection Report
+                </button>
+                <button className="flex-1 bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 transition-colors">
+                  Save Assessment Data
+                </button>
+                <button className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors">
+                  Export Findings
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      case 'fitness':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <h2 className="text-xl font-semibold mb-4 flex items-center">
+                <CheckCircle className="mr-2 h-5 w-5 text-indigo-600" />
+                Fitness-for-Service Assessment (API 579)
+              </h2>
+              <p className="text-gray-600 mb-6">Comprehensive API 579 fitness-for-service evaluation and remaining life assessment</p>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Assessment Level Selection */}
+                <div className="bg-indigo-50 p-6 rounded-lg border border-indigo-200">
+                  <h3 className="text-lg font-semibold mb-4 text-indigo-800">Assessment Level Selection</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">API 579 Assessment Level *</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">Select assessment level</option>
+                        <option value="level1">Level 1 - Screening Assessment</option>
+                        <option value="level2">Level 2 - Engineering Assessment</option>
+                        <option value="level3">Level 3 - Advanced Assessment</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Degradation Mechanism *</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">Select degradation mechanism</option>
+                        <option value="general-corrosion">General Corrosion</option>
+                        <option value="localized-corrosion">Localized Corrosion</option>
+                        <option value="pitting">Pitting Corrosion</option>
+                        <option value="cracking">Cracking</option>
+                        <option value="erosion">Erosion/Erosion-Corrosion</option>
+                        <option value="creep">Creep Damage</option>
+                        <option value="fatigue">Fatigue</option>
+                        <option value="brittle-fracture">Brittle Fracture</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Assessment Purpose</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">Select purpose</option>
+                        <option value="remaining-life">Remaining Life Assessment</option>
+                        <option value="fitness-for-service">Current Fitness-for-Service</option>
+                        <option value="inspection-planning">Inspection Planning</option>
+                        <option value="repair-assessment">Repair Assessment</option>
+                        <option value="rerating">Rerating Assessment</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Assessment Date</label>
+                      <input 
+                        type="date" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Defect Characterization */}
+                <div className="bg-red-50 p-6 rounded-lg border border-red-200">
+                  <h3 className="text-lg font-semibold mb-4 text-red-800">Defect Characterization</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Defect Type</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                        <option value="">Select defect type</option>
+                        <option value="wall-thinning">Wall Thinning</option>
+                        <option value="local-thin-area">Local Thin Area (LTA)</option>
+                        <option value="groove-like-flaw">Groove-Like Flaw</option>
+                        <option value="crack-like-flaw">Crack-Like Flaw</option>
+                        <option value="blunt-flaw">Blunt Flaw</option>
+                        <option value="dent">Dent/Deformation</option>
+                        <option value="lamination">Lamination</option>
+                      </select>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Defect Length (inches)</label>
+                        <input 
+                          type="number" 
+                          step="0.1"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                          placeholder="e.g., 6.0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Defect Width (inches)</label>
+                        <input 
+                          type="number" 
+                          step="0.1"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                          placeholder="e.g., 3.0"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Defect Depth (inches)</label>
+                        <input 
+                          type="number" 
+                          step="0.001"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                          placeholder="e.g., 0.125"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Remaining Thickness (inches)</label>
+                        <input 
+                          type="number" 
+                          step="0.001"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                          placeholder="e.g., 0.375"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Defect Location</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                        <option value="">Select location</option>
+                        <option value="cylindrical-shell">Cylindrical Shell</option>
+                        <option value="spherical-shell">Spherical Shell</option>
+                        <option value="formed-head">Formed Head</option>
+                        <option value="flat-head">Flat Head</option>
+                        <option value="nozzle">Nozzle</option>
+                        <option value="weld-joint">Weld Joint</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Assessment Calculations */}
+              <div className="bg-blue-50 p-6 rounded-lg border border-blue-200 mt-6">
+                <h3 className="text-lg font-semibold mb-4 text-blue-800">Assessment Calculations</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <h5 className="font-semibold text-blue-800 mb-3">Level 1 Assessment</h5>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Thickness (treq)</label>
+                        <input 
+                          type="number" 
+                          step="0.001"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Calculated value"
+                          readOnly
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Remaining Strength Factor (RSF)</label>
+                        <input 
+                          type="number" 
+                          step="0.01"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Calculated value"
+                          readOnly
+                        />
+                      </div>
+                      <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                        Calculate Level 1
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h5 className="font-semibold text-blue-800 mb-3">Level 2 Assessment</h5>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Stress Intensity Factor (K)</label>
+                        <input 
+                          type="number" 
+                          step="0.1"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Calculated value"
+                          readOnly
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Folias Factor (Mt)</label>
+                        <input 
+                          type="number" 
+                          step="0.01"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Calculated value"
+                          readOnly
+                        />
+                      </div>
+                      <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                        Calculate Level 2
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h5 className="font-semibold text-blue-800 mb-3">Level 3 Assessment</h5>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">FEA Required</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                          <option value="">Select FEA requirement</option>
+                          <option value="yes">Yes - Complex Geometry</option>
+                          <option value="no">No - Standard Methods Apply</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Analysis Software</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                          <option value="">Select software</option>
+                          <option value="ansys">ANSYS</option>
+                          <option value="abaqus">ABAQUS</option>
+                          <option value="nastran">NASTRAN</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+                      <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                        Setup Level 3
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Assessment Results */}
+              <div className="bg-green-50 p-6 rounded-lg border border-green-200 mt-6">
+                <h3 className="text-lg font-semibold mb-4 text-green-800">Assessment Results & Recommendations</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h5 className="font-semibold text-green-800 mb-3">Fitness-for-Service Evaluation</h5>
+                    <div className="space-y-3">
+                      <div className="bg-white p-4 rounded border">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">Current Fitness Status:</span>
+                          <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                            Acceptable
+                          </span>
+                        </div>
+                      </div>
+                      <div className="bg-white p-4 rounded border">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">Remaining Life:</span>
+                          <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                            8.5 Years
+                          </span>
+                        </div>
+                      </div>
+                      <div className="bg-white p-4 rounded border">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">Safety Factor:</span>
+                          <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
+                            2.1
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h5 className="font-semibold text-green-800 mb-3">Recommendations</h5>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Inspection Interval</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                          <option value="">Select interval</option>
+                          <option value="1">1 Year</option>
+                          <option value="2">2 Years</option>
+                          <option value="3">3 Years</option>
+                          <option value="5">5 Years</option>
+                          <option value="custom">Custom Interval</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Monitoring Requirements</label>
+                        <textarea 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                          rows="3"
+                          placeholder="Specify monitoring requirements and inspection focus areas..."
+                        ></textarea>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Operating Restrictions</label>
+                        <textarea 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                          rows="2"
+                          placeholder="List any operating pressure/temperature restrictions..."
+                        ></textarea>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex space-x-4 mt-6">
+                <button className="flex-1 bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors">
+                  Generate FFS Report
+                </button>
+                <button className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                  Save Assessment
+                </button>
+                <button className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors">
+                  Export Calculations
+                </button>
+                <button className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors">
+                  Print Summary
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      case 'repairs':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <h2 className="text-xl font-semibold mb-4 flex items-center">
+                <Wrench className="mr-2 h-5 w-5 text-orange-600" />
+                Repairs & Alterations Documentation
+              </h2>
+              <p className="text-gray-600 mb-6">Comprehensive documentation and assessment of vessel modifications per API 510</p>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Repair/Alteration Information */}
+                <div className="bg-orange-50 p-6 rounded-lg border border-orange-200">
+                  <h3 className="text-lg font-semibold mb-4 text-orange-800">Repair/Alteration Information</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Work Type *</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        <option value="">Select work type</option>
+                        <option value="repair">Repair</option>
+                        <option value="alteration">Alteration</option>
+                        <option value="rerating">Rerating</option>
+                        <option value="replacement">Component Replacement</option>
+                        <option value="modification">Design Modification</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Work Classification</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        <option value="">Select classification</option>
+                        <option value="major">Major Repair/Alteration</option>
+                        <option value="minor">Minor Repair/Alteration</option>
+                        <option value="emergency">Emergency Repair</option>
+                        <option value="temporary">Temporary Repair</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Work Date</label>
+                      <input 
+                        type="date" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Contractor/Organization</label>
+                      <input 
+                        type="text" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        placeholder="Contractor name and certification"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Work Description</label>
+                      <textarea 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        rows="3"
+                        placeholder="Detailed description of repair/alteration work performed..."
+                      ></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Technical Requirements */}
+                <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
+                  <h3 className="text-lg font-semibold mb-4 text-blue-800">Technical Requirements</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Design Code Compliance</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select code</option>
+                        <option value="asme-viii-1">ASME Section VIII Div 1</option>
+                        <option value="asme-viii-2">ASME Section VIII Div 2</option>
+                        <option value="asme-i">ASME Section I</option>
+                        <option value="api-650">API 650</option>
+                        <option value="other">Other Code</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Material Specification</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select material</option>
+                        <option value="sa516-70">SA-516 Grade 70</option>
+                        <option value="sa515-70">SA-515 Grade 70</option>
+                        <option value="sa387-22">SA-387 Grade 22</option>
+                        <option value="sa240-304">SA-240 Type 304</option>
+                        <option value="sa240-316">SA-240 Type 316</option>
+                        <option value="other">Other Material</option>
+                      </select>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Design Pressure (psig)</label>
+                        <input 
+                          type="number" 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="e.g., 150"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Design Temperature (°F)</label>
+                        <input 
+                          type="number" 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="e.g., 650"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Welding Procedure (WPS)</label>
+                      <input 
+                        type="text" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="WPS number and qualification"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Welder Qualification</label>
+                      <input 
+                        type="text" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Welder certification numbers"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quality Control & Testing */}
+              <div className="bg-green-50 p-6 rounded-lg border border-green-200 mt-6">
+                <h3 className="text-lg font-semibold mb-4 text-green-800">Quality Control & Testing</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <h5 className="font-semibold text-green-800 mb-3">Non-Destructive Testing</h5>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">NDT Methods Required</label>
+                        <div className="space-y-2">
+                          <label className="flex items-center">
+                            <input type="checkbox" className="mr-2" />
+                            <span className="text-sm">Visual Testing (VT)</span>
+                          </label>
+                          <label className="flex items-center">
+                            <input type="checkbox" className="mr-2" />
+                            <span className="text-sm">Liquid Penetrant (PT)</span>
+                          </label>
+                          <label className="flex items-center">
+                            <input type="checkbox" className="mr-2" />
+                            <span className="text-sm">Magnetic Particle (MT)</span>
+                          </label>
+                          <label className="flex items-center">
+                            <input type="checkbox" className="mr-2" />
+                            <span className="text-sm">Radiographic (RT)</span>
+                          </label>
+                          <label className="flex items-center">
+                            <input type="checkbox" className="mr-2" />
+                            <span className="text-sm">Ultrasonic (UT)</span>
+                          </label>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">NDT Results</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                          <option value="">Select result</option>
+                          <option value="acceptable">Acceptable</option>
+                          <option value="rejectable">Rejectable - Rework Required</option>
+                          <option value="pending">Pending</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h5 className="font-semibold text-green-800 mb-3">Pressure Testing</h5>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Test Type</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                          <option value="">Select test type</option>
+                          <option value="hydrostatic">Hydrostatic Test</option>
+                          <option value="pneumatic">Pneumatic Test</option>
+                          <option value="combination">Combination Test</option>
+                          <option value="not-required">Not Required</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Test Pressure (psig)</label>
+                        <input 
+                          type="number" 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                          placeholder="Calculated test pressure"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Test Result</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                          <option value="">Select result</option>
+                          <option value="passed">Passed</option>
+                          <option value="failed">Failed</option>
+                          <option value="pending">Pending</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Test Date</label>
+                        <input 
+                          type="date" 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h5 className="font-semibold text-green-800 mb-3">Documentation</h5>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Required Documents</label>
+                        <div className="space-y-2">
+                          <label className="flex items-center">
+                            <input type="checkbox" className="mr-2" />
+                            <span className="text-sm">Repair/Alteration Form</span>
+                          </label>
+                          <label className="flex items-center">
+                            <input type="checkbox" className="mr-2" />
+                            <span className="text-sm">Design Calculations</span>
+                          </label>
+                          <label className="flex items-center">
+                            <input type="checkbox" className="mr-2" />
+                            <span className="text-sm">Material Certificates</span>
+                          </label>
+                          <label className="flex items-center">
+                            <input type="checkbox" className="mr-2" />
+                            <span className="text-sm">WPS & WQR</span>
+                          </label>
+                          <label className="flex items-center">
+                            <input type="checkbox" className="mr-2" />
+                            <span className="text-sm">NDT Reports</span>
+                          </label>
+                          <label className="flex items-center">
+                            <input type="checkbox" className="mr-2" />
+                            <span className="text-sm">Pressure Test Report</span>
+                          </label>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Authorized Inspector</label>
+                        <input 
+                          type="text" 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                          placeholder="AI name and commission number"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Approval Date</label>
+                        <input 
+                          type="date" 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Impact Assessment */}
+              <div className="bg-purple-50 p-6 rounded-lg border border-purple-200 mt-6">
+                <h3 className="text-lg font-semibold mb-4 text-purple-800">Impact Assessment</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h5 className="font-semibold text-purple-800 mb-3">Vessel Rating Impact</h5>
+                    <div className="space-y-3">
+                      <div className="bg-white p-4 rounded border">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">MAWP Change:</span>
+                          <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                            No Change
+                          </span>
+                        </div>
+                      </div>
+                      <div className="bg-white p-4 rounded border">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">Temperature Rating:</span>
+                          <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                            Maintained
+                          </span>
+                        </div>
+                      </div>
+                      <div className="bg-white p-4 rounded border">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">Code Compliance:</span>
+                          <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                            Compliant
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h5 className="font-semibold text-purple-800 mb-3">Inspection Requirements</h5>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Next Inspection Interval</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                          <option value="">Select interval</option>
+                          <option value="1">1 Year</option>
+                          <option value="2">2 Years</option>
+                          <option value="3">3 Years</option>
+                          <option value="5">5 Years</option>
+                          <option value="10">10 Years</option>
+                          <option value="custom">Custom Interval</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Special Monitoring</label>
+                        <textarea 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          rows="3"
+                          placeholder="Specify any special monitoring requirements for the repair/alteration area..."
+                        ></textarea>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Follow-up Actions</label>
+                        <textarea 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          rows="2"
+                          placeholder="List any required follow-up actions or inspections..."
+                        ></textarea>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex space-x-4 mt-6">
+                <button className="flex-1 bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 transition-colors">
+                  Generate Repair Report
+                </button>
+                <button className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                  Save Documentation
+                </button>
+                <button className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors">
+                  Submit for Approval
+                </button>
+                <button className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors">
+                  Print Forms
+                </button>
+              </div>
+            </div>
+          </div>
+        )
       default:
         return (
           <Card>
