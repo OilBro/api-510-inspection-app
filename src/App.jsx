@@ -87,13 +87,40 @@ function App() {
   const updateVesselData = (field, value) => {
     setVesselData(prev => ({ ...prev, [field]: value }))
     
-    // Auto-populate calculation inputs from vessel data
+    // Enhanced cross-section data integration
     if (field === 'designPressure') {
       setCalculationInputs(prev => ({ ...prev, designPressure: value }))
     }
     if (field === 'insideDiameter') {
       const radius = parseFloat(value) / 2
       setCalculationInputs(prev => ({ ...prev, insideRadius: radius.toString() }))
+    }
+    if (field === 'materialSpec') {
+      // Auto-lookup allowable stress based on material and temperature
+      const designTemp = parseFloat(vesselData.designTemperature) || 650
+      const material = materialDatabase[value]
+      if (material) {
+        // Find closest temperature match
+        const temps = Object.keys(material).map(t => parseInt(t))
+        const closestTemp = temps.reduce((prev, curr) => 
+          Math.abs(curr - designTemp) < Math.abs(prev - designTemp) ? curr : prev
+        )
+        const allowableStress = material[closestTemp].stress
+        setCalculationInputs(prev => ({ ...prev, allowableStress: allowableStress.toString() }))
+      }
+    }
+    if (field === 'designTemperature') {
+      // Update allowable stress if material is already selected
+      const material = materialDatabase[vesselData.materialSpec]
+      if (material) {
+        const designTemp = parseFloat(value) || 650
+        const temps = Object.keys(material).map(t => parseInt(t))
+        const closestTemp = temps.reduce((prev, curr) => 
+          Math.abs(curr - designTemp) < Math.abs(prev - designTemp) ? curr : prev
+        )
+        const allowableStress = material[closestTemp].stress
+        setCalculationInputs(prev => ({ ...prev, allowableStress: allowableStress.toString() }))
+      }
     }
   }
 
@@ -746,6 +773,49 @@ function App() {
                   }}
                 >
                   Test Remaining Life (Auto-Fill)
+                </button>
+                
+                {/* Comprehensive Test Button */}
+                <button 
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-4 rounded-md hover:from-purple-700 hover:to-blue-700 transition-colors mt-4 font-semibold"
+                  onClick={() => {
+                    // Run comprehensive test with realistic pressure vessel data
+                    setVesselData(prev => ({
+                      ...prev,
+                      tagNumber: 'V-101',
+                      vesselName: 'Reactor Feed Drum',
+                      designPressure: '150',
+                      designTemperature: '650',
+                      materialSpec: 'SA-516-70',
+                      insideDiameter: '72'
+                    }));
+                    
+                    setCalculationInputs(prev => ({
+                      ...prev,
+                      designPressure: '150',
+                      insideRadius: '36',
+                      allowableStress: '20000',
+                      jointEfficiency: '1.0',
+                      corrosionAllowance: '0.125',
+                      actualThickness: '0.375',
+                      currentThickness: '0.350',
+                      corrosionRate: '2.5',
+                      safetyFactor: '2.0'
+                    }));
+                    
+                    // Run all calculations in sequence
+                    setTimeout(() => {
+                      calculateMinimumThickness();
+                      setTimeout(() => {
+                        calculateMAWP();
+                        setTimeout(() => {
+                          calculateRemainingLife();
+                        }, 200);
+                      }, 200);
+                    }, 200);
+                  }}
+                >
+                  🚀 Run Complete API 510 Calculation Suite
                 </button>
                 <div className="p-4 bg-orange-100 rounded-lg border border-orange-300 mt-4">
                   <p className="text-lg font-bold text-orange-900">
