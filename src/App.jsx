@@ -2018,6 +2018,677 @@ function App() {
             </div>
           </div>
         )
+      case 'testing':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <h2 className="text-xl font-semibold mb-4 flex items-center">
+                <Gauge className="mr-2 h-5 w-5 text-green-600" />
+                Pressure Testing Documentation
+              </h2>
+              <p className="text-gray-600 mb-6">Comprehensive hydrostatic and pneumatic pressure testing per ASME and API standards</p>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Test Planning & Setup */}
+                <div className="bg-green-50 p-6 rounded-lg border border-green-200">
+                  <h3 className="text-lg font-semibold mb-4 text-green-800">Test Planning & Setup</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Test Type *</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                        <option value="">Select test type</option>
+                        <option value="hydrostatic">Hydrostatic Test</option>
+                        <option value="pneumatic">Pneumatic Test</option>
+                        <option value="combination">Combination Test</option>
+                        <option value="alternative">Alternative Test Method</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Test Purpose</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                        <option value="">Select purpose</option>
+                        <option value="initial">Initial Construction Test</option>
+                        <option value="repair">Post-Repair Test</option>
+                        <option value="alteration">Post-Alteration Test</option>
+                        <option value="rerating">Rerating Test</option>
+                        <option value="periodic">Periodic Test</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Test Date</label>
+                      <input 
+                        type="date" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Test Medium</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                        <option value="">Select medium</option>
+                        <option value="water">Water</option>
+                        <option value="air">Air</option>
+                        <option value="nitrogen">Nitrogen</option>
+                        <option value="other-liquid">Other Liquid</option>
+                        <option value="other-gas">Other Gas</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Test Temperature (°F)</label>
+                      <input 
+                        type="number" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        placeholder="e.g., 70, 100"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pressure Calculations */}
+                <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
+                  <h3 className="text-lg font-semibold mb-4 text-blue-800">Pressure Calculations</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Design Pressure (psig)</label>
+                      <input 
+                        type="number" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="From vessel data"
+                        value="150"
+                        readOnly
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">MAWP (psig)</label>
+                      <input 
+                        type="number" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="From calculations"
+                        value="165"
+                        readOnly
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Test Pressure Factor</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select factor</option>
+                        <option value="1.3">1.3 (ASME VIII Hydrostatic)</option>
+                        <option value="1.1">1.1 (ASME VIII Pneumatic)</option>
+                        <option value="1.5">1.5 (API 510 Hydrostatic)</option>
+                        <option value="1.25">1.25 (API 510 Pneumatic)</option>
+                        <option value="custom">Custom Factor</option>
+                      </select>
+                    </div>
+                    
+                    <div className="bg-white p-4 rounded border">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Calculated Test Pressure:</span>
+                        <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                          195 psig
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">MAWP × 1.3 = 165 × 1.3 = 195 psig</p>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Actual Test Pressure (psig)</label>
+                      <input 
+                        type="number" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Actual pressure applied"
+                      />
+                    </div>
+                    
+                    <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                      Calculate Test Pressure
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Test Execution & Results */}
+              <div className="bg-orange-50 p-6 rounded-lg border border-orange-200 mt-6">
+                <h3 className="text-lg font-semibold mb-4 text-orange-800">Test Execution & Results</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <h5 className="font-semibold text-orange-800 mb-3">Test Procedure</h5>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Pressurization Rate</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                          <option value="">Select rate</option>
+                          <option value="gradual">Gradual (≤10 psi/min)</option>
+                          <option value="moderate">Moderate (10-25 psi/min)</option>
+                          <option value="controlled">Controlled Rate</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Hold Time (minutes)</label>
+                        <input 
+                          type="number" 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          placeholder="e.g., 10, 30, 60"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Inspection Method</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                          <option value="">Select method</option>
+                          <option value="visual">Visual Inspection</option>
+                          <option value="soap-solution">Soap Solution</option>
+                          <option value="acoustic">Acoustic Monitoring</option>
+                          <option value="strain-gauge">Strain Gauge</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Safety Precautions</label>
+                        <div className="space-y-2">
+                          <label className="flex items-center">
+                            <input type="checkbox" className="mr-2" />
+                            <span className="text-sm">Personnel Cleared</span>
+                          </label>
+                          <label className="flex items-center">
+                            <input type="checkbox" className="mr-2" />
+                            <span className="text-sm">Barriers Installed</span>
+                          </label>
+                          <label className="flex items-center">
+                            <input type="checkbox" className="mr-2" />
+                            <span className="text-sm">Emergency Procedures</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h5 className="font-semibold text-orange-800 mb-3">Test Results</h5>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Test Result</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                          <option value="">Select result</option>
+                          <option value="passed">Passed - No Leakage</option>
+                          <option value="failed-leak">Failed - Leakage Detected</option>
+                          <option value="failed-deformation">Failed - Permanent Deformation</option>
+                          <option value="failed-rupture">Failed - Rupture</option>
+                          <option value="aborted">Test Aborted</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Maximum Pressure Achieved (psig)</label>
+                        <input 
+                          type="number" 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          placeholder="Highest pressure reached"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Pressure Drop (psi)</label>
+                        <input 
+                          type="number" 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          placeholder="Pressure loss during hold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Observations</label>
+                        <textarea 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          rows="3"
+                          placeholder="Visual observations, sounds, deformations..."
+                        ></textarea>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h5 className="font-semibold text-orange-800 mb-3">Documentation</h5>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Test Personnel</label>
+                        <input 
+                          type="text" 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          placeholder="Test supervisor and crew"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Authorized Inspector</label>
+                        <input 
+                          type="text" 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          placeholder="AI name and commission"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Test Equipment</label>
+                        <textarea 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          rows="2"
+                          placeholder="Pumps, gauges, recording devices..."
+                        ></textarea>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Calibration Status</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                          <option value="">Select status</option>
+                          <option value="current">Current Calibration</option>
+                          <option value="expired">Expired Calibration</option>
+                          <option value="unknown">Unknown Status</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Gauge Accuracy</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                          <option value="">Select accuracy</option>
+                          <option value="0.5">±0.5% Full Scale</option>
+                          <option value="1.0">±1.0% Full Scale</option>
+                          <option value="2.0">±2.0% Full Scale</option>
+                          <option value="other">Other Accuracy</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Post-Test Actions */}
+              <div className="bg-purple-50 p-6 rounded-lg border border-purple-200 mt-6">
+                <h3 className="text-lg font-semibold mb-4 text-purple-800">Post-Test Actions & Compliance</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h5 className="font-semibold text-purple-800 mb-3">Required Actions</h5>
+                    <div className="space-y-3">
+                      <div className="bg-white p-4 rounded border">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">Test Status:</span>
+                          <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                            Passed
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Corrective Actions</label>
+                        <textarea 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          rows="3"
+                          placeholder="List any required repairs or modifications..."
+                        ></textarea>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Retest Required</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                          <option value="">Select requirement</option>
+                          <option value="no">No Retest Required</option>
+                          <option value="partial">Partial Retest</option>
+                          <option value="full">Full Retest Required</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Next Test Due Date</label>
+                        <input 
+                          type="date" 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h5 className="font-semibold text-purple-800 mb-3">Code Compliance</h5>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Applicable Code</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                          <option value="">Select code</option>
+                          <option value="asme-viii-1">ASME Section VIII Div 1</option>
+                          <option value="asme-viii-2">ASME Section VIII Div 2</option>
+                          <option value="api-510">API 510</option>
+                          <option value="asme-i">ASME Section I</option>
+                          <option value="other">Other Code</option>
+                        </select>
+                      </div>
+                      <div className="bg-white p-4 rounded border">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">Code Compliance:</span>
+                          <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                            Compliant
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Exemptions/Deviations</label>
+                        <textarea 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          rows="2"
+                          placeholder="List any approved exemptions or deviations..."
+                        ></textarea>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Certificate Required</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                          <option value="">Select requirement</option>
+                          <option value="yes">Certificate Required</option>
+                          <option value="no">No Certificate Required</option>
+                          <option value="pending">Certificate Pending</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex space-x-4 mt-6">
+                <button className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors">
+                  Generate Test Report
+                </button>
+                <button className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                  Save Test Data
+                </button>
+                <button className="flex-1 bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 transition-colors">
+                  Print Certificate
+                </button>
+                <button className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors">
+                  Export Results
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      case 'relief':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <h2 className="text-xl font-semibold mb-4 flex items-center">
+                <Droplets className="mr-2 h-5 w-5 text-red-600" />
+                Pressure Relief Device Inspection
+              </h2>
+              <p className="text-gray-600 mb-6">Comprehensive inspection and testing of pressure relief valves per API 510 and ASME requirements</p>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Device Information */}
+                <div className="bg-red-50 p-6 rounded-lg border border-red-200">
+                  <h3 className="text-lg font-semibold mb-4 text-red-800">Relief Device Information</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Device Type *</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                        <option value="">Select device type</option>
+                        <option value="safety-valve">Safety Valve</option>
+                        <option value="relief-valve">Relief Valve</option>
+                        <option value="safety-relief">Safety Relief Valve</option>
+                        <option value="rupture-disc">Rupture Disc</option>
+                        <option value="pilot-operated">Pilot Operated Relief Valve</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Manufacturer</label>
+                      <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="e.g., Crosby, Anderson Greenwood" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Model/Size</label>
+                      <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="e.g., JOS-3M6, 4x6" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Serial Number</label>
+                      <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Device serial number" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Set Pressure (psig)</label>
+                      <input type="number" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="e.g., 150, 300" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Inspection Results */}
+                <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
+                  <h3 className="text-lg font-semibold mb-4 text-blue-800">Inspection Results</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Visual Condition</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select condition</option>
+                        <option value="excellent">Excellent</option>
+                        <option value="good">Good</option>
+                        <option value="fair">Fair</option>
+                        <option value="poor">Poor</option>
+                        <option value="unacceptable">Unacceptable</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Pop Test Result</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select result</option>
+                        <option value="passed">Passed - Within ±3%</option>
+                        <option value="high">Failed - Set Pressure High</option>
+                        <option value="low">Failed - Set Pressure Low</option>
+                        <option value="no-pop">Failed - No Pop</option>
+                        <option value="not-tested">Not Tested</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Actual Pop Pressure (psig)</label>
+                      <input type="number" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Measured pop pressure" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Seat Leakage</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select leakage</option>
+                        <option value="none">No Leakage</option>
+                        <option value="slight">Slight Leakage</option>
+                        <option value="moderate">Moderate Leakage</option>
+                        <option value="excessive">Excessive Leakage</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Recommended Action</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select action</option>
+                        <option value="continue">Continue Service</option>
+                        <option value="adjust">Adjust Set Pressure</option>
+                        <option value="repair">Repair Required</option>
+                        <option value="replace">Replace Device</option>
+                        <option value="remove">Remove from Service</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex space-x-4 mt-6">
+                <button className="flex-1 bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition-colors">Generate Relief Device Report</button>
+                <button className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">Save Inspection Data</button>
+              </div>
+            </div>
+          </div>
+        )
+      case 'planning':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <h2 className="text-xl font-semibold mb-4 flex items-center">
+                <ClipboardCheck className="mr-2 h-5 w-5 text-blue-600" />
+                Inspection Planning & Scheduling
+              </h2>
+              <p className="text-gray-600 mb-6">Calculate inspection intervals and plan future inspections per API 510 requirements</p>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Interval Calculations */}
+                <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
+                  <h3 className="text-lg font-semibold mb-4 text-blue-800">Inspection Interval Calculations</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Remaining Life (years)</label>
+                      <input type="number" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="From calculations" value="8.5" readOnly />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Maximum Interval (years)</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select maximum</option>
+                        <option value="10">10 Years (API 510 Maximum)</option>
+                        <option value="15">15 Years (Special Cases)</option>
+                        <option value="20">20 Years (Exceptional)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Risk Factor</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select risk factor</option>
+                        <option value="0.25">0.25 (High Risk)</option>
+                        <option value="0.5">0.5 (Medium Risk)</option>
+                        <option value="0.75">0.75 (Low Risk)</option>
+                      </select>
+                    </div>
+                    <div className="bg-white p-4 rounded border">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Calculated Interval:</span>
+                        <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">4.25 Years</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">Min(Remaining Life × Risk Factor, Max Interval)</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Recommended Interval (years)</label>
+                      <input type="number" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Final recommended interval" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Inspection Schedule */}
+                <div className="bg-green-50 p-6 rounded-lg border border-green-200">
+                  <h3 className="text-lg font-semibold mb-4 text-green-800">Inspection Schedule</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Last Internal Inspection</label>
+                      <input type="date" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Last External Inspection</label>
+                      <input type="date" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Next Internal Due</label>
+                      <input type="date" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Next External Due</label>
+                      <input type="date" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" />
+                    </div>
+                    <div className="bg-white p-4 rounded border">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Status:</span>
+                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">Current</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex space-x-4 mt-6">
+                <button className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">Generate Schedule Report</button>
+                <button className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors">Save Planning Data</button>
+              </div>
+            </div>
+          </div>
+        )
+      case 'report':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <h2 className="text-xl font-semibold mb-4 flex items-center">
+                <FileText className="mr-2 h-5 w-5 text-purple-600" />
+                Comprehensive Inspection Report
+              </h2>
+              <p className="text-gray-600 mb-6">Generate complete API 510 inspection reports with all assessment data and recommendations</p>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Report Configuration */}
+                <div className="bg-purple-50 p-6 rounded-lg border border-purple-200">
+                  <h3 className="text-lg font-semibold mb-4 text-purple-800">Report Configuration</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Report Type</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <option value="">Select report type</option>
+                        <option value="internal">Internal Inspection Report</option>
+                        <option value="external">External Inspection Report</option>
+                        <option value="comprehensive">Comprehensive Report</option>
+                        <option value="summary">Executive Summary</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Include Sections</label>
+                      <div className="space-y-2">
+                        <label className="flex items-center"><input type="checkbox" className="mr-2" checked readOnly />Vessel Data</label>
+                        <label className="flex items-center"><input type="checkbox" className="mr-2" checked readOnly />Calculations</label>
+                        <label className="flex items-center"><input type="checkbox" className="mr-2" checked readOnly />Thickness Analysis</label>
+                        <label className="flex items-center"><input type="checkbox" className="mr-2" checked readOnly />Inspection Findings</label>
+                        <label className="flex items-center"><input type="checkbox" className="mr-2" checked readOnly />Fitness-for-Service</label>
+                        <label className="flex items-center"><input type="checkbox" className="mr-2" />Appendices</label>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Report Format</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <option value="">Select format</option>
+                        <option value="pdf">PDF Document</option>
+                        <option value="word">Word Document</option>
+                        <option value="excel">Excel Workbook</option>
+                        <option value="html">HTML Report</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Report Summary */}
+                <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                  <h3 className="text-lg font-semibold mb-4 text-gray-800">Report Summary</h3>
+                  <div className="space-y-4">
+                    <div className="bg-white p-4 rounded border">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Overall Condition:</span>
+                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">Good</span>
+                      </div>
+                    </div>
+                    <div className="bg-white p-4 rounded border">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Remaining Life:</span>
+                        <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">8.5 Years</span>
+                      </div>
+                    </div>
+                    <div className="bg-white p-4 rounded border">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Next Inspection:</span>
+                        <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">4.25 Years</span>
+                      </div>
+                    </div>
+                    <div className="bg-white p-4 rounded border">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Recommendations:</span>
+                        <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-medium">3 Items</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Inspector Comments</label>
+                      <textarea className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500" rows="3" placeholder="Additional inspector comments and observations..."></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex space-x-4 mt-6">
+                <button className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors">Generate Complete Report</button>
+                <button className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">Preview Report</button>
+                <button className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors">Export Data</button>
+                <button className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors">Print Report</button>
+              </div>
+            </div>
+          </div>
+        )
       default:
         return (
           <Card>
