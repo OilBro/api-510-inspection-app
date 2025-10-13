@@ -24,6 +24,292 @@ import './App.css'
 
 function App() {
   const [activeTab, setActiveTab] = useState('vessel-data')
+  
+  // State for vessel data and calculations
+  const [vesselData, setVesselData] = useState({
+    tagNumber: '',
+    vesselName: '',
+    manufacturer: '',
+    yearBuilt: '',
+    designPressure: '',
+    designTemperature: '',
+    operatingPressure: '',
+    materialSpec: '',
+    vesselType: '',
+    insideDiameter: '',
+    overallLength: ''
+  })
+  
+  const [calculationResults, setCalculationResults] = useState({
+    minThickness: null,
+    mawp: null,
+    remainingLife: null,
+    testPressure: null,
+    inspectionInterval: null
+  })
+  
+  const [calculationInputs, setCalculationInputs] = useState({
+    // Minimum thickness inputs
+    designPressure: '',
+    insideRadius: '',
+    allowableStress: '',
+    jointEfficiency: '',
+    corrosionAllowance: '0.125',
+    // MAWP inputs
+    actualThickness: '',
+    // Remaining life inputs
+    currentThickness: '',
+    requiredThickness: '',
+    corrosionRate: '',
+    safetyFactor: '2.0'
+  })
+
+  // Material database with temperature-dependent properties
+  const materialDatabase = {
+    'SA-516-70': {
+      650: { stress: 20000, description: 'SA-516-70 @ 650°F: 20,000 psi' },
+      700: { stress: 17500, description: 'SA-516-70 @ 700°F: 17,500 psi' },
+      750: { stress: 15000, description: 'SA-516-70 @ 750°F: 15,000 psi' }
+    },
+    'SA-515-70': {
+      650: { stress: 20000, description: 'SA-515-70 @ 650°F: 20,000 psi' },
+      700: { stress: 17500, description: 'SA-515-70 @ 700°F: 17,500 psi' },
+      750: { stress: 15000, description: 'SA-515-70 @ 750°F: 15,000 psi' }
+    },
+    'SA-387-22': {
+      850: { stress: 18750, description: 'SA-387-22 @ 850°F: 18,750 psi' },
+      900: { stress: 16250, description: 'SA-387-22 @ 900°F: 16,250 psi' },
+      950: { stress: 14000, description: 'SA-387-22 @ 950°F: 14,000 psi' }
+    }
+  }
+
+  // Update vessel data
+  const updateVesselData = (field, value) => {
+    setVesselData(prev => ({ ...prev, [field]: value }))
+    
+    // Enhanced cross-section data integration
+    if (field === 'designPressure') {
+      setCalculationInputs(prev => ({ ...prev, designPressure: value }))
+    }
+    if (field === 'insideDiameter') {
+      const radius = parseFloat(value) / 2
+      setCalculationInputs(prev => ({ ...prev, insideRadius: radius.toString() }))
+    }
+    if (field === 'materialSpec') {
+      // Auto-lookup allowable stress based on material and temperature
+      const designTemp = parseFloat(vesselData.designTemperature) || 650
+      const material = materialDatabase[value]
+      if (material) {
+        // Find closest temperature match
+        const temps = Object.keys(material).map(t => parseInt(t))
+        const closestTemp = temps.reduce((prev, curr) => 
+          Math.abs(curr - designTemp) < Math.abs(prev - designTemp) ? curr : prev
+        )
+        const allowableStress = material[closestTemp].stress
+        setCalculationInputs(prev => ({ ...prev, allowableStress: allowableStress.toString() }))
+      }
+    }
+    if (field === 'designTemperature') {
+      // Update allowable stress if material is already selected
+      const material = materialDatabase[vesselData.materialSpec]
+      if (material) {
+        const designTemp = parseFloat(value) || 650
+        const temps = Object.keys(material).map(t => parseInt(t))
+        const closestTemp = temps.reduce((prev, curr) => 
+          Math.abs(curr - designTemp) < Math.abs(prev - designTemp) ? curr : prev
+        )
+        const allowableStress = material[closestTemp].stress
+        setCalculationInputs(prev => ({ ...prev, allowableStress: allowableStress.toString() }))
+      }
+    }
+  }
+
+  // Update calculation inputs
+  const updateCalculationInputs = (field, value) => {
+    console.log('Updating calculation input:', field, '=', value)
+    setCalculationInputs(prev => {
+      const newState = { ...prev, [field]: value }
+      console.log('New calculation state:', newState)
+      return newState
+    })
+  }
+
+  // Core calculation functions
+  const calculateMinimumThickness = () => {
+    try {
+      console.log('Calculation inputs:', calculationInputs)
+      const P = parseFloat(calculationInputs.designPressure)
+      const R = parseFloat(calculationInputs.insideRadius)
+      const S = parseFloat(calculationInputs.allowableStress)
+      const E = parseFloat(calculationInputs.jointEfficiency)
+      const CA = parseFloat(calculationInputs.corrosionAllowance)
+      console.log('Parsed values:', { P, R, S, E, CA })
+
+      if (!P || !R || !S || !E) {
+        alert('Please fill in all required fields for minimum thickness calculation')
+        return
+      }
+
+      // ASME Section VIII formula: t = PR/(SE-0.6P) + CA
+      const denominator = (S * E) - (0.6 * P)
+      
+      if (denominator <= 0) {
+        alert('Invalid parameters - denominator is zero or negative. Check allowable stress and pressure values.')
+        return
+      }
+
+      const thickness = (P * R) / denominator + CA
+      
+      setCalculationResults(prev => ({
+        ...prev,
+        minThickness: {
+          value: thickness,
+          formula: 't = PR/(SE-0.6P) + CA',
+          calculation: `t = (${P} × ${R})/((${S} × ${E}) - (0.6 × ${P})) + ${CA}`,
+          result: `${thickness.toFixed(4)} inches`
+        }
+      }))
+
+      // Auto-populate required thickness for remaining life calculation
+      setCalculationInputs(prev => ({ ...prev, requiredThickness: thickness.toFixed(4) }))
+
+    } catch (error) {
+      alert('Error in minimum thickness calculation. Please check your inputs.')
+    }
+  }
+
+  const calculateMAWP = () => {
+    try {
+      const t = parseFloat(calculationInputs.actualThickness)
+      const R = parseFloat(calculationInputs.insideRadius)
+      const S = parseFloat(calculationInputs.allowableStress)
+      const E = parseFloat(calculationInputs.jointEfficiency)
+      const CA = parseFloat(calculationInputs.corrosionAllowance)
+
+      if (!t || !R || !S || !E) {
+        alert('Please fill in all required fields for MAWP calculation')
+        return
+      }
+
+      const effectiveThickness = t - CA
+      
+      if (effectiveThickness <= 0) {
+        alert('Effective thickness is zero or negative. Check actual thickness and corrosion allowance.')
+        return
+      }
+
+      // ASME Section VIII formula: MAWP = SE(t-CA)/(R+0.6(t-CA))
+      const numerator = S * E * effectiveThickness
+      const denominator = R + (0.6 * effectiveThickness)
+      const mawp = numerator / denominator
+
+      setCalculationResults(prev => ({
+        ...prev,
+        mawp: {
+          value: mawp,
+          formula: 'MAWP = SE(t-CA)/(R+0.6(t-CA))',
+          calculation: `MAWP = (${S} × ${E} × ${effectiveThickness})/(${R} + (0.6 × ${effectiveThickness}))`,
+          result: `${mawp.toFixed(1)} psig`
+        }
+      }))
+
+      // Auto-calculate test pressure
+      const testPressure = mawp * 1.3 // Default hydrostatic test factor
+      setCalculationResults(prev => ({
+        ...prev,
+        testPressure: {
+          value: testPressure,
+          formula: 'Test Pressure = MAWP × 1.3',
+          calculation: `${mawp.toFixed(1)} × 1.3 = ${testPressure.toFixed(0)}`,
+          result: `${testPressure.toFixed(0)} psig`
+        }
+      }))
+
+    } catch (error) {
+      alert('Error in MAWP calculation. Please check your inputs.')
+    }
+  }
+
+  const calculateRemainingLife = () => {
+    try {
+      const currentThickness = parseFloat(calculationInputs.currentThickness)
+      const requiredThickness = parseFloat(calculationInputs.requiredThickness)
+      const corrosionRate = parseFloat(calculationInputs.corrosionRate) // mils/year
+      const safetyFactor = parseFloat(calculationInputs.safetyFactor)
+
+      if (!currentThickness || !requiredThickness || !corrosionRate || !safetyFactor) {
+        alert('Please fill in all required fields for remaining life calculation')
+        return
+      }
+
+      const excessThickness = currentThickness - requiredThickness
+      
+      if (excessThickness <= 0) {
+        setCalculationResults(prev => ({
+          ...prev,
+          remainingLife: {
+            value: 0,
+            status: 'CRITICAL',
+            statusColor: 'red',
+            recommendation: 'Immediate action required - Below minimum thickness',
+            result: '0.0 years'
+          }
+        }))
+        return
+      }
+
+      // Convert mils/year to inches/year and apply safety factor
+      const remainingLife = (excessThickness / (corrosionRate / 1000)) / safetyFactor
+
+      let status = 'GOOD'
+      let statusColor = 'green'
+      let recommendation = 'Continue normal operation'
+      
+      if (remainingLife < 2) {
+        status = 'CRITICAL'
+        statusColor = 'red'
+        recommendation = 'Plan immediate replacement or repair'
+      } else if (remainingLife < 5) {
+        status = 'POOR'
+        statusColor = 'orange'
+        recommendation = 'Plan replacement within 2-3 years'
+      } else if (remainingLife < 10) {
+        status = 'FAIR'
+        statusColor = 'yellow'
+        recommendation = 'Monitor closely, plan future replacement'
+      }
+
+      setCalculationResults(prev => ({
+        ...prev,
+        remainingLife: {
+          value: remainingLife,
+          status: status,
+          statusColor: statusColor,
+          recommendation: recommendation,
+          calculation: `Life = (${currentThickness} - ${requiredThickness}) / (${corrosionRate}/1000) / ${safetyFactor}`,
+          result: `${remainingLife.toFixed(1)} years`
+        }
+      }))
+
+      // Auto-calculate inspection interval
+      const riskFactor = 0.5 // Default medium risk
+      const maxInterval = 10 // API 510 maximum
+      const inspectionInterval = Math.min(remainingLife * riskFactor, maxInterval)
+
+      setCalculationResults(prev => ({
+        ...prev,
+        inspectionInterval: {
+          value: inspectionInterval,
+          formula: 'Min(Remaining Life × Risk Factor, Max Interval)',
+          calculation: `Min(${remainingLife.toFixed(1)} × ${riskFactor}, ${maxInterval})`,
+          result: `${inspectionInterval.toFixed(2)} years`
+        }
+      }))
+
+    } catch (error) {
+      alert('Error in remaining life calculation. Please check your inputs.')
+    }
+  }
 
   const navigationItems = [
     { id: 'vessel-data', label: 'Vessel Data', icon: Database, description: 'Basic vessel information and specifications' },
@@ -62,6 +348,8 @@ function App() {
                       type="text" 
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g., V-101, T-205, R-301"
+                      value={vesselData.tagNumber}
+                      onChange={(e) => updateVesselData('tagNumber', e.target.value)}
                     />
                   </div>
                   <div>
@@ -70,6 +358,8 @@ function App() {
                       type="text" 
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g., Reactor Feed Drum, Distillation Tower"
+                      value={vesselData.vesselName}
+                      onChange={(e) => updateVesselData('vesselName', e.target.value)}
                     />
                   </div>
                   <div>
@@ -78,6 +368,8 @@ function App() {
                       type="text" 
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g., Chicago Bridge & Iron, Babcock & Wilcox"
+                      value={vesselData.manufacturer}
+                      onChange={(e) => updateVesselData('manufacturer', e.target.value)}
                     />
                   </div>
                   <div>
@@ -86,6 +378,8 @@ function App() {
                       type="number" 
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g., 1995"
+                      value={vesselData.yearBuilt}
+                      onChange={(e) => updateVesselData('yearBuilt', e.target.value)}
                     />
                   </div>
                 </div>
@@ -101,6 +395,8 @@ function App() {
                       type="number" 
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                       placeholder="e.g., 150, 300, 600"
+                      value={vesselData.designPressure}
+                      onChange={(e) => updateVesselData('designPressure', e.target.value)}
                     />
                   </div>
                   <div>
@@ -109,6 +405,8 @@ function App() {
                       type="number" 
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                       placeholder="e.g., 650, 800, 1000"
+                      value={vesselData.designTemperature}
+                      onChange={(e) => updateVesselData('designTemperature', e.target.value)}
                     />
                   </div>
                   <div>
@@ -117,6 +415,8 @@ function App() {
                       type="number" 
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                       placeholder="e.g., 125, 250, 500"
+                      value={vesselData.operatingPressure}
+                      onChange={(e) => updateVesselData('operatingPressure', e.target.value)}
                     />
                   </div>
                 </div>
@@ -124,7 +424,11 @@ function App() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Material Specification *</label>
-                    <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <select 
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      value={vesselData.materialSpec}
+                      onChange={(e) => updateVesselData('materialSpec', e.target.value)}
+                    >
                       <option value="">Select material specification</option>
                       <option value="sa516-70">SA-516 Grade 70 (Carbon Steel)</option>
                       <option value="sa515-70">SA-515 Grade 70 (Carbon Steel)</option>
@@ -138,7 +442,11 @@ function App() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Vessel Type</label>
-                    <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <select 
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      value={vesselData.vesselType}
+                      onChange={(e) => updateVesselData('vesselType', e.target.value)}
+                    >
                       <option value="">Select vessel type</option>
                       <option value="pressure-vessel">Pressure Vessel</option>
                       <option value="storage-tank">Storage Tank</option>
@@ -162,6 +470,8 @@ function App() {
                       type="number" 
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                       placeholder="e.g., 72, 96, 120"
+                      value={vesselData.insideDiameter}
+                      onChange={(e) => updateVesselData('insideDiameter', e.target.value)}
                     />
                   </div>
                   <div>
@@ -170,6 +480,8 @@ function App() {
                       type="number" 
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                       placeholder="e.g., 20, 40, 60"
+                      value={vesselData.overallLength}
+                      onChange={(e) => updateVesselData('overallLength', e.target.value)}
                     />
                   </div>
                 </div>
@@ -198,6 +510,8 @@ function App() {
                         type="number" 
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                         placeholder="150"
+                        value={calculationInputs.designPressure}
+                        onChange={(e) => updateCalculationInputs('designPressure', e.target.value)}
                       />
                     </div>
                     <div>
@@ -206,11 +520,17 @@ function App() {
                         type="number" 
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                         placeholder="36"
+                        value={calculationInputs.insideRadius}
+                        onChange={(e) => updateCalculationInputs('insideRadius', e.target.value)}
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Allowable Stress (S) - psi</label>
-                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                      <select 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        value={calculationInputs.allowableStress}
+                        onChange={(e) => updateCalculationInputs('allowableStress', e.target.value)}
+                      >
                         <option value="">Select material & temperature</option>
                         <option value="20000">SA-516-70 @ 650°F: 20,000 psi</option>
                         <option value="17500">SA-516-70 @ 700°F: 17,500 psi</option>
@@ -222,7 +542,11 @@ function App() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Joint Efficiency (E)</label>
-                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                      <select 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        value={calculationInputs.jointEfficiency}
+                        onChange={(e) => updateCalculationInputs('jointEfficiency', e.target.value)}
+                      >
                         <option value="">Select joint efficiency</option>
                         <option value="1.0">1.0 - Full Radiography</option>
                         <option value="0.85">0.85 - Spot Radiography</option>
@@ -236,17 +560,43 @@ function App() {
                         step="0.001"
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                         placeholder="0.125"
+                        value={calculationInputs.corrosionAllowance}
+                        onChange={(e) => updateCalculationInputs('corrosionAllowance', e.target.value)}
                       />
                     </div>
-                    <button className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors">
+                    <button 
+                      className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors"
+                      onClick={calculateMinimumThickness}
+                    >
                       Calculate Minimum Thickness
+                    </button>
+                    <button 
+                      className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors mt-2"
+                      onClick={() => {
+                        setCalculationInputs(prev => ({
+                          ...prev,
+                          designPressure: '150',
+                          insideRadius: '36',
+                          allowableStress: '20000',
+                          jointEfficiency: '1.0',
+                          corrosionAllowance: '0.125'
+                        }));
+                        setTimeout(calculateMinimumThickness, 100);
+                      }}
+                    >
+                      Test Calculation (Auto-Fill)
                     </button>
                     <div className="p-4 bg-green-100 rounded-lg border border-green-300">
                       <p className="text-sm text-green-800 mb-2">
-                        <strong>Formula:</strong> t = PR/(SE-0.6P) + CA
+                        <strong>Formula:</strong> {calculationResults.minThickness?.formula || 't = PR/(SE-0.6P) + CA'}
                       </p>
+                      {calculationResults.minThickness?.calculation && (
+                        <p className="text-xs text-green-700 mb-2">
+                          <strong>Calculation:</strong> {calculationResults.minThickness.calculation}
+                        </p>
+                      )}
                       <p className="text-lg font-bold text-green-900">
-                        Required Thickness: 0.XXX inches
+                        Required Thickness: {calculationResults.minThickness?.result || '0.XXX inches'}
                       </p>
                     </div>
                   </div>
@@ -263,6 +613,8 @@ function App() {
                         step="0.001"
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="0.375"
+                        value={calculationInputs.actualThickness}
+                        onChange={(e) => updateCalculationInputs('actualThickness', e.target.value)}
                       />
                     </div>
                     <div>
@@ -271,11 +623,17 @@ function App() {
                         type="number" 
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="36"
+                        value={calculationInputs.insideRadius}
+                        onChange={(e) => updateCalculationInputs('insideRadius', e.target.value)}
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Allowable Stress (S) - psi</label>
-                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <select 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={calculationInputs.allowableStress}
+                        onChange={(e) => updateCalculationInputs('allowableStress', e.target.value)}
+                      >
                         <option value="">Select material & temperature</option>
                         <option value="20000">SA-516-70 @ 650°F: 20,000 psi</option>
                         <option value="17500">SA-516-70 @ 700°F: 17,500 psi</option>
@@ -284,7 +642,11 @@ function App() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Joint Efficiency (E)</label>
-                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <select 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={calculationInputs.jointEfficiency}
+                        onChange={(e) => updateCalculationInputs('jointEfficiency', e.target.value)}
+                      >
                         <option value="">Select joint efficiency</option>
                         <option value="1.0">1.0 - Full Radiography</option>
                         <option value="0.85">0.85 - Spot Radiography</option>
@@ -298,17 +660,43 @@ function App() {
                         step="0.001"
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="0.125"
+                        value={calculationInputs.corrosionAllowance}
+                        onChange={(e) => updateCalculationInputs('corrosionAllowance', e.target.value)}
                       />
                     </div>
-                    <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                    <button 
+                      className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+                      onClick={calculateMAWP}
+                    >
                       Calculate MAWP
+                    </button>
+                    <button 
+                      className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors mt-2"
+                      onClick={() => {
+                        setCalculationInputs(prev => ({
+                          ...prev,
+                          actualThickness: '0.375',
+                          insideRadius: '36',
+                          allowableStress: '20000',
+                          jointEfficiency: '1.0',
+                          corrosionAllowance: '0.125'
+                        }));
+                        setTimeout(calculateMAWP, 100);
+                      }}
+                    >
+                      Test MAWP Calculation (Auto-Fill)
                     </button>
                     <div className="p-4 bg-blue-100 rounded-lg border border-blue-300">
                       <p className="text-sm text-blue-800 mb-2">
-                        <strong>Formula:</strong> MAWP = SE(t-CA)/(R+0.6(t-CA))
+                        <strong>Formula:</strong> {calculationResults.mawp?.formula || 'MAWP = SE(t-CA)/(R+0.6(t-CA))'}
                       </p>
+                      {calculationResults.mawp?.calculation && (
+                        <p className="text-xs text-blue-700 mb-2">
+                          <strong>Calculation:</strong> {calculationResults.mawp.calculation}
+                        </p>
+                      )}
                       <p className="text-lg font-bold text-blue-900">
-                        MAWP: XXX psig
+                        MAWP: {calculationResults.mawp?.result || 'XXX psig'}
                       </p>
                     </div>
                   </div>
@@ -327,6 +715,8 @@ function App() {
                       step="0.001"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                       placeholder="0.350"
+                      value={calculationInputs.currentThickness}
+                      onChange={(e) => updateCalculationInputs('currentThickness', e.target.value)}
                     />
                   </div>
                   <div>
@@ -336,6 +726,8 @@ function App() {
                       step="0.001"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                       placeholder="0.250"
+                      value={calculationInputs.requiredThickness}
+                      onChange={(e) => updateCalculationInputs('requiredThickness', e.target.value)}
                     />
                   </div>
                   <div>
@@ -345,6 +737,8 @@ function App() {
                       step="0.1"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                       placeholder="2.5"
+                      value={calculationInputs.corrosionRate}
+                      onChange={(e) => updateCalculationInputs('corrosionRate', e.target.value)}
                     />
                   </div>
                   <div>
@@ -354,19 +748,101 @@ function App() {
                       step="0.1"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                       placeholder="2.0"
+                      value={calculationInputs.safetyFactor}
+                      onChange={(e) => updateCalculationInputs('safetyFactor', e.target.value)}
                     />
                   </div>
                 </div>
-                <button className="w-full bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 transition-colors mt-4">
+                <button 
+                  className="w-full bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 transition-colors mt-4"
+                  onClick={calculateRemainingLife}
+                >
                   Calculate Remaining Life
+                </button>
+                <button 
+                  className="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition-colors mt-2"
+                  onClick={() => {
+                    setCalculationInputs(prev => ({
+                      ...prev,
+                      currentThickness: '0.350',
+                      requiredThickness: '0.250',
+                      corrosionRate: '2.5',
+                      safetyFactor: '2.0'
+                    }));
+                    setTimeout(calculateRemainingLife, 100);
+                  }}
+                >
+                  Test Remaining Life (Auto-Fill)
+                </button>
+                
+                {/* Comprehensive Test Button */}
+                <button 
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-4 rounded-md hover:from-purple-700 hover:to-blue-700 transition-colors mt-4 font-semibold"
+                  onClick={() => {
+                    // Run comprehensive test with realistic pressure vessel data
+                    setVesselData(prev => ({
+                      ...prev,
+                      tagNumber: 'V-101',
+                      vesselName: 'Reactor Feed Drum',
+                      designPressure: '150',
+                      designTemperature: '650',
+                      materialSpec: 'SA-516-70',
+                      insideDiameter: '72'
+                    }));
+                    
+                    setCalculationInputs(prev => ({
+                      ...prev,
+                      designPressure: '150',
+                      insideRadius: '36',
+                      allowableStress: '20000',
+                      jointEfficiency: '1.0',
+                      corrosionAllowance: '0.125',
+                      actualThickness: '0.375',
+                      currentThickness: '0.350',
+                      corrosionRate: '2.5',
+                      safetyFactor: '2.0'
+                    }));
+                    
+                    // Run all calculations in sequence
+                    setTimeout(() => {
+                      calculateMinimumThickness();
+                      setTimeout(() => {
+                        calculateMAWP();
+                        setTimeout(() => {
+                          calculateRemainingLife();
+                        }, 200);
+                      }, 200);
+                    }, 200);
+                  }}
+                >
+                  🚀 Run Complete API 510 Calculation Suite
                 </button>
                 <div className="p-4 bg-orange-100 rounded-lg border border-orange-300 mt-4">
                   <p className="text-lg font-bold text-orange-900">
-                    Estimated Remaining Life: XX.X years
+                    Estimated Remaining Life: {calculationResults.remainingLife?.result || 'XX.X years'}
                   </p>
-                  <p className="text-sm text-orange-800 mt-1">
-                    Next inspection due: Month/Year
-                  </p>
+                  {calculationResults.remainingLife?.status && (
+                    <div className="mt-2">
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        calculationResults.remainingLife.statusColor === 'green' ? 'bg-green-100 text-green-800' :
+                        calculationResults.remainingLife.statusColor === 'yellow' ? 'bg-yellow-100 text-yellow-800' :
+                        calculationResults.remainingLife.statusColor === 'orange' ? 'bg-orange-100 text-orange-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {calculationResults.remainingLife.status}
+                      </span>
+                    </div>
+                  )}
+                  {calculationResults.remainingLife?.recommendation && (
+                    <p className="text-sm text-orange-800 mt-2">
+                      <strong>Recommendation:</strong> {calculationResults.remainingLife.recommendation}
+                    </p>
+                  )}
+                  {calculationResults.inspectionInterval?.result && (
+                    <p className="text-sm text-orange-800 mt-1">
+                      <strong>Next inspection due:</strong> {calculationResults.inspectionInterval.result}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
