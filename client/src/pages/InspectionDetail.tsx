@@ -11,6 +11,7 @@ import VesselDataTab from "@/components/inspection/VesselDataTab";
 import CalculationsTab from "@/components/inspection/CalculationsTab";
 import ThicknessAnalysisTab from "@/components/inspection/ThicknessAnalysisTab";
 import InspectionReportTab from "@/components/inspection/InspectionReportTab";
+import InspectionFindingsTab from "@/components/inspection/InspectionFindingsTab";
 
 export default function InspectionDetail() {
   const params = useParams();
@@ -117,7 +118,7 @@ export default function InspectionDetail() {
           </TabsContent>
 
           <TabsContent value="calculations">
-            <CalculationsTab inspectionId={id} inspection={inspection} />
+            <CalculationsTab inspectionId={id} />
           </TabsContent>
 
           <TabsContent value="thickness">
@@ -125,15 +126,7 @@ export default function InspectionDetail() {
           </TabsContent>
 
           <TabsContent value="inspections">
-            <Card>
-              <CardHeader>
-                <CardTitle>Inspection Findings</CardTitle>
-                <CardDescription>External and internal inspection results</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">Inspection findings will be displayed here</p>
-              </CardContent>
-            </Card>
+            <InspectionFindingsTab inspectionId={id} />
           </TabsContent>
 
           <TabsContent value="report">

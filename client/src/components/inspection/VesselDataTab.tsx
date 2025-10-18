@@ -157,11 +157,32 @@ export default function VesselDataTab({ inspection }: VesselDataTabProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="SA-516 Grade 70">SA-516 Grade 70 (Carbon Steel)</SelectItem>
+                  <SelectItem value="SA-516 Grade 60">SA-516 Grade 60 (Carbon Steel)</SelectItem>
                   <SelectItem value="SA-515 Grade 70">SA-515 Grade 70 (Carbon Steel)</SelectItem>
-                  <SelectItem value="SA-387 Grade 22">SA-387 Grade 22 (Cr-Mo Steel)</SelectItem>
-                  <SelectItem value="SA-387 Grade 11">SA-387 Grade 11 (Cr-Mo Steel)</SelectItem>
+                  <SelectItem value="SA-515 Grade 60">SA-515 Grade 60 (Carbon Steel)</SelectItem>
+                  <SelectItem value="SA-285 Grade C">SA-285 Grade C (Carbon Steel)</SelectItem>
+                  <SelectItem value="SA-285 Grade B">SA-285 Grade B (Carbon Steel)</SelectItem>
+                  <SelectItem value="SA-285 Grade A">SA-285 Grade A (Carbon Steel)</SelectItem>
+                  <SelectItem value="SA-36">SA-36 (Carbon Steel)</SelectItem>
+                  <SelectItem value="SA-283 Grade C">SA-283 Grade C (Carbon Steel)</SelectItem>
+                  <SelectItem value="SA-283 Grade D">SA-283 Grade D (Carbon Steel)</SelectItem>
+                  <SelectItem value="SA-387 Grade 22 Class 2">SA-387 Grade 22 Class 2 (Cr-Mo Steel)</SelectItem>
+                  <SelectItem value="SA-387 Grade 22 Class 1">SA-387 Grade 22 Class 1 (Cr-Mo Steel)</SelectItem>
+                  <SelectItem value="SA-387 Grade 11 Class 2">SA-387 Grade 11 Class 2 (Cr-Mo Steel)</SelectItem>
+                  <SelectItem value="SA-387 Grade 11 Class 1">SA-387 Grade 11 Class 1 (Cr-Mo Steel)</SelectItem>
+                  <SelectItem value="SA-387 Grade 5">SA-387 Grade 5 (Cr-Mo Steel)</SelectItem>
+                  <SelectItem value="SA-387 Grade 2">SA-387 Grade 2 (Cr-Mo Steel)</SelectItem>
                   <SelectItem value="SA-240 Type 304">SA-240 Type 304 (Stainless Steel)</SelectItem>
+                  <SelectItem value="SA-240 Type 304L">SA-240 Type 304L (Stainless Steel)</SelectItem>
                   <SelectItem value="SA-240 Type 316">SA-240 Type 316 (Stainless Steel)</SelectItem>
+                  <SelectItem value="SA-240 Type 316L">SA-240 Type 316L (Stainless Steel)</SelectItem>
+                  <SelectItem value="SA-240 Type 321">SA-240 Type 321 (Stainless Steel)</SelectItem>
+                  <SelectItem value="SA-240 Type 347">SA-240 Type 347 (Stainless Steel)</SelectItem>
+                  <SelectItem value="SA-240 Type 410">SA-240 Type 410 (Stainless Steel)</SelectItem>
+                  <SelectItem value="SA-203 Grade A">SA-203 Grade A (Ni Alloy Steel)</SelectItem>
+                  <SelectItem value="SA-203 Grade B">SA-203 Grade B (Ni Alloy Steel)</SelectItem>
+                  <SelectItem value="SA-203 Grade D">SA-203 Grade D (Ni Alloy Steel)</SelectItem>
+                  <SelectItem value="SA-203 Grade E">SA-203 Grade E (Ni Alloy Steel)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
