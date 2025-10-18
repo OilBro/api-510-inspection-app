@@ -1,6 +1,21 @@
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { 
+  InsertUser, 
+  users, 
+  inspections,
+  InsertInspection,
+  calculations,
+  InsertCalculation,
+  tmlReadings,
+  InsertTmlReading,
+  externalInspections,
+  InsertExternalInspection,
+  internalInspections,
+  InsertInternalInspection,
+  importedFiles,
+  InsertImportedFile
+} from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -17,6 +32,8 @@ export async function getDb() {
   }
   return _db;
 }
+
+// ============= User Functions =============
 
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.id) {
@@ -81,8 +98,169 @@ export async function getUser(id: string) {
   }
 
   const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
-
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// ============= Inspection Functions =============
+
+export async function createInspection(inspection: InsertInspection) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(inspections).values(inspection);
+  return inspection;
+}
+
+export async function getInspection(id: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select().from(inspections).where(eq(inspections.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getUserInspections(userId: string) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(inspections).where(eq(inspections.userId, userId)).orderBy(desc(inspections.updatedAt));
+}
+
+export async function updateInspection(id: string, data: Partial<InsertInspection>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(inspections).set(data).where(eq(inspections.id, id));
+}
+
+export async function deleteInspection(id: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(inspections).where(eq(inspections.id, id));
+}
+
+// ============= Calculation Functions =============
+
+export async function saveCalculation(calculation: InsertCalculation) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(calculations).values(calculation);
+  return calculation;
+}
+
+export async function getCalculation(inspectionId: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select().from(calculations).where(eq(calculations.inspectionId, inspectionId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updateCalculation(id: string, data: Partial<InsertCalculation>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(calculations).set(data).where(eq(calculations.id, id));
+}
+
+// ============= TML Reading Functions =============
+
+export async function createTmlReading(reading: InsertTmlReading) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(tmlReadings).values(reading);
+  return reading;
+}
+
+export async function getTmlReadings(inspectionId: string) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(tmlReadings).where(eq(tmlReadings.inspectionId, inspectionId));
+}
+
+export async function updateTmlReading(id: string, data: Partial<InsertTmlReading>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(tmlReadings).set(data).where(eq(tmlReadings.id, id));
+}
+
+export async function deleteTmlReading(id: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(tmlReadings).where(eq(tmlReadings.id, id));
+}
+
+// ============= External Inspection Functions =============
+
+export async function saveExternalInspection(inspection: InsertExternalInspection) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(externalInspections).values(inspection);
+  return inspection;
+}
+
+export async function getExternalInspection(inspectionId: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select().from(externalInspections).where(eq(externalInspections.inspectionId, inspectionId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// ============= Internal Inspection Functions =============
+
+export async function saveInternalInspection(inspection: InsertInternalInspection) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(internalInspections).values(inspection);
+  return inspection;
+}
+
+export async function getInternalInspection(inspectionId: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select().from(internalInspections).where(eq(internalInspections.inspectionId, inspectionId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// ============= Imported File Functions =============
+
+export async function createImportedFile(file: InsertImportedFile) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(importedFiles).values(file);
+  return file;
+}
+
+export async function getImportedFile(id: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select().from(importedFiles).where(eq(importedFiles.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updateImportedFile(id: string, data: Partial<InsertImportedFile>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(importedFiles).set(data).where(eq(importedFiles.id, id));
+}
+
+export async function getInspectionImportedFiles(inspectionId: string) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(importedFiles).where(eq(importedFiles.inspectionId, inspectionId)).orderBy(desc(importedFiles.createdAt));
+}
+

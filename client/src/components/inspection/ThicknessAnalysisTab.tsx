@@ -1,0 +1,294 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { trpc } from "@/lib/trpc";
+import { Plus, Trash2, Save } from "lucide-react";
+import { toast } from "sonner";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+interface ThicknessAnalysisTabProps {
+  inspectionId: string;
+}
+
+export default function ThicknessAnalysisTab({ inspectionId }: ThicknessAnalysisTabProps) {
+  const { data: readings, isLoading } = trpc.tmlReadings.list.useQuery({ inspectionId });
+  const createMutation = trpc.tmlReadings.create.useMutation();
+  const deleteMutation = trpc.tmlReadings.delete.useMutation();
+  const utils = trpc.useUtils();
+
+  const [newReading, setNewReading] = useState({
+    tmlId: "",
+    component: "",
+    currentThickness: "",
+    previousThickness: "",
+    nominalThickness: "",
+  });
+
+  const handleAddReading = async () => {
+    if (!newReading.tmlId || !newReading.component) {
+      toast.error("TML ID and Component are required");
+      return;
+    }
+
+    try {
+      // Calculate loss and corrosion rate
+      const current = parseFloat(newReading.currentThickness) || 0;
+      const previous = parseFloat(newReading.previousThickness) || 0;
+      const nominal = parseFloat(newReading.nominalThickness) || 0;
+
+      let loss = "0";
+      let corrosionRate = "0";
+      let status: "good" | "monitor" | "critical" = "good";
+
+      if (nominal && current) {
+        loss = ((nominal - current) / nominal * 100).toFixed(2);
+        
+        if (parseFloat(loss) > 20) {
+          status = "critical";
+        } else if (parseFloat(loss) > 10) {
+          status = "monitor";
+        }
+      }
+
+      if (previous && current) {
+        // Assuming 5 years between inspections
+        corrosionRate = (((previous - current) * 1000) / 5).toFixed(2);
+      }
+
+      await createMutation.mutateAsync({
+        inspectionId,
+        tmlId: newReading.tmlId,
+        component: newReading.component,
+        currentThickness: newReading.currentThickness || undefined,
+        previousThickness: newReading.previousThickness || undefined,
+        nominalThickness: newReading.nominalThickness || undefined,
+        loss,
+        corrosionRate,
+        status,
+      });
+
+      utils.tmlReadings.list.invalidate({ inspectionId });
+      setNewReading({
+        tmlId: "",
+        component: "",
+        currentThickness: "",
+        previousThickness: "",
+        nominalThickness: "",
+      });
+      toast.success("TML reading added");
+    } catch (error) {
+      toast.error("Failed to add reading");
+      console.error(error);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm("Are you sure you want to delete this reading?")) {
+      try {
+        await deleteMutation.mutateAsync({ id });
+        utils.tmlReadings.list.invalidate({ inspectionId });
+        toast.success("Reading deleted");
+      } catch (error) {
+        toast.error("Failed to delete reading");
+      }
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "good":
+        return <Badge className="bg-green-100 text-green-800">Good</Badge>;
+      case "monitor":
+        return <Badge className="bg-yellow-100 text-yellow-800">Monitor</Badge>;
+      case "critical":
+        return <Badge className="bg-red-100 text-red-800">Critical</Badge>;
+      default:
+        return <Badge className="bg-gray-100 text-gray-800">Unknown</Badge>;
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Thickness Measurement Locations (TML)</CardTitle>
+          <CardDescription>Track thickness readings across vessel components</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
+            <div className="space-y-2">
+              <Label>TML ID</Label>
+              <Input
+                placeholder="e.g., TML-001"
+                value={newReading.tmlId}
+                onChange={(e) => setNewReading({ ...newReading, tmlId: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Component</Label>
+              <Select
+                value={newReading.component}
+                onValueChange={(value) => setNewReading({ ...newReading, component: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Shell">Shell</SelectItem>
+                  <SelectItem value="Head">Head</SelectItem>
+                  <SelectItem value="Nozzle">Nozzle</SelectItem>
+                  <SelectItem value="Flange">Flange</SelectItem>
+                  <SelectItem value="Support">Support</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Nominal (in)</Label>
+              <Input
+                type="number"
+                step="0.0001"
+                placeholder="0.3750"
+                value={newReading.nominalThickness}
+                onChange={(e) => setNewReading({ ...newReading, nominalThickness: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Previous (in)</Label>
+              <Input
+                type="number"
+                step="0.0001"
+                placeholder="0.3600"
+                value={newReading.previousThickness}
+                onChange={(e) => setNewReading({ ...newReading, previousThickness: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Current (in)</Label>
+              <Input
+                type="number"
+                step="0.0001"
+                placeholder="0.3500"
+                value={newReading.currentThickness}
+                onChange={(e) => setNewReading({ ...newReading, currentThickness: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <Button onClick={handleAddReading} disabled={createMutation.isPending}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Reading
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>TML Readings Summary</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-2 text-sm text-gray-600">Loading readings...</p>
+            </div>
+          ) : readings && readings.length > 0 ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>TML ID</TableHead>
+                    <TableHead>Component</TableHead>
+                    <TableHead>Nominal</TableHead>
+                    <TableHead>Previous</TableHead>
+                    <TableHead>Current</TableHead>
+                    <TableHead>Loss %</TableHead>
+                    <TableHead>Corr. Rate</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {readings.map((reading) => (
+                    <TableRow key={reading.id}>
+                      <TableCell className="font-medium">{reading.tmlId}</TableCell>
+                      <TableCell>{reading.component}</TableCell>
+                      <TableCell>{reading.nominalThickness || "-"}</TableCell>
+                      <TableCell>{reading.previousThickness || "-"}</TableCell>
+                      <TableCell>{reading.currentThickness || "-"}</TableCell>
+                      <TableCell>{reading.loss ? `${reading.loss}%` : "-"}</TableCell>
+                      <TableCell>{reading.corrosionRate ? `${reading.corrosionRate} mpy` : "-"}</TableCell>
+                      <TableCell>{getStatusBadge(reading.status || "good")}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(reading.id)}
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-600" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-600">
+              <p>No thickness readings recorded yet</p>
+              <p className="text-sm mt-2">Add your first TML reading above</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {readings && readings.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Analysis Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                <p className="text-sm text-gray-600 mb-1">Good Condition</p>
+                <p className="text-2xl font-bold text-green-700">
+                  {readings.filter((r) => r.status === "good").length}
+                </p>
+              </div>
+
+              <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                <p className="text-sm text-gray-600 mb-1">Monitor</p>
+                <p className="text-2xl font-bold text-yellow-700">
+                  {readings.filter((r) => r.status === "monitor").length}
+                </p>
+              </div>
+
+              <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+                <p className="text-sm text-gray-600 mb-1">Critical</p>
+                <p className="text-2xl font-bold text-red-700">
+                  {readings.filter((r) => r.status === "critical").length}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
