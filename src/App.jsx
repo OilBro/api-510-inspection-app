@@ -24,6 +24,292 @@ import './App.css'
 
 function App() {
   const [activeTab, setActiveTab] = useState('vessel-data')
+  
+  // State for vessel data and calculations
+  const [vesselData, setVesselData] = useState({
+    tagNumber: '',
+    vesselName: '',
+    manufacturer: '',
+    yearBuilt: '',
+    designPressure: '',
+    designTemperature: '',
+    operatingPressure: '',
+    materialSpec: '',
+    vesselType: '',
+    insideDiameter: '',
+    overallLength: ''
+  })
+  
+  const [calculationResults, setCalculationResults] = useState({
+    minThickness: null,
+    mawp: null,
+    remainingLife: null,
+    testPressure: null,
+    inspectionInterval: null
+  })
+  
+  const [calculationInputs, setCalculationInputs] = useState({
+    // Minimum thickness inputs
+    designPressure: '',
+    insideRadius: '',
+    allowableStress: '',
+    jointEfficiency: '',
+    corrosionAllowance: '0.125',
+    // MAWP inputs
+    actualThickness: '',
+    // Remaining life inputs
+    currentThickness: '',
+    requiredThickness: '',
+    corrosionRate: '',
+    safetyFactor: '2.0'
+  })
+
+  // Material database with temperature-dependent properties
+  const materialDatabase = {
+    'SA-516-70': {
+      650: { stress: 20000, description: 'SA-516-70 @ 650°F: 20,000 psi' },
+      700: { stress: 17500, description: 'SA-516-70 @ 700°F: 17,500 psi' },
+      750: { stress: 15000, description: 'SA-516-70 @ 750°F: 15,000 psi' }
+    },
+    'SA-515-70': {
+      650: { stress: 20000, description: 'SA-515-70 @ 650°F: 20,000 psi' },
+      700: { stress: 17500, description: 'SA-515-70 @ 700°F: 17,500 psi' },
+      750: { stress: 15000, description: 'SA-515-70 @ 750°F: 15,000 psi' }
+    },
+    'SA-387-22': {
+      850: { stress: 18750, description: 'SA-387-22 @ 850°F: 18,750 psi' },
+      900: { stress: 16250, description: 'SA-387-22 @ 900°F: 16,250 psi' },
+      950: { stress: 14000, description: 'SA-387-22 @ 950°F: 14,000 psi' }
+    }
+  }
+
+  // Update vessel data
+  const updateVesselData = (field, value) => {
+    setVesselData(prev => ({ ...prev, [field]: value }))
+    
+    // Enhanced cross-section data integration
+    if (field === 'designPressure') {
+      setCalculationInputs(prev => ({ ...prev, designPressure: value }))
+    }
+    if (field === 'insideDiameter') {
+      const radius = parseFloat(value) / 2
+      setCalculationInputs(prev => ({ ...prev, insideRadius: radius.toString() }))
+    }
+    if (field === 'materialSpec') {
+      // Auto-lookup allowable stress based on material and temperature
+      const designTemp = parseFloat(vesselData.designTemperature) || 650
+      const material = materialDatabase[value]
+      if (material) {
+        // Find closest temperature match
+        const temps = Object.keys(material).map(t => parseInt(t))
+        const closestTemp = temps.reduce((prev, curr) => 
+          Math.abs(curr - designTemp) < Math.abs(prev - designTemp) ? curr : prev
+        )
+        const allowableStress = material[closestTemp].stress
+        setCalculationInputs(prev => ({ ...prev, allowableStress: allowableStress.toString() }))
+      }
+    }
+    if (field === 'designTemperature') {
+      // Update allowable stress if material is already selected
+      const material = materialDatabase[vesselData.materialSpec]
+      if (material) {
+        const designTemp = parseFloat(value) || 650
+        const temps = Object.keys(material).map(t => parseInt(t))
+        const closestTemp = temps.reduce((prev, curr) => 
+          Math.abs(curr - designTemp) < Math.abs(prev - designTemp) ? curr : prev
+        )
+        const allowableStress = material[closestTemp].stress
+        setCalculationInputs(prev => ({ ...prev, allowableStress: allowableStress.toString() }))
+      }
+    }
+  }
+
+  // Update calculation inputs
+  const updateCalculationInputs = (field, value) => {
+    console.log('Updating calculation input:', field, '=', value)
+    setCalculationInputs(prev => {
+      const newState = { ...prev, [field]: value }
+      console.log('New calculation state:', newState)
+      return newState
+    })
+  }
+
+  // Core calculation functions
+  const calculateMinimumThickness = () => {
+    try {
+      console.log('Calculation inputs:', calculationInputs)
+      const P = parseFloat(calculationInputs.designPressure)
+      const R = parseFloat(calculationInputs.insideRadius)
+      const S = parseFloat(calculationInputs.allowableStress)
+      const E = parseFloat(calculationInputs.jointEfficiency)
+      const CA = parseFloat(calculationInputs.corrosionAllowance)
+      console.log('Parsed values:', { P, R, S, E, CA })
+
+      if (!P || !R || !S || !E) {
+        alert('Please fill in all required fields for minimum thickness calculation')
+        return
+      }
+
+      // ASME Section VIII formula: t = PR/(SE-0.6P) + CA
+      const denominator = (S * E) - (0.6 * P)
+      
+      if (denominator <= 0) {
+        alert('Invalid parameters - denominator is zero or negative. Check allowable stress and pressure values.')
+        return
+      }
+
+      const thickness = (P * R) / denominator + CA
+      
+      setCalculationResults(prev => ({
+        ...prev,
+        minThickness: {
+          value: thickness,
+          formula: 't = PR/(SE-0.6P) + CA',
+          calculation: `t = (${P} × ${R})/((${S} × ${E}) - (0.6 × ${P})) + ${CA}`,
+          result: `${thickness.toFixed(4)} inches`
+        }
+      }))
+
+      // Auto-populate required thickness for remaining life calculation
+      setCalculationInputs(prev => ({ ...prev, requiredThickness: thickness.toFixed(4) }))
+
+    } catch (error) {
+      alert('Error in minimum thickness calculation. Please check your inputs.')
+    }
+  }
+
+  const calculateMAWP = () => {
+    try {
+      const t = parseFloat(calculationInputs.actualThickness)
+      const R = parseFloat(calculationInputs.insideRadius)
+      const S = parseFloat(calculationInputs.allowableStress)
+      const E = parseFloat(calculationInputs.jointEfficiency)
+      const CA = parseFloat(calculationInputs.corrosionAllowance)
+
+      if (!t || !R || !S || !E) {
+        alert('Please fill in all required fields for MAWP calculation')
+        return
+      }
+
+      const effectiveThickness = t - CA
+      
+      if (effectiveThickness <= 0) {
+        alert('Effective thickness is zero or negative. Check actual thickness and corrosion allowance.')
+        return
+      }
+
+      // ASME Section VIII formula: MAWP = SE(t-CA)/(R+0.6(t-CA))
+      const numerator = S * E * effectiveThickness
+      const denominator = R + (0.6 * effectiveThickness)
+      const mawp = numerator / denominator
+
+      setCalculationResults(prev => ({
+        ...prev,
+        mawp: {
+          value: mawp,
+          formula: 'MAWP = SE(t-CA)/(R+0.6(t-CA))',
+          calculation: `MAWP = (${S} × ${E} × ${effectiveThickness})/(${R} + (0.6 × ${effectiveThickness}))`,
+          result: `${mawp.toFixed(1)} psig`
+        }
+      }))
+
+      // Auto-calculate test pressure
+      const testPressure = mawp * 1.3 // Default hydrostatic test factor
+      setCalculationResults(prev => ({
+        ...prev,
+        testPressure: {
+          value: testPressure,
+          formula: 'Test Pressure = MAWP × 1.3',
+          calculation: `${mawp.toFixed(1)} × 1.3 = ${testPressure.toFixed(0)}`,
+          result: `${testPressure.toFixed(0)} psig`
+        }
+      }))
+
+    } catch (error) {
+      alert('Error in MAWP calculation. Please check your inputs.')
+    }
+  }
+
+  const calculateRemainingLife = () => {
+    try {
+      const currentThickness = parseFloat(calculationInputs.currentThickness)
+      const requiredThickness = parseFloat(calculationInputs.requiredThickness)
+      const corrosionRate = parseFloat(calculationInputs.corrosionRate) // mils/year
+      const safetyFactor = parseFloat(calculationInputs.safetyFactor)
+
+      if (!currentThickness || !requiredThickness || !corrosionRate || !safetyFactor) {
+        alert('Please fill in all required fields for remaining life calculation')
+        return
+      }
+
+      const excessThickness = currentThickness - requiredThickness
+      
+      if (excessThickness <= 0) {
+        setCalculationResults(prev => ({
+          ...prev,
+          remainingLife: {
+            value: 0,
+            status: 'CRITICAL',
+            statusColor: 'red',
+            recommendation: 'Immediate action required - Below minimum thickness',
+            result: '0.0 years'
+          }
+        }))
+        return
+      }
+
+      // Convert mils/year to inches/year and apply safety factor
+      const remainingLife = (excessThickness / (corrosionRate / 1000)) / safetyFactor
+
+      let status = 'GOOD'
+      let statusColor = 'green'
+      let recommendation = 'Continue normal operation'
+      
+      if (remainingLife < 2) {
+        status = 'CRITICAL'
+        statusColor = 'red'
+        recommendation = 'Plan immediate replacement or repair'
+      } else if (remainingLife < 5) {
+        status = 'POOR'
+        statusColor = 'orange'
+        recommendation = 'Plan replacement within 2-3 years'
+      } else if (remainingLife < 10) {
+        status = 'FAIR'
+        statusColor = 'yellow'
+        recommendation = 'Monitor closely, plan future replacement'
+      }
+
+      setCalculationResults(prev => ({
+        ...prev,
+        remainingLife: {
+          value: remainingLife,
+          status: status,
+          statusColor: statusColor,
+          recommendation: recommendation,
+          calculation: `Life = (${currentThickness} - ${requiredThickness}) / (${corrosionRate}/1000) / ${safetyFactor}`,
+          result: `${remainingLife.toFixed(1)} years`
+        }
+      }))
+
+      // Auto-calculate inspection interval
+      const riskFactor = 0.5 // Default medium risk
+      const maxInterval = 10 // API 510 maximum
+      const inspectionInterval = Math.min(remainingLife * riskFactor, maxInterval)
+
+      setCalculationResults(prev => ({
+        ...prev,
+        inspectionInterval: {
+          value: inspectionInterval,
+          formula: 'Min(Remaining Life × Risk Factor, Max Interval)',
+          calculation: `Min(${remainingLife.toFixed(1)} × ${riskFactor}, ${maxInterval})`,
+          result: `${inspectionInterval.toFixed(2)} years`
+        }
+      }))
+
+    } catch (error) {
+      alert('Error in remaining life calculation. Please check your inputs.')
+    }
+  }
 
   const navigationItems = [
     { id: 'vessel-data', label: 'Vessel Data', icon: Database, description: 'Basic vessel information and specifications' },
@@ -62,6 +348,8 @@ function App() {
                       type="text" 
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g., V-101, T-205, R-301"
+                      value={vesselData.tagNumber}
+                      onChange={(e) => updateVesselData('tagNumber', e.target.value)}
                     />
                   </div>
                   <div>
@@ -70,6 +358,8 @@ function App() {
                       type="text" 
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g., Reactor Feed Drum, Distillation Tower"
+                      value={vesselData.vesselName}
+                      onChange={(e) => updateVesselData('vesselName', e.target.value)}
                     />
                   </div>
                   <div>
@@ -78,6 +368,8 @@ function App() {
                       type="text" 
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g., Chicago Bridge & Iron, Babcock & Wilcox"
+                      value={vesselData.manufacturer}
+                      onChange={(e) => updateVesselData('manufacturer', e.target.value)}
                     />
                   </div>
                   <div>
@@ -86,6 +378,8 @@ function App() {
                       type="number" 
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g., 1995"
+                      value={vesselData.yearBuilt}
+                      onChange={(e) => updateVesselData('yearBuilt', e.target.value)}
                     />
                   </div>
                 </div>
@@ -101,6 +395,8 @@ function App() {
                       type="number" 
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                       placeholder="e.g., 150, 300, 600"
+                      value={vesselData.designPressure}
+                      onChange={(e) => updateVesselData('designPressure', e.target.value)}
                     />
                   </div>
                   <div>
@@ -109,6 +405,8 @@ function App() {
                       type="number" 
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                       placeholder="e.g., 650, 800, 1000"
+                      value={vesselData.designTemperature}
+                      onChange={(e) => updateVesselData('designTemperature', e.target.value)}
                     />
                   </div>
                   <div>
@@ -117,6 +415,8 @@ function App() {
                       type="number" 
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                       placeholder="e.g., 125, 250, 500"
+                      value={vesselData.operatingPressure}
+                      onChange={(e) => updateVesselData('operatingPressure', e.target.value)}
                     />
                   </div>
                 </div>
@@ -124,7 +424,11 @@ function App() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Material Specification *</label>
-                    <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <select 
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      value={vesselData.materialSpec}
+                      onChange={(e) => updateVesselData('materialSpec', e.target.value)}
+                    >
                       <option value="">Select material specification</option>
                       <option value="sa516-70">SA-516 Grade 70 (Carbon Steel)</option>
                       <option value="sa515-70">SA-515 Grade 70 (Carbon Steel)</option>
@@ -138,7 +442,11 @@ function App() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Vessel Type</label>
-                    <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <select 
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      value={vesselData.vesselType}
+                      onChange={(e) => updateVesselData('vesselType', e.target.value)}
+                    >
                       <option value="">Select vessel type</option>
                       <option value="pressure-vessel">Pressure Vessel</option>
                       <option value="storage-tank">Storage Tank</option>
@@ -162,6 +470,8 @@ function App() {
                       type="number" 
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                       placeholder="e.g., 72, 96, 120"
+                      value={vesselData.insideDiameter}
+                      onChange={(e) => updateVesselData('insideDiameter', e.target.value)}
                     />
                   </div>
                   <div>
@@ -170,6 +480,8 @@ function App() {
                       type="number" 
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                       placeholder="e.g., 20, 40, 60"
+                      value={vesselData.overallLength}
+                      onChange={(e) => updateVesselData('overallLength', e.target.value)}
                     />
                   </div>
                 </div>
@@ -198,6 +510,8 @@ function App() {
                         type="number" 
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                         placeholder="150"
+                        value={calculationInputs.designPressure}
+                        onChange={(e) => updateCalculationInputs('designPressure', e.target.value)}
                       />
                     </div>
                     <div>
@@ -206,11 +520,17 @@ function App() {
                         type="number" 
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                         placeholder="36"
+                        value={calculationInputs.insideRadius}
+                        onChange={(e) => updateCalculationInputs('insideRadius', e.target.value)}
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Allowable Stress (S) - psi</label>
-                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                      <select 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        value={calculationInputs.allowableStress}
+                        onChange={(e) => updateCalculationInputs('allowableStress', e.target.value)}
+                      >
                         <option value="">Select material & temperature</option>
                         <option value="20000">SA-516-70 @ 650°F: 20,000 psi</option>
                         <option value="17500">SA-516-70 @ 700°F: 17,500 psi</option>
@@ -222,7 +542,11 @@ function App() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Joint Efficiency (E)</label>
-                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                      <select 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        value={calculationInputs.jointEfficiency}
+                        onChange={(e) => updateCalculationInputs('jointEfficiency', e.target.value)}
+                      >
                         <option value="">Select joint efficiency</option>
                         <option value="1.0">1.0 - Full Radiography</option>
                         <option value="0.85">0.85 - Spot Radiography</option>
@@ -236,17 +560,43 @@ function App() {
                         step="0.001"
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                         placeholder="0.125"
+                        value={calculationInputs.corrosionAllowance}
+                        onChange={(e) => updateCalculationInputs('corrosionAllowance', e.target.value)}
                       />
                     </div>
-                    <button className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors">
+                    <button 
+                      className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors"
+                      onClick={calculateMinimumThickness}
+                    >
                       Calculate Minimum Thickness
+                    </button>
+                    <button 
+                      className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors mt-2"
+                      onClick={() => {
+                        setCalculationInputs(prev => ({
+                          ...prev,
+                          designPressure: '150',
+                          insideRadius: '36',
+                          allowableStress: '20000',
+                          jointEfficiency: '1.0',
+                          corrosionAllowance: '0.125'
+                        }));
+                        setTimeout(calculateMinimumThickness, 100);
+                      }}
+                    >
+                      Test Calculation (Auto-Fill)
                     </button>
                     <div className="p-4 bg-green-100 rounded-lg border border-green-300">
                       <p className="text-sm text-green-800 mb-2">
-                        <strong>Formula:</strong> t = PR/(SE-0.6P) + CA
+                        <strong>Formula:</strong> {calculationResults.minThickness?.formula || 't = PR/(SE-0.6P) + CA'}
                       </p>
+                      {calculationResults.minThickness?.calculation && (
+                        <p className="text-xs text-green-700 mb-2">
+                          <strong>Calculation:</strong> {calculationResults.minThickness.calculation}
+                        </p>
+                      )}
                       <p className="text-lg font-bold text-green-900">
-                        Required Thickness: 0.XXX inches
+                        Required Thickness: {calculationResults.minThickness?.result || '0.XXX inches'}
                       </p>
                     </div>
                   </div>
@@ -263,6 +613,8 @@ function App() {
                         step="0.001"
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="0.375"
+                        value={calculationInputs.actualThickness}
+                        onChange={(e) => updateCalculationInputs('actualThickness', e.target.value)}
                       />
                     </div>
                     <div>
@@ -271,11 +623,17 @@ function App() {
                         type="number" 
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="36"
+                        value={calculationInputs.insideRadius}
+                        onChange={(e) => updateCalculationInputs('insideRadius', e.target.value)}
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Allowable Stress (S) - psi</label>
-                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <select 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={calculationInputs.allowableStress}
+                        onChange={(e) => updateCalculationInputs('allowableStress', e.target.value)}
+                      >
                         <option value="">Select material & temperature</option>
                         <option value="20000">SA-516-70 @ 650°F: 20,000 psi</option>
                         <option value="17500">SA-516-70 @ 700°F: 17,500 psi</option>
@@ -284,7 +642,11 @@ function App() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Joint Efficiency (E)</label>
-                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <select 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={calculationInputs.jointEfficiency}
+                        onChange={(e) => updateCalculationInputs('jointEfficiency', e.target.value)}
+                      >
                         <option value="">Select joint efficiency</option>
                         <option value="1.0">1.0 - Full Radiography</option>
                         <option value="0.85">0.85 - Spot Radiography</option>
@@ -298,17 +660,43 @@ function App() {
                         step="0.001"
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="0.125"
+                        value={calculationInputs.corrosionAllowance}
+                        onChange={(e) => updateCalculationInputs('corrosionAllowance', e.target.value)}
                       />
                     </div>
-                    <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                    <button 
+                      className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+                      onClick={calculateMAWP}
+                    >
                       Calculate MAWP
+                    </button>
+                    <button 
+                      className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors mt-2"
+                      onClick={() => {
+                        setCalculationInputs(prev => ({
+                          ...prev,
+                          actualThickness: '0.375',
+                          insideRadius: '36',
+                          allowableStress: '20000',
+                          jointEfficiency: '1.0',
+                          corrosionAllowance: '0.125'
+                        }));
+                        setTimeout(calculateMAWP, 100);
+                      }}
+                    >
+                      Test MAWP Calculation (Auto-Fill)
                     </button>
                     <div className="p-4 bg-blue-100 rounded-lg border border-blue-300">
                       <p className="text-sm text-blue-800 mb-2">
-                        <strong>Formula:</strong> MAWP = SE(t-CA)/(R+0.6(t-CA))
+                        <strong>Formula:</strong> {calculationResults.mawp?.formula || 'MAWP = SE(t-CA)/(R+0.6(t-CA))'}
                       </p>
+                      {calculationResults.mawp?.calculation && (
+                        <p className="text-xs text-blue-700 mb-2">
+                          <strong>Calculation:</strong> {calculationResults.mawp.calculation}
+                        </p>
+                      )}
                       <p className="text-lg font-bold text-blue-900">
-                        MAWP: XXX psig
+                        MAWP: {calculationResults.mawp?.result || 'XXX psig'}
                       </p>
                     </div>
                   </div>
@@ -327,6 +715,8 @@ function App() {
                       step="0.001"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                       placeholder="0.350"
+                      value={calculationInputs.currentThickness}
+                      onChange={(e) => updateCalculationInputs('currentThickness', e.target.value)}
                     />
                   </div>
                   <div>
@@ -336,6 +726,8 @@ function App() {
                       step="0.001"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                       placeholder="0.250"
+                      value={calculationInputs.requiredThickness}
+                      onChange={(e) => updateCalculationInputs('requiredThickness', e.target.value)}
                     />
                   </div>
                   <div>
@@ -345,6 +737,8 @@ function App() {
                       step="0.1"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                       placeholder="2.5"
+                      value={calculationInputs.corrosionRate}
+                      onChange={(e) => updateCalculationInputs('corrosionRate', e.target.value)}
                     />
                   </div>
                   <div>
@@ -354,19 +748,101 @@ function App() {
                       step="0.1"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                       placeholder="2.0"
+                      value={calculationInputs.safetyFactor}
+                      onChange={(e) => updateCalculationInputs('safetyFactor', e.target.value)}
                     />
                   </div>
                 </div>
-                <button className="w-full bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 transition-colors mt-4">
+                <button 
+                  className="w-full bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 transition-colors mt-4"
+                  onClick={calculateRemainingLife}
+                >
                   Calculate Remaining Life
+                </button>
+                <button 
+                  className="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition-colors mt-2"
+                  onClick={() => {
+                    setCalculationInputs(prev => ({
+                      ...prev,
+                      currentThickness: '0.350',
+                      requiredThickness: '0.250',
+                      corrosionRate: '2.5',
+                      safetyFactor: '2.0'
+                    }));
+                    setTimeout(calculateRemainingLife, 100);
+                  }}
+                >
+                  Test Remaining Life (Auto-Fill)
+                </button>
+                
+                {/* Comprehensive Test Button */}
+                <button 
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-4 rounded-md hover:from-purple-700 hover:to-blue-700 transition-colors mt-4 font-semibold"
+                  onClick={() => {
+                    // Run comprehensive test with realistic pressure vessel data
+                    setVesselData(prev => ({
+                      ...prev,
+                      tagNumber: 'V-101',
+                      vesselName: 'Reactor Feed Drum',
+                      designPressure: '150',
+                      designTemperature: '650',
+                      materialSpec: 'SA-516-70',
+                      insideDiameter: '72'
+                    }));
+                    
+                    setCalculationInputs(prev => ({
+                      ...prev,
+                      designPressure: '150',
+                      insideRadius: '36',
+                      allowableStress: '20000',
+                      jointEfficiency: '1.0',
+                      corrosionAllowance: '0.125',
+                      actualThickness: '0.375',
+                      currentThickness: '0.350',
+                      corrosionRate: '2.5',
+                      safetyFactor: '2.0'
+                    }));
+                    
+                    // Run all calculations in sequence
+                    setTimeout(() => {
+                      calculateMinimumThickness();
+                      setTimeout(() => {
+                        calculateMAWP();
+                        setTimeout(() => {
+                          calculateRemainingLife();
+                        }, 200);
+                      }, 200);
+                    }, 200);
+                  }}
+                >
+                  🚀 Run Complete API 510 Calculation Suite
                 </button>
                 <div className="p-4 bg-orange-100 rounded-lg border border-orange-300 mt-4">
                   <p className="text-lg font-bold text-orange-900">
-                    Estimated Remaining Life: XX.X years
+                    Estimated Remaining Life: {calculationResults.remainingLife?.result || 'XX.X years'}
                   </p>
-                  <p className="text-sm text-orange-800 mt-1">
-                    Next inspection due: Month/Year
-                  </p>
+                  {calculationResults.remainingLife?.status && (
+                    <div className="mt-2">
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        calculationResults.remainingLife.statusColor === 'green' ? 'bg-green-100 text-green-800' :
+                        calculationResults.remainingLife.statusColor === 'yellow' ? 'bg-yellow-100 text-yellow-800' :
+                        calculationResults.remainingLife.statusColor === 'orange' ? 'bg-orange-100 text-orange-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {calculationResults.remainingLife.status}
+                      </span>
+                    </div>
+                  )}
+                  {calculationResults.remainingLife?.recommendation && (
+                    <p className="text-sm text-orange-800 mt-2">
+                      <strong>Recommendation:</strong> {calculationResults.remainingLife.recommendation}
+                    </p>
+                  )}
+                  {calculationResults.inspectionInterval?.result && (
+                    <p className="text-sm text-orange-800 mt-1">
+                      <strong>Next inspection due:</strong> {calculationResults.inspectionInterval.result}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -2014,6 +2490,677 @@ function App() {
                 <button className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors">
                   Print Forms
                 </button>
+              </div>
+            </div>
+          </div>
+        )
+      case 'testing':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <h2 className="text-xl font-semibold mb-4 flex items-center">
+                <Gauge className="mr-2 h-5 w-5 text-green-600" />
+                Pressure Testing Documentation
+              </h2>
+              <p className="text-gray-600 mb-6">Comprehensive hydrostatic and pneumatic pressure testing per ASME and API standards</p>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Test Planning & Setup */}
+                <div className="bg-green-50 p-6 rounded-lg border border-green-200">
+                  <h3 className="text-lg font-semibold mb-4 text-green-800">Test Planning & Setup</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Test Type *</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                        <option value="">Select test type</option>
+                        <option value="hydrostatic">Hydrostatic Test</option>
+                        <option value="pneumatic">Pneumatic Test</option>
+                        <option value="combination">Combination Test</option>
+                        <option value="alternative">Alternative Test Method</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Test Purpose</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                        <option value="">Select purpose</option>
+                        <option value="initial">Initial Construction Test</option>
+                        <option value="repair">Post-Repair Test</option>
+                        <option value="alteration">Post-Alteration Test</option>
+                        <option value="rerating">Rerating Test</option>
+                        <option value="periodic">Periodic Test</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Test Date</label>
+                      <input 
+                        type="date" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Test Medium</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                        <option value="">Select medium</option>
+                        <option value="water">Water</option>
+                        <option value="air">Air</option>
+                        <option value="nitrogen">Nitrogen</option>
+                        <option value="other-liquid">Other Liquid</option>
+                        <option value="other-gas">Other Gas</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Test Temperature (°F)</label>
+                      <input 
+                        type="number" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        placeholder="e.g., 70, 100"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pressure Calculations */}
+                <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
+                  <h3 className="text-lg font-semibold mb-4 text-blue-800">Pressure Calculations</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Design Pressure (psig)</label>
+                      <input 
+                        type="number" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="From vessel data"
+                        value="150"
+                        readOnly
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">MAWP (psig)</label>
+                      <input 
+                        type="number" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="From calculations"
+                        value="165"
+                        readOnly
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Test Pressure Factor</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select factor</option>
+                        <option value="1.3">1.3 (ASME VIII Hydrostatic)</option>
+                        <option value="1.1">1.1 (ASME VIII Pneumatic)</option>
+                        <option value="1.5">1.5 (API 510 Hydrostatic)</option>
+                        <option value="1.25">1.25 (API 510 Pneumatic)</option>
+                        <option value="custom">Custom Factor</option>
+                      </select>
+                    </div>
+                    
+                    <div className="bg-white p-4 rounded border">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Calculated Test Pressure:</span>
+                        <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                          195 psig
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">MAWP × 1.3 = 165 × 1.3 = 195 psig</p>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Actual Test Pressure (psig)</label>
+                      <input 
+                        type="number" 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Actual pressure applied"
+                      />
+                    </div>
+                    
+                    <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                      Calculate Test Pressure
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Test Execution & Results */}
+              <div className="bg-orange-50 p-6 rounded-lg border border-orange-200 mt-6">
+                <h3 className="text-lg font-semibold mb-4 text-orange-800">Test Execution & Results</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <h5 className="font-semibold text-orange-800 mb-3">Test Procedure</h5>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Pressurization Rate</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                          <option value="">Select rate</option>
+                          <option value="gradual">Gradual (≤10 psi/min)</option>
+                          <option value="moderate">Moderate (10-25 psi/min)</option>
+                          <option value="controlled">Controlled Rate</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Hold Time (minutes)</label>
+                        <input 
+                          type="number" 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          placeholder="e.g., 10, 30, 60"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Inspection Method</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                          <option value="">Select method</option>
+                          <option value="visual">Visual Inspection</option>
+                          <option value="soap-solution">Soap Solution</option>
+                          <option value="acoustic">Acoustic Monitoring</option>
+                          <option value="strain-gauge">Strain Gauge</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Safety Precautions</label>
+                        <div className="space-y-2">
+                          <label className="flex items-center">
+                            <input type="checkbox" className="mr-2" />
+                            <span className="text-sm">Personnel Cleared</span>
+                          </label>
+                          <label className="flex items-center">
+                            <input type="checkbox" className="mr-2" />
+                            <span className="text-sm">Barriers Installed</span>
+                          </label>
+                          <label className="flex items-center">
+                            <input type="checkbox" className="mr-2" />
+                            <span className="text-sm">Emergency Procedures</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h5 className="font-semibold text-orange-800 mb-3">Test Results</h5>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Test Result</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                          <option value="">Select result</option>
+                          <option value="passed">Passed - No Leakage</option>
+                          <option value="failed-leak">Failed - Leakage Detected</option>
+                          <option value="failed-deformation">Failed - Permanent Deformation</option>
+                          <option value="failed-rupture">Failed - Rupture</option>
+                          <option value="aborted">Test Aborted</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Maximum Pressure Achieved (psig)</label>
+                        <input 
+                          type="number" 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          placeholder="Highest pressure reached"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Pressure Drop (psi)</label>
+                        <input 
+                          type="number" 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          placeholder="Pressure loss during hold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Observations</label>
+                        <textarea 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          rows="3"
+                          placeholder="Visual observations, sounds, deformations..."
+                        ></textarea>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h5 className="font-semibold text-orange-800 mb-3">Documentation</h5>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Test Personnel</label>
+                        <input 
+                          type="text" 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          placeholder="Test supervisor and crew"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Authorized Inspector</label>
+                        <input 
+                          type="text" 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          placeholder="AI name and commission"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Test Equipment</label>
+                        <textarea 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          rows="2"
+                          placeholder="Pumps, gauges, recording devices..."
+                        ></textarea>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Calibration Status</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                          <option value="">Select status</option>
+                          <option value="current">Current Calibration</option>
+                          <option value="expired">Expired Calibration</option>
+                          <option value="unknown">Unknown Status</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Gauge Accuracy</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                          <option value="">Select accuracy</option>
+                          <option value="0.5">±0.5% Full Scale</option>
+                          <option value="1.0">±1.0% Full Scale</option>
+                          <option value="2.0">±2.0% Full Scale</option>
+                          <option value="other">Other Accuracy</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Post-Test Actions */}
+              <div className="bg-purple-50 p-6 rounded-lg border border-purple-200 mt-6">
+                <h3 className="text-lg font-semibold mb-4 text-purple-800">Post-Test Actions & Compliance</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h5 className="font-semibold text-purple-800 mb-3">Required Actions</h5>
+                    <div className="space-y-3">
+                      <div className="bg-white p-4 rounded border">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">Test Status:</span>
+                          <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                            Passed
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Corrective Actions</label>
+                        <textarea 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          rows="3"
+                          placeholder="List any required repairs or modifications..."
+                        ></textarea>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Retest Required</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                          <option value="">Select requirement</option>
+                          <option value="no">No Retest Required</option>
+                          <option value="partial">Partial Retest</option>
+                          <option value="full">Full Retest Required</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Next Test Due Date</label>
+                        <input 
+                          type="date" 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h5 className="font-semibold text-purple-800 mb-3">Code Compliance</h5>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Applicable Code</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                          <option value="">Select code</option>
+                          <option value="asme-viii-1">ASME Section VIII Div 1</option>
+                          <option value="asme-viii-2">ASME Section VIII Div 2</option>
+                          <option value="api-510">API 510</option>
+                          <option value="asme-i">ASME Section I</option>
+                          <option value="other">Other Code</option>
+                        </select>
+                      </div>
+                      <div className="bg-white p-4 rounded border">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">Code Compliance:</span>
+                          <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                            Compliant
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Exemptions/Deviations</label>
+                        <textarea 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          rows="2"
+                          placeholder="List any approved exemptions or deviations..."
+                        ></textarea>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Certificate Required</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                          <option value="">Select requirement</option>
+                          <option value="yes">Certificate Required</option>
+                          <option value="no">No Certificate Required</option>
+                          <option value="pending">Certificate Pending</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex space-x-4 mt-6">
+                <button className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors">
+                  Generate Test Report
+                </button>
+                <button className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                  Save Test Data
+                </button>
+                <button className="flex-1 bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 transition-colors">
+                  Print Certificate
+                </button>
+                <button className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors">
+                  Export Results
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      case 'relief':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <h2 className="text-xl font-semibold mb-4 flex items-center">
+                <Droplets className="mr-2 h-5 w-5 text-red-600" />
+                Pressure Relief Device Inspection
+              </h2>
+              <p className="text-gray-600 mb-6">Comprehensive inspection and testing of pressure relief valves per API 510 and ASME requirements</p>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Device Information */}
+                <div className="bg-red-50 p-6 rounded-lg border border-red-200">
+                  <h3 className="text-lg font-semibold mb-4 text-red-800">Relief Device Information</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Device Type *</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                        <option value="">Select device type</option>
+                        <option value="safety-valve">Safety Valve</option>
+                        <option value="relief-valve">Relief Valve</option>
+                        <option value="safety-relief">Safety Relief Valve</option>
+                        <option value="rupture-disc">Rupture Disc</option>
+                        <option value="pilot-operated">Pilot Operated Relief Valve</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Manufacturer</label>
+                      <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="e.g., Crosby, Anderson Greenwood" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Model/Size</label>
+                      <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="e.g., JOS-3M6, 4x6" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Serial Number</label>
+                      <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Device serial number" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Set Pressure (psig)</label>
+                      <input type="number" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="e.g., 150, 300" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Inspection Results */}
+                <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
+                  <h3 className="text-lg font-semibold mb-4 text-blue-800">Inspection Results</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Visual Condition</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select condition</option>
+                        <option value="excellent">Excellent</option>
+                        <option value="good">Good</option>
+                        <option value="fair">Fair</option>
+                        <option value="poor">Poor</option>
+                        <option value="unacceptable">Unacceptable</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Pop Test Result</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select result</option>
+                        <option value="passed">Passed - Within ±3%</option>
+                        <option value="high">Failed - Set Pressure High</option>
+                        <option value="low">Failed - Set Pressure Low</option>
+                        <option value="no-pop">Failed - No Pop</option>
+                        <option value="not-tested">Not Tested</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Actual Pop Pressure (psig)</label>
+                      <input type="number" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Measured pop pressure" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Seat Leakage</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select leakage</option>
+                        <option value="none">No Leakage</option>
+                        <option value="slight">Slight Leakage</option>
+                        <option value="moderate">Moderate Leakage</option>
+                        <option value="excessive">Excessive Leakage</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Recommended Action</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select action</option>
+                        <option value="continue">Continue Service</option>
+                        <option value="adjust">Adjust Set Pressure</option>
+                        <option value="repair">Repair Required</option>
+                        <option value="replace">Replace Device</option>
+                        <option value="remove">Remove from Service</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex space-x-4 mt-6">
+                <button className="flex-1 bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition-colors">Generate Relief Device Report</button>
+                <button className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">Save Inspection Data</button>
+              </div>
+            </div>
+          </div>
+        )
+      case 'planning':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <h2 className="text-xl font-semibold mb-4 flex items-center">
+                <ClipboardCheck className="mr-2 h-5 w-5 text-blue-600" />
+                Inspection Planning & Scheduling
+              </h2>
+              <p className="text-gray-600 mb-6">Calculate inspection intervals and plan future inspections per API 510 requirements</p>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Interval Calculations */}
+                <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
+                  <h3 className="text-lg font-semibold mb-4 text-blue-800">Inspection Interval Calculations</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Remaining Life (years)</label>
+                      <input type="number" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="From calculations" value="8.5" readOnly />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Maximum Interval (years)</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select maximum</option>
+                        <option value="10">10 Years (API 510 Maximum)</option>
+                        <option value="15">15 Years (Special Cases)</option>
+                        <option value="20">20 Years (Exceptional)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Risk Factor</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select risk factor</option>
+                        <option value="0.25">0.25 (High Risk)</option>
+                        <option value="0.5">0.5 (Medium Risk)</option>
+                        <option value="0.75">0.75 (Low Risk)</option>
+                      </select>
+                    </div>
+                    <div className="bg-white p-4 rounded border">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Calculated Interval:</span>
+                        <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">4.25 Years</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">Min(Remaining Life × Risk Factor, Max Interval)</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Recommended Interval (years)</label>
+                      <input type="number" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Final recommended interval" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Inspection Schedule */}
+                <div className="bg-green-50 p-6 rounded-lg border border-green-200">
+                  <h3 className="text-lg font-semibold mb-4 text-green-800">Inspection Schedule</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Last Internal Inspection</label>
+                      <input type="date" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Last External Inspection</label>
+                      <input type="date" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Next Internal Due</label>
+                      <input type="date" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Next External Due</label>
+                      <input type="date" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" />
+                    </div>
+                    <div className="bg-white p-4 rounded border">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Status:</span>
+                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">Current</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex space-x-4 mt-6">
+                <button className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">Generate Schedule Report</button>
+                <button className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors">Save Planning Data</button>
+              </div>
+            </div>
+          </div>
+        )
+      case 'report':
+        return (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <h2 className="text-xl font-semibold mb-4 flex items-center">
+                <FileText className="mr-2 h-5 w-5 text-purple-600" />
+                Comprehensive Inspection Report
+              </h2>
+              <p className="text-gray-600 mb-6">Generate complete API 510 inspection reports with all assessment data and recommendations</p>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Report Configuration */}
+                <div className="bg-purple-50 p-6 rounded-lg border border-purple-200">
+                  <h3 className="text-lg font-semibold mb-4 text-purple-800">Report Configuration</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Report Type</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <option value="">Select report type</option>
+                        <option value="internal">Internal Inspection Report</option>
+                        <option value="external">External Inspection Report</option>
+                        <option value="comprehensive">Comprehensive Report</option>
+                        <option value="summary">Executive Summary</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Include Sections</label>
+                      <div className="space-y-2">
+                        <label className="flex items-center"><input type="checkbox" className="mr-2" checked readOnly />Vessel Data</label>
+                        <label className="flex items-center"><input type="checkbox" className="mr-2" checked readOnly />Calculations</label>
+                        <label className="flex items-center"><input type="checkbox" className="mr-2" checked readOnly />Thickness Analysis</label>
+                        <label className="flex items-center"><input type="checkbox" className="mr-2" checked readOnly />Inspection Findings</label>
+                        <label className="flex items-center"><input type="checkbox" className="mr-2" checked readOnly />Fitness-for-Service</label>
+                        <label className="flex items-center"><input type="checkbox" className="mr-2" />Appendices</label>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Report Format</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <option value="">Select format</option>
+                        <option value="pdf">PDF Document</option>
+                        <option value="word">Word Document</option>
+                        <option value="excel">Excel Workbook</option>
+                        <option value="html">HTML Report</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Report Summary */}
+                <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                  <h3 className="text-lg font-semibold mb-4 text-gray-800">Report Summary</h3>
+                  <div className="space-y-4">
+                    <div className="bg-white p-4 rounded border">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Overall Condition:</span>
+                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">Good</span>
+                      </div>
+                    </div>
+                    <div className="bg-white p-4 rounded border">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Remaining Life:</span>
+                        <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">8.5 Years</span>
+                      </div>
+                    </div>
+                    <div className="bg-white p-4 rounded border">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Next Inspection:</span>
+                        <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">4.25 Years</span>
+                      </div>
+                    </div>
+                    <div className="bg-white p-4 rounded border">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Recommendations:</span>
+                        <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-medium">3 Items</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Inspector Comments</label>
+                      <textarea className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500" rows="3" placeholder="Additional inspector comments and observations..."></textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex space-x-4 mt-6">
+                <button className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors">Generate Complete Report</button>
+                <button className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">Preview Report</button>
+                <button className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors">Export Data</button>
+                <button className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors">Print Report</button>
               </div>
             </div>
           </div>
