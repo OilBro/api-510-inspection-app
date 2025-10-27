@@ -2,11 +2,12 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { APP_LOGO, APP_TITLE, getLoginUrl } from "@/const";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Settings, FileText, Upload, Calculator, BarChart3 } from "lucide-react";
 
 export default function Home() {
   const { user, loading, isAuthenticated } = useAuth();
+  const [, setLocation] = useLocation();
 
   if (loading) {
     return (
@@ -109,16 +110,25 @@ export default function Home() {
             </Link>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <Link href="/import">
-              <CardHeader>
-                <Upload className="h-10 w-10 text-blue-600 mb-2" />
-                <CardTitle>Import Data</CardTitle>
-                <CardDescription>Upload PDF or Excel files to import inspection data</CardDescription>
-              </CardHeader>
-            </Link>
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setLocation("/import")}>
+            <CardHeader>
+              <Upload className="h-12 w-12 text-blue-600 mb-4" />
+              <CardTitle>Import Data</CardTitle>
+              <CardDescription>
+                Upload PDF or Excel files to import inspection data
+              </CardDescription>
+            </CardHeader>
           </Card>
-        </div>
+
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setLocation("/calculation-worksheet")}>
+            <CardHeader>
+              <Calculator className="h-12 w-12 text-purple-600 mb-4" />
+              <CardTitle>Calculation Worksheet</CardTitle>
+              <CardDescription>
+                Interactive worksheet with live calculations for shell and head evaluations
+              </CardDescription>
+            </CardHeader>
+          </Card>       </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
