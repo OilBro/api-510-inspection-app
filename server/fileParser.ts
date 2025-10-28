@@ -125,7 +125,15 @@ export async function parseExcelFile(buffer: Buffer): Promise<ParsedVesselData> 
     return result;
   } catch (error) {
     console.error("Error parsing Excel file:", error);
-    throw new Error("Failed to parse Excel file");
+    const errorMsg = error instanceof Error ? error.message : "Unknown error";
+    console.error("Excel parsing failed with error:", errorMsg);
+    
+    // Return minimal data structure instead of throwing
+    return {
+      vesselTagNumber: "PARSE-ERROR-" + Date.now(),
+      vesselName: "Failed to parse Excel",
+      tmlReadings: [],
+    };
   }
 }
 
@@ -210,7 +218,7 @@ export async function parsePDFFile(buffer: Buffer): Promise<ParsedVesselData> {
     }
 
     // Fallback to pdf-parse + LLM if Docupipe fails or returns insufficient data
-    console.log("Using pdf-parse + LLM for extraction...");
+    console.log("Using pdf-parse + LLM for extraction as fallback...");
     const pdfData = await (pdf as any)(buffer);
     const text = pdfData.text;
 
@@ -305,7 +313,15 @@ Return ONLY valid JSON, no other text.`,
     return parsedData;
   } catch (error) {
     console.error("Error parsing PDF file:", error);
-    throw new Error(`Failed to parse PDF file: ${error instanceof Error ? error.message : "Unknown error"}`);
+    const errorMsg = error instanceof Error ? error.message : "Unknown error";
+    console.error("PDF parsing failed with error:", errorMsg);
+    
+    // Return minimal data structure instead of throwing
+    return {
+      vesselTagNumber: "PARSE-ERROR-" + Date.now(),
+      vesselName: "Failed to parse PDF",
+      tmlReadings: [],
+    };
   }
 }
 

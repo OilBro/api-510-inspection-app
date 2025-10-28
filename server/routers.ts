@@ -397,7 +397,14 @@ export const appRouter = router({
           };
         } catch (error) {
           console.error("Error parsing file:", error);
-          throw new Error(`Failed to parse file: ${error instanceof Error ? error.message : "Unknown error"}`);
+          const errorMessage = error instanceof Error ? error.message : "Unknown error";
+          console.error("Full error details:", {
+            message: errorMessage,
+            stack: error instanceof Error ? error.stack : undefined,
+            fileName: input.fileName,
+            fileType: input.fileType,
+          });
+          throw new Error(`Failed to parse ${input.fileType} file: ${errorMessage}`);
         }
       }),
   }),

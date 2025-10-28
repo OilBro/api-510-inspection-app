@@ -25,3 +25,8 @@
 ## New Feature Request
 - [x] Integrate Docupipe API for enhanced PDF parsing and data extraction
 
+
+
+## Bug Reports
+- [x] Fix "failed to parse" error when uploading files - Added better error handling and graceful fallbacks
+
