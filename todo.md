@@ -44,3 +44,8 @@
 - [x] Update database schema to match Docupipe standardized fields
 - [x] Map thickness readings from Docupipe CML format to app TML format
 
+
+- [x] Fix PDF report generation - overlapping text issue
+- [x] Fix PDF to include all imported data fields
+- [ ] Fix calculation section saving errors - need more details on specific error
+
