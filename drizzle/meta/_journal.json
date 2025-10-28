@@ -15,6 +15,13 @@
       "when": 1760780850863,
       "tag": "0001_flaky_stepford_cuckoos",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1761674184156,
+      "tag": "0002_careless_dazzler",
+      "breakpoints": true
     }
   ]
 }

@@ -5,13 +5,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { Link, useParams, useLocation } from "wouter";
-import { Settings, ArrowLeft, FileText, Calculator, BarChart3, Eye, Upload } from "lucide-react";
+import { Settings, ArrowLeft, FileText, Calculator, BarChart3, Eye, Upload, AlertCircle } from "lucide-react";
 import { APP_TITLE } from "@/const";
 import VesselDataTab from "@/components/inspection/VesselDataTab";
 import CalculationsTab from "@/components/inspection/CalculationsTab";
 import ThicknessAnalysisTab from "@/components/inspection/ThicknessAnalysisTab";
 import InspectionReportTab from "@/components/inspection/InspectionReportTab";
 import InspectionFindingsTab from "@/components/inspection/InspectionFindingsTab";
+import UnmatchedDataTab from "@/components/inspection/UnmatchedDataTab";
 
 export default function InspectionDetail() {
   const params = useParams();
@@ -90,7 +91,7 @@ export default function InspectionDetail() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5 mb-8">
+          <TabsList className="grid w-full grid-cols-6 mb-8">
             <TabsTrigger value="vessel-data">
               <FileText className="h-4 w-4 mr-2" />
               Vessel Data
@@ -110,6 +111,10 @@ export default function InspectionDetail() {
             <TabsTrigger value="report">
               <FileText className="h-4 w-4 mr-2" />
               Report
+            </TabsTrigger>
+            <TabsTrigger value="unmatched">
+              <AlertCircle className="h-4 w-4 mr-2" />
+              Unmatched
             </TabsTrigger>
           </TabsList>
 
@@ -131,6 +136,10 @@ export default function InspectionDetail() {
 
           <TabsContent value="report">
             <InspectionReportTab inspection={inspection} />
+          </TabsContent>
+
+          <TabsContent value="unmatched">
+            <UnmatchedDataTab inspectionId={id} />
           </TabsContent>
         </Tabs>
       </main>

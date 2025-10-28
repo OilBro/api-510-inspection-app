@@ -7,6 +7,8 @@ import * as db from "./db";
 import { nanoid } from "nanoid";
 import { parseExcelFile, parsePDFFile } from "./fileParser";
 import { storagePut } from "./storage";
+import { fieldMappingRouter, unmatchedDataRouter } from "./fieldMappingRouters";
+import * as fieldMappingDb from "./fieldMappingDb";
 
 export const appRouter = router({
   system: systemRouter,
@@ -430,8 +432,9 @@ export const appRouter = router({
           }
 
           // Create imported file record
+          const importedFileId = nanoid();
           await db.createImportedFile({
-            id: nanoid(),
+            id: importedFileId,
             inspectionId: inspection.id,
             userId: ctx.user.id,
             fileName: input.fileName,
@@ -442,10 +445,50 @@ export const appRouter = router({
             processingStatus: "completed",
           });
 
+          // Identify and store unmatched data
+          const mappedFields = new Set([
+            'vesselTagNumber', 'vesselName', 'manufacturer', 'yearBuilt', 'designPressure',
+            'designTemperature', 'operatingPressure', 'materialSpec', 'vesselType',
+            'insideDiameter', 'overallLength', 'product', 'nbNumber', 'constructionCode',
+            'vesselConfiguration', 'headType', 'insulationType', 'reportNumber',
+            'inspectionDate', 'reportDate', 'inspectionType', 'inspectionCompany',
+            'inspectorName', 'inspectorCert', 'clientName', 'clientLocation',
+            'executiveSummary', 'thicknessReadings'
+          ]);
+
+          const unmatchedFields: any[] = [];
+          
+          // Flatten parsed data and find unmatched fields
+          const flattenObject = (obj: any, prefix = '') => {
+            for (const [key, value] of Object.entries(obj)) {
+              if (value && typeof value === 'object' && !Array.isArray(value)) {
+                flattenObject(value, prefix + key + '.');
+              } else if (!mappedFields.has(key) && value !== null && value !== undefined && value !== '') {
+                unmatchedFields.push({
+                  id: nanoid(),
+                  inspectionId: inspection.id,
+                  importedFileId,
+                  fieldName: prefix + key,
+                  fieldValue: String(value),
+                  fieldPath: prefix + key,
+                  status: "pending" as const,
+                });
+              }
+            }
+          };
+
+          flattenObject(parsedData);
+
+          // Store unmatched data
+          if (unmatchedFields.length > 0) {
+            await fieldMappingDb.bulkCreateUnmatchedData(unmatchedFields);
+          }
+
           return {
             success: true,
             inspectionId: inspection.id,
             parsedData,
+            unmatchedCount: unmatchedFields.length,
           };
         } catch (error) {
           console.error("Error parsing file:", error);
@@ -460,6 +503,12 @@ export const appRouter = router({
         }
       }),
   }),
+
+  // Field mappings for machine learning
+  fieldMappings: fieldMappingRouter,
+  
+  // Unmatched data management
+  unmatchedData: unmatchedDataRouter,
 });
 
 export type AppRouter = typeof appRouter;

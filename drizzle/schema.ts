@@ -176,3 +176,57 @@ export const importedFiles = mysqlTable("importedFiles", {
 export type ImportedFile = typeof importedFiles.$inferSelect;
 export type InsertImportedFile = typeof importedFiles.$inferInsert;
 
+
+
+/**
+ * Field mappings for machine learning
+ * Stores user's manual mappings to improve future imports
+ */
+export const fieldMappings = mysqlTable("fieldMappings", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  userId: varchar("userId", { length: 64 }).notNull(),
+  
+  // Source data
+  sourceField: varchar("sourceField", { length: 255 }).notNull(),
+  sourceValue: text("sourceValue"),
+  
+  // Target mapping
+  targetSection: varchar("targetSection", { length: 100 }).notNull(),
+  targetField: varchar("targetField", { length: 100 }).notNull(),
+  
+  // Learning metadata
+  confidence: decimal("confidence", { precision: 3, scale: 2 }).default("1.00"),
+  usageCount: int("usageCount").default(1),
+  lastUsed: timestamp("lastUsed").defaultNow(),
+  
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+});
+
+export type FieldMapping = typeof fieldMappings.$inferSelect;
+export type InsertFieldMapping = typeof fieldMappings.$inferInsert;
+
+/**
+ * Unmatched data storage
+ * Stores extracted data that wasn't automatically mapped
+ */
+export const unmatchedData = mysqlTable("unmatchedData", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  inspectionId: varchar("inspectionId", { length: 64 }).notNull(),
+  importedFileId: varchar("importedFileId", { length: 64 }),
+  
+  fieldName: varchar("fieldName", { length: 255 }).notNull(),
+  fieldValue: text("fieldValue"),
+  fieldPath: varchar("fieldPath", { length: 500 }), // JSON path in original data
+  
+  // Status
+  status: mysqlEnum("status", ["pending", "mapped", "ignored"]).default("pending").notNull(),
+  mappedTo: varchar("mappedTo", { length: 200 }), // targetSection.targetField
+  
+  createdAt: timestamp("createdAt").defaultNow(),
+  resolvedAt: timestamp("resolvedAt"),
+});
+
+export type UnmatchedData = typeof unmatchedData.$inferSelect;
+export type InsertUnmatchedData = typeof unmatchedData.$inferInsert;
+

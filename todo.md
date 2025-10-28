@@ -49,3 +49,12 @@
 - [x] Fix PDF to include all imported data fields
 - [ ] Fix calculation section saving errors - need more details on specific error
 
+
+
+## New Feature Request
+- [x] Create "Unmatched Data" tab to display unmapped extracted data
+- [x] Add dropdown for each unmatched field to manually assign to app sections
+- [x] Implement machine learning system to remember user mappings
+- [x] Store mapping patterns in database for future imports
+- [x] Auto-apply learned mappings to subsequent imports
+
