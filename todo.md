@@ -36,3 +36,6 @@
 
 - [x] Fix database insertion error when creating inspection from parsed file - handle undefined values properly
 
+
+- [x] Fix database schema - make optional fields nullable or provide default values
+

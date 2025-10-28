@@ -346,6 +346,21 @@ export const appRouter = router({
             input.fileType === "pdf" ? "application/pdf" : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
           );
 
+          // Helper function to parse numeric values
+          const parseNumeric = (value: any): string | null => {
+            if (value === null || value === undefined || value === '') return null;
+            const str = String(value).trim();
+            // Extract first number from string (e.g., "250 psig" -> "250")
+            const match = str.match(/([0-9]+\.?[0-9]*)/);
+            return match ? match[1] : null;
+          };
+          
+          const parseInt = (value: any): number | null => {
+            if (value === null || value === undefined || value === '') return null;
+            const num = Number(value);
+            return isNaN(num) ? null : Math.floor(num);
+          };
+
           // Create inspection from parsed data - only include defined values
           const inspection: any = {
             id: nanoid(),
@@ -355,16 +370,34 @@ export const appRouter = router({
           };
           
           // Only add optional fields if they have values
-          if (parsedData.vesselName) inspection.vesselName = parsedData.vesselName;
-          if (parsedData.manufacturer) inspection.manufacturer = parsedData.manufacturer;
-          if (parsedData.yearBuilt) inspection.yearBuilt = parsedData.yearBuilt;
-          if (parsedData.designPressure) inspection.designPressure = parsedData.designPressure;
-          if (parsedData.designTemperature) inspection.designTemperature = parsedData.designTemperature;
-          if (parsedData.operatingPressure) inspection.operatingPressure = parsedData.operatingPressure;
-          if (parsedData.materialSpec) inspection.materialSpec = parsedData.materialSpec;
-          if (parsedData.vesselType) inspection.vesselType = parsedData.vesselType;
-          if (parsedData.insideDiameter) inspection.insideDiameter = parsedData.insideDiameter;
-          if (parsedData.overallLength) inspection.overallLength = parsedData.overallLength;
+          if (parsedData.vesselName) inspection.vesselName = String(parsedData.vesselName).substring(0, 500);
+          if (parsedData.manufacturer) inspection.manufacturer = String(parsedData.manufacturer).substring(0, 500);
+          if (parsedData.yearBuilt) {
+            const year = parseInt(parsedData.yearBuilt);
+            if (year) inspection.yearBuilt = year;
+          }
+          if (parsedData.designPressure) {
+            const val = parseNumeric(parsedData.designPressure);
+            if (val) inspection.designPressure = val;
+          }
+          if (parsedData.designTemperature) {
+            const val = parseNumeric(parsedData.designTemperature);
+            if (val) inspection.designTemperature = val;
+          }
+          if (parsedData.operatingPressure) {
+            const val = parseNumeric(parsedData.operatingPressure);
+            if (val) inspection.operatingPressure = val;
+          }
+          if (parsedData.materialSpec) inspection.materialSpec = String(parsedData.materialSpec).substring(0, 255);
+          if (parsedData.vesselType) inspection.vesselType = String(parsedData.vesselType).substring(0, 255);
+          if (parsedData.insideDiameter) {
+            const val = parseNumeric(parsedData.insideDiameter);
+            if (val) inspection.insideDiameter = val;
+          }
+          if (parsedData.overallLength) {
+            const val = parseNumeric(parsedData.overallLength);
+            if (val) inspection.overallLength = val;
+          }
 
           await db.createInspection(inspection);
 
