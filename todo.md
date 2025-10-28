@@ -33,3 +33,6 @@
 
 - [ ] Debug persistent file parsing error - investigate server logs and error details
 
+
+- [x] Fix database insertion error when creating inspection from parsed file - handle undefined values properly
+

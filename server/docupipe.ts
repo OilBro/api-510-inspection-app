@@ -3,6 +3,13 @@ import { ENV } from "./_core/env";
 const DOCUPIPE_API_URL = "https://app.docupipe.ai";
 const DOCUPIPE_API_KEY = process.env.DOCUPIPE_API_KEY;
 
+// Log API key status on module load
+if (DOCUPIPE_API_KEY) {
+  console.log("[Docupipe] API key loaded successfully:", DOCUPIPE_API_KEY.substring(0, 10) + "...");
+} else {
+  console.warn("[Docupipe] WARNING: API key not found in environment variables");
+}
+
 interface DocupipeUploadResponse {
   documentId: string;
   jobId: string;

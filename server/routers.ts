@@ -346,34 +346,44 @@ export const appRouter = router({
             input.fileType === "pdf" ? "application/pdf" : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
           );
 
-          // Create inspection from parsed data
-          const inspection = {
+          // Create inspection from parsed data - only include defined values
+          const inspection: any = {
             id: nanoid(),
             userId: ctx.user.id,
             vesselTagNumber: parsedData.vesselTagNumber || `IMPORT-${Date.now()}`,
-            vesselName: parsedData.vesselName,
-            manufacturer: parsedData.manufacturer,
-            yearBuilt: parsedData.yearBuilt,
-            designPressure: parsedData.designPressure,
-            designTemperature: parsedData.designTemperature,
-            operatingPressure: parsedData.operatingPressure,
-            materialSpec: parsedData.materialSpec,
-            vesselType: parsedData.vesselType,
-            insideDiameter: parsedData.insideDiameter,
-            overallLength: parsedData.overallLength,
             status: "draft" as const,
           };
+          
+          // Only add optional fields if they have values
+          if (parsedData.vesselName) inspection.vesselName = parsedData.vesselName;
+          if (parsedData.manufacturer) inspection.manufacturer = parsedData.manufacturer;
+          if (parsedData.yearBuilt) inspection.yearBuilt = parsedData.yearBuilt;
+          if (parsedData.designPressure) inspection.designPressure = parsedData.designPressure;
+          if (parsedData.designTemperature) inspection.designTemperature = parsedData.designTemperature;
+          if (parsedData.operatingPressure) inspection.operatingPressure = parsedData.operatingPressure;
+          if (parsedData.materialSpec) inspection.materialSpec = parsedData.materialSpec;
+          if (parsedData.vesselType) inspection.vesselType = parsedData.vesselType;
+          if (parsedData.insideDiameter) inspection.insideDiameter = parsedData.insideDiameter;
+          if (parsedData.overallLength) inspection.overallLength = parsedData.overallLength;
 
           await db.createInspection(inspection);
 
           // Create TML readings if available
           if (parsedData.tmlReadings && parsedData.tmlReadings.length > 0) {
             for (const reading of parsedData.tmlReadings) {
-              await db.createTmlReading({
+              const tmlRecord: any = {
                 id: nanoid(),
                 inspectionId: inspection.id,
-                ...reading,
-              });
+                location: reading.tmlId || `TML-${nanoid()}`,
+                component: reading.component || "Unknown",
+              };
+              
+              // Only add optional fields if they exist
+              if (reading.nominalThickness) tmlRecord.nominalThickness = parseFloat(reading.nominalThickness) || undefined;
+              if (reading.previousThickness) tmlRecord.previousReading = parseFloat(reading.previousThickness) || undefined;
+              if (reading.currentThickness) tmlRecord.currentReading = parseFloat(reading.currentThickness) || undefined;
+              
+              await db.createTmlReading(tmlRecord);
             }
           }
 
