@@ -20,3 +20,8 @@
 - [x] MAWP calculations for next inspection interval
 - [x] Corrosion allowance tracking and calculations
 
+
+
+## New Feature Request
+- [x] Integrate Docupipe API for enhanced PDF parsing and data extraction
+

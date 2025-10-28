@@ -1,6 +1,7 @@
 import * as XLSX from "xlsx";
 import * as pdf from "pdf-parse";
 import { invokeLLM } from "./_core/llm";
+import { parseDocument, extractVesselDataFromDocupipe } from "./docupipe";
 
 interface ParsedVesselData {
   vesselTagNumber?: string;
@@ -49,95 +50,49 @@ export async function parseExcelFile(buffer: Buffer): Promise<ParsedVesselData> 
 
           if (!value) continue;
 
-          // Vessel tag number variations
-          if (
-            key.includes("vessel") && (key.includes("tag") || key.includes("number") || key.includes("id")) ||
-            key.includes("equipment") && key.includes("number") ||
-            key === "tag number" ||
-            key === "vessel id"
-          ) {
+          // Match vessel identification fields
+          if (key.includes("tag") || key.includes("equipment id") || key.includes("asset")) {
             result.vesselTagNumber = value;
-          }
-
-          // Vessel name
-          if (
-            key.includes("vessel") && key.includes("name") ||
-            key.includes("description") ||
-            key === "vessel name"
-          ) {
+          } else if (key.includes("vessel name") || key.includes("description")) {
             result.vesselName = value;
-          }
-
-          // Manufacturer
-          if (key.includes("manufacturer") || key.includes("fabricator")) {
+          } else if (key.includes("manufacturer") || key.includes("fabricator")) {
             result.manufacturer = value;
-          }
-
-          // Year built
-          if (key.includes("year") && key.includes("built") || key.includes("construction year")) {
+          } else if (key.includes("year built") || key.includes("year manufactured")) {
             const year = parseInt(value);
-            if (!isNaN(year) && year > 1900 && year < 2100) {
-              result.yearBuilt = year;
-            }
-          }
-
-          // Design pressure
-          if (key.includes("design") && key.includes("pressure")) {
-            result.designPressure = value.replace(/[^0-9.]/g, "");
-          }
-
-          // Design temperature
-          if (key.includes("design") && key.includes("temp")) {
-            result.designTemperature = value.replace(/[^0-9.]/g, "");
-          }
-
-          // Operating pressure
-          if (key.includes("operating") && key.includes("pressure")) {
-            result.operatingPressure = value.replace(/[^0-9.]/g, "");
-          }
-
-          // Material specification
-          if (
-            key.includes("material") && (key.includes("spec") || key.includes("specification")) ||
-            key === "material"
-          ) {
+            if (!isNaN(year)) result.yearBuilt = year;
+          } else if (key.includes("design pressure") || key.includes("mawp")) {
+            result.designPressure = value;
+          } else if (key.includes("design temp")) {
+            result.designTemperature = value;
+          } else if (key.includes("operating pressure")) {
+            result.operatingPressure = value;
+          } else if (key.includes("material") && key.includes("spec")) {
             result.materialSpec = value;
-          }
-
-          // Vessel type
-          if (key.includes("vessel") && key.includes("type") || key === "type") {
+          } else if (key.includes("vessel type")) {
             result.vesselType = value;
-          }
-
-          // Inside diameter
-          if (
-            key.includes("inside") && key.includes("diameter") ||
-            key.includes("id") && key.includes("diameter") ||
-            key === "diameter"
-          ) {
-            result.insideDiameter = value.replace(/[^0-9.]/g, "");
-          }
-
-          // Overall length
-          if (key.includes("length") || key.includes("height")) {
-            result.overallLength = value.replace(/[^0-9.]/g, "");
+          } else if (key.includes("inside diameter") || key.includes("id")) {
+            result.insideDiameter = value;
+          } else if (key.includes("length") || key.includes("height")) {
+            result.overallLength = value;
           }
         }
       }
 
       // Look for TML readings table
-      const tmlHeaders = ["tml", "location", "component", "thickness", "reading", "nominal", "previous", "current"];
       for (let i = 0; i < data.length; i++) {
         const row = data[i];
         if (!row) continue;
 
         // Check if this row contains TML headers
         const rowStr = row.join(" ").toLowerCase();
-        const hasTmlHeader = tmlHeaders.some((h) => rowStr.includes(h));
+        if (
+          (rowStr.includes("tml") || rowStr.includes("location")) &&
+          (rowStr.includes("thickness") || rowStr.includes("reading"))
+        ) {
+          // Found TML table header
+          const headers = row.map((h: any) => String(h || "").toLowerCase());
 
-        if (hasTmlHeader) {
-          // Found header row, parse data rows below
-          const headers = row.map((h) => String(h || "").toLowerCase());
+          // Find column indices
           const tmlIdIdx = headers.findIndex((h) => h.includes("tml") || h.includes("location") || h.includes("id"));
           const componentIdx = headers.findIndex((h) => h.includes("component") || h.includes("area"));
           const nominalIdx = headers.findIndex((h) => h.includes("nominal") || h.includes("design"));
@@ -175,11 +130,87 @@ export async function parseExcelFile(buffer: Buffer): Promise<ParsedVesselData> 
 }
 
 /**
- * Parse PDF file and extract vessel inspection data using LLM
+ * Parse PDF file using Docupipe for enhanced extraction
  */
 export async function parsePDFFile(buffer: Buffer): Promise<ParsedVesselData> {
   try {
-    // Extract text from PDF
+    // First, try Docupipe for enhanced parsing
+    console.log("Parsing PDF with Docupipe...");
+    
+    try {
+      const docResult = await parseDocument(buffer, "inspection.pdf");
+      const fullText = docResult.result.text;
+      
+      console.log("Docupipe parsing successful, extracting vessel data...");
+      
+      // Extract vessel data using pattern matching
+      const result: ParsedVesselData = {
+        tmlReadings: [],
+      };
+
+      // Extract vessel tag/ID
+      const tagPatterns = [
+        /(?:Vessel|Tag|Equipment\s+ID|Asset)[:\s]+([A-Z0-9-]+)/i,
+        /Report\s+No[.:]?\s*([A-Z0-9-]+)/i,
+      ];
+      for (const pattern of tagPatterns) {
+        const match = fullText.match(pattern);
+        if (match) {
+          result.vesselTagNumber = match[1].trim();
+          break;
+        }
+      }
+
+      // Extract vessel name
+      const nameMatch = fullText.match(/(?:Vessel\s+Name|Description)[:\s]+([^\n]+)/i);
+      if (nameMatch) result.vesselName = nameMatch[1].trim();
+
+      // Extract client/manufacturer
+      const clientMatch = fullText.match(/(?:Client|Manufacturer)[:\s]+([^\n]+)/i);
+      if (clientMatch) result.manufacturer = clientMatch[1].trim();
+
+      // Extract material
+      const materialMatch = fullText.match(/Material[:\s]+(SA-[0-9A-Z-]+|SS\s*A\s*-\s*[0-9]+)/i);
+      if (materialMatch) result.materialSpec = materialMatch[1].trim().replace(/\s+/g, "-");
+
+      // Extract design pressure (MAWP)
+      const mawpMatch = fullText.match(/(?:MAWP|Design\s+Pressure)[:\s]+([0-9.]+)\s*(?:psi|psig)?/i);
+      if (mawpMatch) result.designPressure = `${mawpMatch[1]} psig`;
+
+      // Extract design temperature
+      const tempMatch = fullText.match(/(?:Design\s+)?Temp(?:erature)?[:\s]+([0-9.]+)\s*(?:°F|F)?/i);
+      if (tempMatch) result.designTemperature = `${tempMatch[1]} °F`;
+
+      // Extract diameter
+      const diameterMatch = fullText.match(/(?:Inside\s+)?Diameter[:\s]+([0-9.]+)\s*(?:inch|in)?/i);
+      if (diameterMatch) result.insideDiameter = `${diameterMatch[1]} inches`;
+
+      // Extract TML readings from tables
+      // Look for patterns like "TML-1  Shell  0.625  0.652"
+      const tmlPattern = /([A-Z0-9-]+)\s+(Shell|Head|Nozzle|Bottom|Top|Side)\s+([0-9.]+)\s+([0-9.]+)/gi;
+      let tmlMatch;
+      while ((tmlMatch = tmlPattern.exec(fullText)) !== null) {
+        result.tmlReadings?.push({
+          tmlId: tmlMatch[1],
+          component: tmlMatch[2],
+          previousThickness: tmlMatch[3],
+          currentThickness: tmlMatch[4],
+        });
+      }
+
+      // If we got meaningful data, return it
+      if (result.vesselTagNumber || result.vesselName || (result.tmlReadings && result.tmlReadings.length > 0)) {
+        console.log("Successfully extracted data with Docupipe");
+        return result;
+      }
+      
+      console.log("Docupipe extraction incomplete, falling back to LLM...");
+    } catch (docupipeError) {
+      console.warn("Docupipe parsing failed, falling back to LLM:", docupipeError);
+    }
+
+    // Fallback to pdf-parse + LLM if Docupipe fails or returns insufficient data
+    console.log("Using pdf-parse + LLM for extraction...");
     const pdfData = await (pdf as any)(buffer);
     const text = pdfData.text;
 
@@ -263,17 +294,18 @@ Return ONLY valid JSON, no other text.`,
       },
     });
 
-    const content = response.choices[0]?.message?.content;
+    const content = response.choices[0].message.content;
     if (!content) {
-      throw new Error("No response from LLM");
+      throw new Error("No content in LLM response");
     }
 
     const contentStr = typeof content === 'string' ? content : JSON.stringify(content);
-    const parsedData = JSON.parse(contentStr) as ParsedVesselData;
+    const parsedData = JSON.parse(contentStr);
+    console.log("Successfully extracted data with LLM");
     return parsedData;
   } catch (error) {
     console.error("Error parsing PDF file:", error);
-    throw new Error("Failed to parse PDF file");
+    throw new Error(`Failed to parse PDF file: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 }
 
