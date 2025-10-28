@@ -1,7 +1,8 @@
 import * as XLSX from "xlsx";
 import * as pdf from "pdf-parse";
 import { invokeLLM } from "./_core/llm";
-import { parseDocument, extractVesselDataFromDocupipe } from "./docupipe";
+import { parseDocument, parseAndStandardizeDocument } from "./docupipe";
+import { parseDocupipeStandard, type DocupipeStandardFormat } from "./docupipeStandardParser";
 
 interface ParsedVesselData {
   vesselTagNumber?: string;
@@ -15,12 +16,35 @@ interface ParsedVesselData {
   vesselType?: string;
   insideDiameter?: string;
   overallLength?: string;
+  
+  // Additional fields from Docupipe standardization
+  reportNumber?: string;
+  reportDate?: string;
+  inspectionDate?: string;
+  inspectionType?: string;
+  inspectionCompany?: string;
+  inspectorName?: string;
+  inspectorCert?: string;
+  clientName?: string;
+  clientLocation?: string;
+  product?: string;
+  nbNumber?: string;
+  constructionCode?: string;
+  vesselConfiguration?: string;
+  headType?: string;
+  insulationType?: string;
+  executiveSummary?: string;
+  
   tmlReadings?: Array<{
-    tmlId: string;
+    cmlNumber?: string;
+    tmlId?: string;
+    location?: string;
     component: string;
-    currentThickness?: string;
+    currentThickness?: string | number;
     previousThickness?: string;
-    nominalThickness?: string;
+    nominalThickness?: string | number;
+    minimumRequired?: number;
+    calculatedMAWP?: number;
   }>;
 }
 
@@ -51,277 +75,196 @@ export async function parseExcelFile(buffer: Buffer): Promise<ParsedVesselData> 
           if (!value) continue;
 
           // Match vessel identification fields
-          if (key.includes("tag") || key.includes("equipment id") || key.includes("asset")) {
+          if (key.includes("tag") || key.includes("vessel id")) {
             result.vesselTagNumber = value;
-          } else if (key.includes("vessel name") || key.includes("description")) {
+          } else if (key.includes("vessel name") || key.includes("equipment")) {
             result.vesselName = value;
           } else if (key.includes("manufacturer") || key.includes("fabricator")) {
             result.manufacturer = value;
-          } else if (key.includes("year built") || key.includes("year manufactured")) {
-            const year = parseInt(value);
-            if (!isNaN(year)) result.yearBuilt = year;
+          } else if (key.includes("year") && key.includes("built")) {
+            result.yearBuilt = parseInt(value);
           } else if (key.includes("design pressure") || key.includes("mawp")) {
             result.designPressure = value;
           } else if (key.includes("design temp")) {
             result.designTemperature = value;
           } else if (key.includes("operating pressure")) {
             result.operatingPressure = value;
-          } else if (key.includes("material") && key.includes("spec")) {
+          } else if (key.includes("material")) {
             result.materialSpec = value;
-          } else if (key.includes("vessel type")) {
-            result.vesselType = value;
-          } else if (key.includes("inside diameter") || key.includes("id")) {
+          } else if (key.includes("diameter") || key.includes("id")) {
             result.insideDiameter = value;
-          } else if (key.includes("length") || key.includes("height")) {
+          } else if (key.includes("length")) {
             result.overallLength = value;
           }
         }
       }
 
-      // Look for TML readings table
-      for (let i = 0; i < data.length; i++) {
-        const row = data[i];
-        if (!row) continue;
+      // Look for TML reading data (usually in tabular format)
+      const headers = data[0]?.map((h: any) => String(h || "").toLowerCase()) || [];
+      const tmlIdCol = headers.findIndex((h) =>
+        h.includes("tml") || h.includes("cml") || h.includes("location")
+      );
+      const componentCol = headers.findIndex((h) => h.includes("component") || h.includes("area"));
+      const currentThicknessCol = headers.findIndex(
+        (h) => h.includes("current") || h.includes("actual") || h.includes("measured")
+      );
+      const nominalCol = headers.findIndex((h) => h.includes("nominal") || h.includes("design"));
 
-        // Check if this row contains TML headers
-        const rowStr = row.join(" ").toLowerCase();
-        if (
-          (rowStr.includes("tml") || rowStr.includes("location")) &&
-          (rowStr.includes("thickness") || rowStr.includes("reading"))
-        ) {
-          // Found TML table header
-          const headers = row.map((h: any) => String(h || "").toLowerCase());
+      if (tmlIdCol >= 0 && currentThicknessCol >= 0) {
+        for (let i = 1; i < data.length; i++) {
+          const row = data[i];
+          if (!row || !row[tmlIdCol]) continue;
 
-          // Find column indices
-          const tmlIdIdx = headers.findIndex((h) => h.includes("tml") || h.includes("location") || h.includes("id"));
-          const componentIdx = headers.findIndex((h) => h.includes("component") || h.includes("area"));
-          const nominalIdx = headers.findIndex((h) => h.includes("nominal") || h.includes("design"));
-          const previousIdx = headers.findIndex((h) => h.includes("previous") || h.includes("last"));
-          const currentIdx = headers.findIndex((h) => h.includes("current") || h.includes("actual"));
+          const reading: any = {
+            tmlId: String(row[tmlIdCol]),
+            component: componentCol >= 0 ? String(row[componentCol] || "Shell") : "Shell",
+            currentThickness: row[currentThicknessCol]
+              ? String(row[currentThicknessCol])
+              : undefined,
+          };
 
-          // Parse data rows
-          for (let j = i + 1; j < data.length; j++) {
-            const dataRow = data[j];
-            if (!dataRow || dataRow.length === 0) break;
-
-            const tmlId = tmlIdIdx >= 0 ? String(dataRow[tmlIdIdx] || "").trim() : "";
-            const component = componentIdx >= 0 ? String(dataRow[componentIdx] || "").trim() : "";
-
-            if (tmlId && component) {
-              result.tmlReadings?.push({
-                tmlId,
-                component,
-                nominalThickness: nominalIdx >= 0 ? String(dataRow[nominalIdx] || "") : undefined,
-                previousThickness: previousIdx >= 0 ? String(dataRow[previousIdx] || "") : undefined,
-                currentThickness: currentIdx >= 0 ? String(dataRow[currentIdx] || "") : undefined,
-              });
-            }
+          if (nominalCol >= 0 && row[nominalCol]) {
+            reading.nominalThickness = String(row[nominalCol]);
           }
-          break;
+
+          result.tmlReadings?.push(reading);
         }
       }
     }
 
     return result;
   } catch (error) {
-    console.error("Error parsing Excel file:", error);
-    const errorMsg = error instanceof Error ? error.message : "Unknown error";
-    console.error("Excel parsing failed with error:", errorMsg);
-    
-    // Return minimal data structure instead of throwing
-    return {
-      vesselTagNumber: "PARSE-ERROR-" + Date.now(),
-      vesselName: "Failed to parse Excel",
-      tmlReadings: [],
-    };
+    console.error("[Excel Parser] Error:", error);
+    throw new Error(`Failed to parse Excel file: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 }
 
 /**
- * Parse PDF file using Docupipe for enhanced extraction
+ * Parse PDF file using Docupipe standardized extraction
  */
 export async function parsePDFFile(buffer: Buffer): Promise<ParsedVesselData> {
   try {
-    // First, try Docupipe for enhanced parsing
-    console.log("Parsing PDF with Docupipe...");
+    console.log("[PDF Parser] Starting Docupipe standardized extraction...");
     
+    // Try Docupipe standardized extraction first
     try {
-      const docResult = await parseDocument(buffer, "inspection.pdf");
-      const fullText = docResult.result.text;
+      const standardizedData = await parseAndStandardizeDocument(buffer, "inspection-report.pdf");
+      console.log("[PDF Parser] Docupipe standardization successful");
       
-      console.log("Docupipe parsing successful, extracting vessel data...");
+      // Parse the standardized format
+      const parsedData = parseDocupipeStandard(standardizedData as DocupipeStandardFormat);
       
-      // Extract vessel data using pattern matching
-      const result: ParsedVesselData = {
-        tmlReadings: [],
+      return {
+        vesselTagNumber: parsedData.vesselTagNumber,
+        vesselName: parsedData.vesselName,
+        manufacturer: parsedData.manufacturer,
+        yearBuilt: parsedData.yearBuilt,
+        designPressure: parsedData.designPressure,
+        designTemperature: parsedData.designTemperature,
+        operatingPressure: parsedData.operatingPressure,
+        materialSpec: parsedData.materialSpec,
+        vesselType: parsedData.vesselType,
+        insideDiameter: parsedData.insideDiameter,
+        overallLength: parsedData.overallLength,
+        
+        // Additional standardized fields
+        reportNumber: parsedData.reportNumber,
+        reportDate: parsedData.reportDate,
+        inspectionDate: parsedData.inspectionDate,
+        inspectionType: parsedData.inspectionType,
+        inspectionCompany: parsedData.inspectionCompany,
+        inspectorName: parsedData.inspectorName,
+        inspectorCert: parsedData.inspectorCert,
+        clientName: parsedData.clientName,
+        clientLocation: parsedData.clientLocation,
+        product: parsedData.product,
+        nbNumber: parsedData.nbNumber,
+        constructionCode: parsedData.constructionCode,
+        vesselConfiguration: parsedData.vesselConfiguration,
+        headType: parsedData.headType,
+        insulationType: parsedData.insulationType,
+        executiveSummary: parsedData.executiveSummary,
+        
+        tmlReadings: parsedData.tmlReadings.map(reading => ({
+          cmlNumber: reading.cmlNumber,
+          location: reading.location,
+          component: reading.component,
+          currentThickness: reading.currentThickness,
+          nominalThickness: reading.nominalThickness,
+          minimumRequired: reading.minimumRequired,
+          calculatedMAWP: reading.calculatedMAWP,
+        })),
       };
-
-      // Extract vessel tag/ID
-      const tagPatterns = [
-        /(?:Vessel|Tag|Equipment\s+ID|Asset)[:\s]+([A-Z0-9-]+)/i,
-        /Report\s+No[.:]?\s*([A-Z0-9-]+)/i,
-      ];
-      for (const pattern of tagPatterns) {
-        const match = fullText.match(pattern);
-        if (match) {
-          result.vesselTagNumber = match[1].trim();
-          break;
-        }
-      }
-
-      // Extract vessel name
-      const nameMatch = fullText.match(/(?:Vessel\s+Name|Description)[:\s]+([^\n]+)/i);
-      if (nameMatch) result.vesselName = nameMatch[1].trim();
-
-      // Extract client/manufacturer
-      const clientMatch = fullText.match(/(?:Client|Manufacturer)[:\s]+([^\n]+)/i);
-      if (clientMatch) result.manufacturer = clientMatch[1].trim();
-
-      // Extract material
-      const materialMatch = fullText.match(/Material[:\s]+(SA-[0-9A-Z-]+|SS\s*A\s*-\s*[0-9]+)/i);
-      if (materialMatch) result.materialSpec = materialMatch[1].trim().replace(/\s+/g, "-");
-
-      // Extract design pressure (MAWP)
-      const mawpMatch = fullText.match(/(?:MAWP|Design\s+Pressure)[:\s]+([0-9.]+)\s*(?:psi|psig)?/i);
-      if (mawpMatch) result.designPressure = `${mawpMatch[1]} psig`;
-
-      // Extract design temperature
-      const tempMatch = fullText.match(/(?:Design\s+)?Temp(?:erature)?[:\s]+([0-9.]+)\s*(?:°F|F)?/i);
-      if (tempMatch) result.designTemperature = `${tempMatch[1]} °F`;
-
-      // Extract diameter
-      const diameterMatch = fullText.match(/(?:Inside\s+)?Diameter[:\s]+([0-9.]+)\s*(?:inch|in)?/i);
-      if (diameterMatch) result.insideDiameter = `${diameterMatch[1]} inches`;
-
-      // Extract TML readings from tables
-      // Look for patterns like "TML-1  Shell  0.625  0.652"
-      const tmlPattern = /([A-Z0-9-]+)\s+(Shell|Head|Nozzle|Bottom|Top|Side)\s+([0-9.]+)\s+([0-9.]+)/gi;
-      let tmlMatch;
-      while ((tmlMatch = tmlPattern.exec(fullText)) !== null) {
-        result.tmlReadings?.push({
-          tmlId: tmlMatch[1],
-          component: tmlMatch[2],
-          previousThickness: tmlMatch[3],
-          currentThickness: tmlMatch[4],
-        });
-      }
-
-      // If we got meaningful data, return it
-      if (result.vesselTagNumber || result.vesselName || (result.tmlReadings && result.tmlReadings.length > 0)) {
-        console.log("Successfully extracted data with Docupipe");
-        return result;
-      }
-      
-      console.log("Docupipe extraction incomplete, falling back to LLM...");
     } catch (docupipeError) {
-      console.warn("Docupipe parsing failed, falling back to LLM:", docupipeError);
-    }
+      console.warn("[PDF Parser] Docupipe standardization failed, falling back to basic parsing:", docupipeError);
+      
+      // Fallback to basic Docupipe parsing + LLM extraction
+      const docResult = await parseDocument(buffer, "inspection-report.pdf");
+      const fullText = docResult.result.text;
 
-    // Fallback to pdf-parse + LLM if Docupipe fails or returns insufficient data
-    console.log("Using pdf-parse + LLM for extraction as fallback...");
-    const pdfData = await (pdf as any)(buffer);
-    const text = pdfData.text;
-
-    // Use LLM to extract structured data
-    const response = await invokeLLM({
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert at extracting vessel inspection data from API 510 inspection reports. 
-Extract the following information from the provided text and return it as valid JSON:
-{
-  "vesselTagNumber": "vessel tag number, equipment ID, or asset ID",
-  "vesselName": "vessel name or description",
-  "manufacturer": "manufacturer or fabricator name",
-  "yearBuilt": year as number,
-  "designPressure": "design pressure value in psig",
-  "designTemperature": "design temperature value in °F",
-  "operatingPressure": "operating pressure value in psig",
-  "materialSpec": "material specification (e.g., SA-516-70)",
-  "vesselType": "vessel type (e.g., Pressure Vessel, Storage Tank)",
-  "insideDiameter": "inside diameter in inches",
-  "overallLength": "overall length in feet",
-  "tmlReadings": [
-    {
-      "tmlId": "TML location ID",
-      "component": "component name (Shell, Head, Nozzle, etc.)",
-      "nominalThickness": "nominal thickness in inches",
-      "previousThickness": "previous thickness reading in inches",
-      "currentThickness": "current thickness reading in inches"
-    }
-  ]
-}
-
-Only include fields that are found in the text. If a field is not found, omit it from the JSON.
-Return ONLY valid JSON, no other text.`,
-        },
-        {
-          role: "user",
-          content: text,
-        },
-      ],
-      response_format: {
-        type: "json_schema",
-        json_schema: {
-          name: "vessel_data",
-          strict: true,
-          schema: {
-            type: "object",
-            properties: {
-              vesselTagNumber: { type: "string" },
-              vesselName: { type: "string" },
-              manufacturer: { type: "string" },
-              yearBuilt: { type: "integer" },
-              designPressure: { type: "string" },
-              designTemperature: { type: "string" },
-              operatingPressure: { type: "string" },
-              materialSpec: { type: "string" },
-              vesselType: { type: "string" },
-              insideDiameter: { type: "string" },
-              overallLength: { type: "string" },
-              tmlReadings: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    tmlId: { type: "string" },
-                    component: { type: "string" },
-                    nominalThickness: { type: "string" },
-                    previousThickness: { type: "string" },
-                    currentThickness: { type: "string" },
+      // Use LLM to extract structured data from text
+      const llmResponse = await invokeLLM({
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are an expert at extracting vessel inspection data from API 510 reports. Extract all available information and return it as JSON.",
+          },
+          {
+            role: "user",
+            content: `Extract vessel inspection data from this report:\n\n${fullText.substring(0, 8000)}`,
+          },
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "vessel_data",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                vesselTagNumber: { type: "string" },
+                vesselName: { type: "string" },
+                manufacturer: { type: "string" },
+                yearBuilt: { type: "number" },
+                designPressure: { type: "string" },
+                designTemperature: { type: "string" },
+                operatingPressure: { type: "string" },
+                materialSpec: { type: "string" },
+                vesselType: { type: "string" },
+                insideDiameter: { type: "string" },
+                overallLength: { type: "string" },
+                tmlReadings: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      location: { type: "string" },
+                      component: { type: "string" },
+                      currentThickness: { type: "string" },
+                    },
+                    required: ["location", "component"],
+                    additionalProperties: false,
                   },
-                  required: ["tmlId", "component"],
-                  additionalProperties: false,
                 },
               },
+              required: ["vesselTagNumber"],
+              additionalProperties: false,
             },
-            required: [],
-            additionalProperties: false,
           },
         },
-      },
-    });
+      });
 
-    const content = response.choices[0].message.content;
-    if (!content) {
-      throw new Error("No content in LLM response");
+      const messageContent = llmResponse.choices[0].message.content;
+      const contentStr = typeof messageContent === 'string' ? messageContent : JSON.stringify(messageContent);
+      const extracted = JSON.parse(contentStr || "{}");
+      console.log("[PDF Parser] LLM extraction completed");
+      
+      return extracted;
     }
-
-    const contentStr = typeof content === 'string' ? content : JSON.stringify(content);
-    const parsedData = JSON.parse(contentStr);
-    console.log("Successfully extracted data with LLM");
-    return parsedData;
   } catch (error) {
-    console.error("Error parsing PDF file:", error);
-    const errorMsg = error instanceof Error ? error.message : "Unknown error";
-    console.error("PDF parsing failed with error:", errorMsg);
-    
-    // Return minimal data structure instead of throwing
-    return {
-      vesselTagNumber: "PARSE-ERROR-" + Date.now(),
-      vesselName: "Failed to parse PDF",
-      tmlReadings: [],
-    };
+    console.error("[PDF Parser] Error:", error);
+    throw new Error(`Failed to parse PDF file: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 }
 

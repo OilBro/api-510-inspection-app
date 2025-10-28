@@ -2,12 +2,19 @@ import { ENV } from "./_core/env";
 
 const DOCUPIPE_API_URL = "https://app.docupipe.ai";
 const DOCUPIPE_API_KEY = process.env.DOCUPIPE_API_KEY;
+const DOCUPIPE_SCHEMA_ID = process.env.DOCUPIPE_SCHEMA_ID; // Schema ID for API 510 standardization
 
 // Log API key status on module load
 if (DOCUPIPE_API_KEY) {
   console.log("[Docupipe] API key loaded successfully:", DOCUPIPE_API_KEY.substring(0, 10) + "...");
 } else {
   console.warn("[Docupipe] WARNING: API key not found in environment variables");
+}
+
+if (DOCUPIPE_SCHEMA_ID) {
+  console.log("[Docupipe] Schema ID loaded:", DOCUPIPE_SCHEMA_ID);
+} else {
+  console.warn("[Docupipe] WARNING: Schema ID not found - standardization will not be available");
 }
 
 interface DocupipeUploadResponse {
@@ -53,9 +60,6 @@ interface DocupipeStandardizationResult {
 
 /**
  * Upload a document to Docupipe for processing
- * @param fileBuffer - The file buffer (PDF, image, etc.)
- * @param filename - The filename
- * @returns Document ID and Job ID
  */
 export async function uploadDocument(
   fileBuffer: Buffer,
@@ -94,8 +98,6 @@ export async function uploadDocument(
 
 /**
  * Check the status of a Docupipe job
- * @param jobId - The job ID returned from upload
- * @returns Job status
  */
 export async function checkJobStatus(jobId: string): Promise<DocupipeJobStatus> {
   if (!DOCUPIPE_API_KEY) {
@@ -120,9 +122,6 @@ export async function checkJobStatus(jobId: string): Promise<DocupipeJobStatus> 
 
 /**
  * Wait for a job to complete with exponential backoff
- * @param jobId - The job ID to wait for
- * @param maxWaitSeconds - Maximum time to wait (default 120 seconds)
- * @returns Final job status
  */
 export async function waitForJobCompletion(
   jobId: string,
@@ -134,8 +133,12 @@ export async function waitForJobCompletion(
 
   do {
     status = await checkJobStatus(jobId);
-    
-    if (status.status === "completed" || status.status === "failed") {
+
+    if (status.status === "failed") {
+      throw new Error(`Docupipe job ${jobId} failed`);
+    }
+
+    if (status.status === "completed") {
       return status;
     }
 
@@ -154,8 +157,6 @@ export async function waitForJobCompletion(
 
 /**
  * Get the parsed document results
- * @param documentId - The document ID
- * @returns Parsed document with text and structure
  */
 export async function getDocumentResult(
   documentId: string
@@ -182,16 +183,18 @@ export async function getDocumentResult(
 
 /**
  * Standardize a document using a schema
- * @param documentId - The document ID
- * @param schemaId - The schema ID to use for standardization
- * @returns Standardization ID and Job ID
  */
 export async function standardizeDocument(
   documentId: string,
-  schemaId: string
+  schemaId?: string
 ): Promise<DocupipeStandardizeResponse> {
   if (!DOCUPIPE_API_KEY) {
     throw new Error("DOCUPIPE_API_KEY is not configured");
+  }
+
+  const schema = schemaId || DOCUPIPE_SCHEMA_ID;
+  if (!schema) {
+    throw new Error("No schema ID provided and DOCUPIPE_SCHEMA_ID is not configured");
   }
 
   const response = await fetch(`${DOCUPIPE_API_URL}/v2/standardize/batch`, {
@@ -203,7 +206,7 @@ export async function standardizeDocument(
     },
     body: JSON.stringify({
       documentIds: [documentId],
-      schemaId: schemaId,
+      schemaId: schema,
     }),
   });
 
@@ -217,8 +220,6 @@ export async function standardizeDocument(
 
 /**
  * Get standardization results
- * @param standardizationId - The standardization ID
- * @returns Standardization result with structured JSON
  */
 export async function getStandardizationResult(
   standardizationId: string
@@ -246,74 +247,79 @@ export async function getStandardizationResult(
 }
 
 /**
- * Complete workflow: Upload document, wait for processing, and get parsed results
- * @param fileBuffer - The file buffer
- * @param filename - The filename
- * @returns Parsed document result
+ * Wait for standardization to complete
+ */
+export async function waitForStandardizationCompletion(
+  standardizationId: string,
+  maxWaitSeconds: number = 120
+): Promise<DocupipeStandardizationResult> {
+  let waitSeconds = 2;
+  let totalWaited = 0;
+  let result: DocupipeStandardizationResult;
+
+  do {
+    result = await getStandardizationResult(standardizationId);
+
+    if (result.status === "failed") {
+      throw new Error(`Docupipe standardization ${standardizationId} failed`);
+    }
+
+    if (result.status === "completed") {
+      return result;
+    }
+
+    // Wait with exponential backoff
+    await new Promise((resolve) => setTimeout(resolve, waitSeconds * 1000));
+    totalWaited += waitSeconds;
+    waitSeconds = Math.min(waitSeconds * 2, 10);
+
+    if (totalWaited >= maxWaitSeconds) {
+      throw new Error(`Standardization ${standardizationId} did not complete within ${maxWaitSeconds} seconds`);
+    }
+  } while (result.status === "processing");
+
+  return result;
+}
+
+/**
+ * Complete workflow: Upload, parse, and standardize document
+ * Returns standardized JSON data
+ */
+export async function parseAndStandardizeDocument(
+  fileBuffer: Buffer,
+  filename: string,
+  schemaId?: string
+): Promise<any> {
+  console.log("[Docupipe] Starting upload and standardization workflow...");
+  
+  // Step 1: Upload document
+  const { documentId, jobId } = await uploadDocument(fileBuffer, filename);
+  console.log("[Docupipe] Document uploaded:", documentId);
+
+  // Step 2: Wait for document processing
+  await waitForJobCompletion(jobId);
+  console.log("[Docupipe] Document processing completed");
+
+  // Step 3: Start standardization
+  const { standardizationId } = await standardizeDocument(documentId, schemaId);
+  console.log("[Docupipe] Standardization started:", standardizationId);
+
+  // Step 4: Wait for standardization
+  const standardizationResult = await waitForStandardizationCompletion(standardizationId);
+  console.log("[Docupipe] Standardization completed");
+
+  return standardizationResult.result;
+}
+
+/**
+ * Fallback: Parse document without standardization (basic text extraction)
  */
 export async function parseDocument(
   fileBuffer: Buffer,
   filename: string
 ): Promise<DocupipeDocumentResult> {
-  // Upload document
   const { documentId, jobId } = await uploadDocument(fileBuffer, filename);
-
-  // Wait for processing to complete
   await waitForJobCompletion(jobId);
-
-  // Get and return results
   return await getDocumentResult(documentId);
-}
-
-/**
- * Extract vessel inspection data from parsed Docupipe result
- * @param docResult - The parsed document result from Docupipe
- * @returns Extracted vessel data
- */
-export function extractVesselDataFromDocupipe(docResult: DocupipeDocumentResult): any {
-  const fullText = docResult.result.text;
-  
-  // Extract key information using pattern matching
-  const extracted: any = {};
-
-  // Extract vessel information
-  const vesselMatch = fullText.match(/Vessel[:\s]+([^\n]+)/i);
-  if (vesselMatch) extracted.vesselName = vesselMatch[1].trim();
-
-  const tagMatch = fullText.match(/Tag[:\s]+([^\n]+)/i);
-  if (tagMatch) extracted.tagNumber = tagMatch[1].trim();
-
-  // Extract material
-  const materialMatch = fullText.match(/Material[:\s]+([^\n]+)/i);
-  if (materialMatch) extracted.material = materialMatch[1].trim();
-
-  // Extract dimensions
-  const diameterMatch = fullText.match(/(?:Diameter|D)[:\s]+([0-9.]+)/i);
-  if (diameterMatch) extracted.diameter = parseFloat(diameterMatch[1]);
-
-  const thicknessMatch = fullText.match(/(?:Thickness|t nom)[:\s]+([0-9.]+)/i);
-  if (thicknessMatch) extracted.nominalThickness = parseFloat(thicknessMatch[1]);
-
-  // Extract pressure
-  const mawpMatch = fullText.match(/MAWP[:\s]+([0-9.]+)/i);
-  if (mawpMatch) extracted.mawp = parseFloat(mawpMatch[1]);
-
-  // Extract temperature
-  const tempMatch = fullText.match(/(?:Temp|Temperature)[:\s]+([0-9.]+)/i);
-  if (tempMatch) extracted.designTemperature = parseFloat(tempMatch[1]);
-
-  // Extract stress value
-  const stressMatch = fullText.match(/S[:\s]+([0-9]+)/i);
-  if (stressMatch) extracted.allowableStress = parseInt(stressMatch[1]);
-
-  // Extract efficiency
-  const efficiencyMatch = fullText.match(/E[:\s]+([0-9.]+)/i);
-  if (efficiencyMatch) extracted.jointEfficiency = parseFloat(efficiencyMatch[1]);
-
-  // Extract corrosion rate
-  const corrosionMatch = fullText.match(/(?:Corrosion Rate|Cr)[:\s]+([0-9.]+)/i);
-  if (corrosionMatch) extracted.corrosionRate = parseFloat(corrosionMatch[1]);
-
-  return extracted;
 }
 

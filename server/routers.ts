@@ -412,9 +412,18 @@ export const appRouter = router({
               };
               
               // Only add optional fields if they exist
-              if (reading.nominalThickness) tmlRecord.nominalThickness = parseFloat(reading.nominalThickness) || undefined;
-              if (reading.previousThickness) tmlRecord.previousReading = parseFloat(reading.previousThickness) || undefined;
-              if (reading.currentThickness) tmlRecord.currentReading = parseFloat(reading.currentThickness) || undefined;
+              if (reading.nominalThickness) {
+                const val = typeof reading.nominalThickness === 'number' ? reading.nominalThickness : parseFloat(String(reading.nominalThickness));
+                if (!isNaN(val)) tmlRecord.nominalThickness = val;
+              }
+              if (reading.previousThickness) {
+                const val = parseFloat(String(reading.previousThickness));
+                if (!isNaN(val)) tmlRecord.previousReading = val;
+              }
+              if (reading.currentThickness) {
+                const val = typeof reading.currentThickness === 'number' ? reading.currentThickness : parseFloat(String(reading.currentThickness));
+                if (!isNaN(val)) tmlRecord.currentReading = val;
+              }
               
               await db.createTmlReading(tmlRecord);
             }

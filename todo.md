@@ -39,3 +39,8 @@
 
 - [x] Fix database schema - make optional fields nullable or provide default values
 
+
+- [x] Integrate Docupipe standardized JSON format for parsing
+- [x] Update database schema to match Docupipe standardized fields
+- [x] Map thickness readings from Docupipe CML format to app TML format
+
