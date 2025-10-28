@@ -30,3 +30,6 @@
 ## Bug Reports
 - [x] Fix "failed to parse" error when uploading files - Added better error handling and graceful fallbacks
 
+
+- [ ] Debug persistent file parsing error - investigate server logs and error details
+

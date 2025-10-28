@@ -71,7 +71,9 @@ export default function ImportData() {
           }, 2000);
         } catch (error) {
           console.error("Parse error:", error);
-          toast.error("Failed to parse file. Please check the file format.");
+          const errorMessage = error instanceof Error ? error.message : "Unknown error";
+          console.error("Detailed error:", errorMessage);
+          toast.error(`Failed to parse file: ${errorMessage}`);
           setUploading(false);
         }
       };
