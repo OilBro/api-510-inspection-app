@@ -1,6 +1,22 @@
 # API 510 Professional Report System - TODO
 
 ## 🚨 URGENT BUGS - FIX NOW
+
+### CRITICAL PDF ISSUES (616 pages generated!)
+- [ ] PDF generating 616 pages instead of ~40 pages - investigate page generation loop
+- [ ] Executive summary text getting truncated
+- [ ] Component calculations section blank - no data rendered
+- [ ] Blank pages being created when no data exists
+- [ ] Need to skip sections with no data instead of creating blank pages
+- [ ] TML numbers not displaying in PDF report
+
+### CRITICAL IMPORT ISSUES
+- [ ] Docupipe import not matching/inserting most data correctly
+- [ ] Very little data being imported from PDF files
+- [ ] Need to improve field mapping from Docupipe standardized format
+- [ ] Debug why imported data is not being saved to database
+
+### Other Bugs
 - [x] Fix checklist section not working - schema mismatch fixed, migration applied
 - [x] **CRITICAL: PDF generator creating blank pages - FIXED - completely rewrote generator**
 - [ ] Fix PDF overlapping text - spacing/layout issues causing text overlap

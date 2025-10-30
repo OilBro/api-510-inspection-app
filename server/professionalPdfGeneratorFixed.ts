@@ -183,6 +183,15 @@ export async function generateProfessionalPDF(data: ProfessionalReportData): Pro
   const checklist = await getChecklistItems(reportId);
   const tmlReadings = await getTmlReadings(inspectionId);
   
+  // DEBUG LOGGING
+  console.log('[PDF DEBUG] Data counts:');
+  console.log('  Components:', components?.length || 0);
+  console.log('  Findings:', findings?.length || 0);
+  console.log('  Recommendations:', recommendations?.length || 0);
+  console.log('  Photos:', photos?.length || 0);
+  console.log('  Checklist:', checklist?.length || 0);
+  console.log('  TML Readings:', tmlReadings?.length || 0);
+  
   // Create PDF
   const doc = new PDFDocument({
     size: 'LETTER',
@@ -199,16 +208,45 @@ export async function generateProfessionalPDF(data: ProfessionalReportData): Pro
   });
   
   // Generate pages
+  console.log('[PDF DEBUG] Generating cover page...');
   generateCoverPage(doc, report, inspection);
+  console.log('[PDF DEBUG] Page count after cover:', doc.bufferedPageRange().count);
+  
+  console.log('[PDF DEBUG] Generating TOC...');
   generateTableOfContents(doc);
+  console.log('[PDF DEBUG] Page count after TOC:', doc.bufferedPageRange().count);
+  
+  console.log('[PDF DEBUG] Generating executive summary...');
   generateExecutiveSummary(doc, report, components);
+  console.log('[PDF DEBUG] Page count after exec summary:', doc.bufferedPageRange().count);
+  
+  console.log('[PDF DEBUG] Generating vessel data...');
   generateVesselData(doc, inspection);
+  console.log('[PDF DEBUG] Page count after vessel data:', doc.bufferedPageRange().count);
+  
+  console.log('[PDF DEBUG] Generating component calculations...');
   generateComponentCalculations(doc, components);
+  console.log('[PDF DEBUG] Page count after components:', doc.bufferedPageRange().count);
+  
+  console.log('[PDF DEBUG] Generating findings...');
   generateInspectionFindings(doc, findings);
+  console.log('[PDF DEBUG] Page count after findings:', doc.bufferedPageRange().count);
+  
+  console.log('[PDF DEBUG] Generating recommendations...');
   generateRecommendationsSection(doc, recommendations);
+  console.log('[PDF DEBUG] Page count after recommendations:', doc.bufferedPageRange().count);
+  
+  console.log('[PDF DEBUG] Generating thickness readings...');
   generateThicknessReadings(doc, tmlReadings);
+  console.log('[PDF DEBUG] Page count after TML:', doc.bufferedPageRange().count);
+  
+  console.log('[PDF DEBUG] Generating checklist...');
   generateChecklist(doc, checklist);
+  console.log('[PDF DEBUG] Page count after checklist:', doc.bufferedPageRange().count);
+  
+  console.log('[PDF DEBUG] Generating photos...');
   generatePhotos(doc, photos);
+  console.log('[PDF DEBUG] Final page count:', doc.bufferedPageRange().count);
   
   // Finalize
   doc.end();
