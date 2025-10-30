@@ -202,3 +202,15 @@
 - [x] Made all generate functions async to support logo rendering
 - [x] Logo loads from filesystem at PDF generation time
 
+
+
+
+## 📊 COMPONENT IMPORT/EXPORT FEATURE
+- [x] Add "Export Template" button to Component Calculations page - DONE
+- [x] Generate CSV template with component calculation columns - DONE: 16 column template
+- [x] Add "Import" button to Component Calculations page - DONE
+- [x] Support CSV/Excel file import to populate components - DONE
+- [ ] Support PDF file import (parse component data from PDF) - TODO: Not yet implemented
+- [x] Validate imported data before saving to database - DONE: Uses existing mutation validation
+- [x] Show import success/error feedback to user - DONE: Toast notifications
+

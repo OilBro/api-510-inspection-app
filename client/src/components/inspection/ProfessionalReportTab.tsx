@@ -413,6 +413,102 @@ function ComponentCalculationsSection({ reportId }: { reportId: string }) {
     },
   });
 
+  const handleExportTemplate = () => {
+    // Create Excel template with component calculation columns
+    const headers = [
+      "Component Name",
+      "Component Type (shell/head)",
+      "Material Code",
+      "Material Name",
+      "Design Temperature (°F)",
+      "Design MAWP (psi)",
+      "Static Head (psi)",
+      "Corrosion Allowance (in)",
+      "Inside Diameter (in)",
+      "Nominal Thickness (in)",
+      "Measured Thickness (in)",
+      "Joint Efficiency",
+      "Allowable Stress (psi)",
+      "Head Type (elliptical/hemispherical/torispherical)",
+      "Crown Radius (in)",
+      "Knuckle Radius (in)"
+    ];
+
+    // Create CSV content
+    const csvContent = headers.join(",") + "\n";
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `component-calculations-template.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Template downloaded");
+  };
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    toast.info("Importing components...");
+
+    try {
+      if (file.name.endsWith(".pdf")) {
+        // TODO: Implement PDF parsing
+        toast.error("PDF import not yet implemented");
+      } else if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls") || file.name.endsWith(".csv")) {
+        // Read CSV/Excel file
+        const text = await file.text();
+        const lines = text.split("\n").filter(line => line.trim());
+        
+        if (lines.length < 2) {
+          toast.error("File is empty or invalid");
+          return;
+        }
+
+        const headers = lines[0].split(",");
+        const dataLines = lines.slice(1);
+
+        for (const line of dataLines) {
+          const values = line.split(",");
+          const componentData: any = {
+            componentName: values[0]?.trim() || "",
+            componentType: values[1]?.trim().toLowerCase() === "head" ? "head" : "shell",
+            materialCode: values[2]?.trim() || "",
+            materialName: values[3]?.trim() || "",
+            designTemp: values[4]?.trim() || "",
+            designMAWP: values[5]?.trim() || "",
+            staticHead: values[6]?.trim() || "0",
+            corrosionAllowance: values[7]?.trim() || "",
+            insideDiameter: values[8]?.trim() || "",
+            nominalThickness: values[9]?.trim() || "",
+            measuredThickness: values[10]?.trim() || "",
+            jointEfficiency: values[11]?.trim() || "",
+            allowableStress: values[12]?.trim() || "",
+          };
+
+          if (componentData.componentType === "head") {
+            componentData.headType = values[13]?.trim() || "elliptical";
+            componentData.crownRadius = values[14]?.trim() || "";
+            componentData.knuckleRadius = values[15]?.trim() || "";
+          }
+
+          if (componentData.componentName) {
+            await createCalculation.mutateAsync({ reportId, ...componentData });
+          }
+        }
+
+        toast.success(`Imported ${dataLines.length} components`);
+      }
+    } catch (error) {
+      console.error("Import error:", error);
+      toast.error("Failed to import file");
+    }
+
+    // Reset input
+    e.target.value = "";
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -430,28 +526,45 @@ function ComponentCalculationsSection({ reportId }: { reportId: string }) {
             Shell and head evaluations per ASME Section VIII
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Component
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Add Component Calculation</DialogTitle>
-              <DialogDescription>
-                Enter component data for mechanical integrity evaluation
-              </DialogDescription>
-            </DialogHeader>
-            <ComponentCalculationForm
-              reportId={reportId}
-              componentType={componentType}
-              onComponentTypeChange={setComponentType}
-              onSubmit={(data) => createCalculation.mutate({ reportId, ...data })}
-            />
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2">
+          <Button variant="outline" className="gap-2" onClick={() => handleExportTemplate()}>
+            <Download className="h-4 w-4" />
+            Export Template
+          </Button>
+          <Button variant="outline" className="gap-2" onClick={() => document.getElementById('component-import-input')?.click()}>
+            <Upload className="h-4 w-4" />
+            Import
+          </Button>
+          <input
+            id="component-import-input"
+            type="file"
+            accept=".xlsx,.xls,.pdf"
+            className="hidden"
+            onChange={handleImportFile}
+          />
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add Component
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Add Component Calculation</DialogTitle>
+                <DialogDescription>
+                  Enter component data for mechanical integrity evaluation
+                </DialogDescription>
+              </DialogHeader>
+              <ComponentCalculationForm
+                reportId={reportId}
+                componentType={componentType}
+                onComponentTypeChange={setComponentType}
+                onSubmit={(data) => createCalculation.mutate({ reportId, ...data })}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {calculations && calculations.length > 0 ? (
