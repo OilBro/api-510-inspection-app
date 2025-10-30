@@ -1,6 +1,6 @@
-# Project TODO
+# API 510 Professional Report System - TODO
 
-## Completed Features
+## Completed Features ✓
 - [x] Database schema for inspections, calculations, TML readings
 - [x] Backend API with tRPC routers
 - [x] Vessel data form with auto-fill
@@ -9,52 +9,87 @@
 - [x] Remaining life assessment
 - [x] TML thickness analysis with status indicators
 - [x] Inspection findings input (external/internal)
-- [x] PDF report generation
+- [x] PDF report generation (basic)
 - [x] Excel and PDF file import with parsing
 - [x] Expanded material selections (27+ materials)
+- [x] Interactive calculation worksheet with editable fields
+- [x] Docupipe API integration for enhanced PDF parsing
+- [x] Unmatched data tab with machine learning mapping
+- [x] Professional calculation engine with exact ASME formulas
+- [x] Extended database schema for professional reports
+- [x] Component calculations table (shell/head)
+- [x] Inspection findings, recommendations, photos, appendices tables
+- [x] Database helper functions for all professional report tables
+- [x] Default checklist initialization
 
-## New Features to Implement
-- [x] Interactive calculation worksheet with editable fields and live recalculation
-- [x] Professional report format matching OilPro Consulting template
-- [x] Variable definitions and formulas display
-- [x] MAWP calculations for next inspection interval
-- [x] Corrosion allowance tracking and calculations
+## In Progress 🚧
 
+### Phase 3: Professional PDF Generation (CURRENT)
+- [ ] PDF generation service with PDFKit
+- [ ] Cover page with logo and metadata
+- [ ] Table of contents with page numbers
+- [ ] Executive summary with TABLE A
+- [ ] Vessel data page (2-column layout)
+- [ ] Inspection results sections (3.1-3.4)
+- [ ] Recommendations sections (4.1-4.5)
+- [ ] Ultrasonic thickness measurements section
+- [ ] Appendix B: Mechanical Integrity Calculations
+  - [ ] Shell evaluation page with formulas
+  - [ ] Shell variable definitions page
+  - [ ] Head evaluation page with formulas
+  - [ ] Head variable definitions page
+- [ ] Appendix D: Inspection Checklist
+- [ ] Appendix E: Inspection Photographs
+- [ ] Professional formatting (headers, footers, page numbers)
 
+### Phase 4: Photo & Document Management
+- [ ] Photo upload component with section tagging
+- [ ] Photo preview and management
+- [ ] Document upload for appendices
+- [ ] Photo placement in PDF report
+- [ ] Document embedding in PDF appendices
 
-## New Feature Request
-- [x] Integrate Docupipe API for enhanced PDF parsing and data extraction
+### Phase 5: UI Components
+- [ ] Professional Report tab in inspection detail
+- [ ] Report metadata form (inspector, client, dates)
+- [ ] Component calculation forms (shell/head)
+- [ ] Inspection findings editor
+- [ ] Recommendations editor
+- [ ] Photo upload interface
+- [ ] Checklist interface
+- [ ] Document upload interface
+- [ ] "Generate Final Report" button
 
+### Phase 6: tRPC API Routes
+- [ ] Professional report CRUD operations
+- [ ] Component calculation operations
+- [ ] Inspection findings operations
+- [ ] Recommendations operations
+- [ ] Photo upload and management
+- [ ] Document upload and management
+- [ ] Checklist operations
+- [ ] PDF generation endpoint
 
+### Phase 7: Verification & Testing
+- [ ] Verify shell calculations against sample report (54-11-005)
+- [ ] Verify head calculations against sample report
+- [ ] Test with multiple vessel types
+- [ ] Test with different head types
+- [ ] Validate PDF output matches original format
+- [ ] Test photo placement in PDF
+- [ ] Test document embedding in PDF
+- [ ] Create verification plan document
 
-## Bug Reports
-- [x] Fix "failed to parse" error when uploading files - Added better error handling and graceful fallbacks
-
-
-- [ ] Debug persistent file parsing error - investigate server logs and error details
-
-
-- [x] Fix database insertion error when creating inspection from parsed file - handle undefined values properly
-
-
-- [x] Fix database schema - make optional fields nullable or provide default values
-
-
-- [x] Integrate Docupipe standardized JSON format for parsing
-- [x] Update database schema to match Docupipe standardized fields
-- [x] Map thickness readings from Docupipe CML format to app TML format
-
-
-- [x] Fix PDF report generation - overlapping text issue
-- [x] Fix PDF to include all imported data fields
+## Bug Reports 🐛
 - [ ] Fix calculation section saving errors - need more details on specific error
 
-
-
-## New Feature Request
-- [x] Create "Unmatched Data" tab to display unmapped extracted data
-- [x] Add dropdown for each unmatched field to manually assign to app sections
-- [x] Implement machine learning system to remember user mappings
-- [x] Store mapping patterns in database for future imports
-- [x] Auto-apply learned mappings to subsequent imports
+## Notes 📝
+- All formulas implemented EXACTLY as shown in OilPro report (54-11-005)
+- Formulas are NOT editable - inputs only
+- PDF layout must match original report precisely
+- Material database can be extended as needed
+- Default checklist based on report sections
+- Photos tagged by section for proper placement
+- Appendices auto-generated from uploaded documents
+- Working from 40-page sample report as template
 

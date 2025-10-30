@@ -13,6 +13,7 @@ import ThicknessAnalysisTab from "@/components/inspection/ThicknessAnalysisTab";
 import InspectionReportTab from "@/components/inspection/InspectionReportTab";
 import InspectionFindingsTab from "@/components/inspection/InspectionFindingsTab";
 import UnmatchedDataTab from "@/components/inspection/UnmatchedDataTab";
+import ProfessionalReportTab from "@/components/inspection/ProfessionalReportTab";
 
 export default function InspectionDetail() {
   const params = useParams();
@@ -91,7 +92,7 @@ export default function InspectionDetail() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-6 mb-8">
+          <TabsList className="grid w-full grid-cols-7 mb-8">
             <TabsTrigger value="vessel-data">
               <FileText className="h-4 w-4 mr-2" />
               Vessel Data
@@ -115,6 +116,10 @@ export default function InspectionDetail() {
             <TabsTrigger value="unmatched">
               <AlertCircle className="h-4 w-4 mr-2" />
               Unmatched
+            </TabsTrigger>
+            <TabsTrigger value="professional">
+              <FileText className="h-4 w-4 mr-2" />
+              Professional Report
             </TabsTrigger>
           </TabsList>
 
@@ -140,6 +145,10 @@ export default function InspectionDetail() {
 
           <TabsContent value="unmatched">
             <UnmatchedDataTab inspectionId={id} />
+          </TabsContent>
+
+          <TabsContent value="professional">
+            <ProfessionalReportTab inspectionId={id} />
           </TabsContent>
         </Tabs>
       </main>

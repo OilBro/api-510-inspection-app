@@ -1,4 +1,4 @@
-import { mysqlEnum, mysqlTable, text, timestamp, varchar, int, boolean, decimal } from "drizzle-orm/mysql-core";
+import { mysqlEnum, mysqlTable, text, timestamp, varchar, int, boolean, decimal, date } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -229,4 +229,212 @@ export const unmatchedData = mysqlTable("unmatchedData", {
 
 export type UnmatchedData = typeof unmatchedData.$inferSelect;
 export type InsertUnmatchedData = typeof unmatchedData.$inferInsert;
+
+
+
+/**
+ * Professional Report Data - for generating OilPro-style reports
+ */
+export const professionalReports = mysqlTable("professionalReports", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  inspectionId: varchar("inspectionId", { length: 64 }).notNull().unique(),
+  
+  // Report metadata
+  reportNumber: varchar("reportNumber", { length: 255 }),
+  reportDate: date("reportDate"),
+  inspectorName: text("inspectorName"),
+  inspectorCertification: varchar("inspectorCertification", { length: 255 }),
+  employerName: text("employerName"),
+  
+  // Client information
+  clientName: text("clientName"),
+  clientLocation: text("clientLocation"),
+  clientContact: text("clientContact"),
+  clientApprovalName: text("clientApprovalName"),
+  clientApprovalTitle: text("clientApprovalTitle"),
+  
+  // Executive summary
+  executiveSummary: text("executiveSummary"),
+  
+  // Next inspection dates
+  nextExternalInspectionClient: date("nextExternalInspectionClient"),
+  nextExternalInspectionAPI: date("nextExternalInspectionAPI"),
+  nextInternalInspection: date("nextInternalInspection"),
+  nextUTInspection: date("nextUTInspection"),
+  
+  // Governing component
+  governingComponent: varchar("governingComponent", { length: 255 }),
+  
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+});
+
+export type ProfessionalReport = typeof professionalReports.$inferSelect;
+export type InsertProfessionalReport = typeof professionalReports.$inferInsert;
+
+/**
+ * Shell/Head calculation results for professional reports
+ */
+export const componentCalculations = mysqlTable("componentCalculations", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  reportId: varchar("reportId", { length: 64 }).notNull(),
+  
+  componentName: varchar("componentName", { length: 255 }).notNull(), // e.g., "Shell 1", "North Head", "South Head"
+  componentType: mysqlEnum("componentType", ["shell", "head"]).notNull(),
+  
+  // Material data
+  materialCode: varchar("materialCode", { length: 255 }),
+  materialName: text("materialName"),
+  
+  // Design parameters
+  designTemp: decimal("designTemp", { precision: 10, scale: 2 }),
+  designMAWP: decimal("designMAWP", { precision: 10, scale: 2 }),
+  staticHead: decimal("staticHead", { precision: 10, scale: 2 }),
+  specificGravity: decimal("specificGravity", { precision: 10, scale: 4 }),
+  insideDiameter: decimal("insideDiameter", { precision: 10, scale: 3 }),
+  nominalThickness: decimal("nominalThickness", { precision: 10, scale: 4 }),
+  
+  // Stress and efficiency
+  allowableStress: decimal("allowableStress", { precision: 10, scale: 2 }),
+  jointEfficiency: decimal("jointEfficiency", { precision: 4, scale: 2 }),
+  
+  // Head-specific
+  headType: varchar("headType", { length: 50 }), // "hemispherical", "ellipsoidal", "torispherical"
+  crownRadius: decimal("crownRadius", { precision: 10, scale: 3 }),
+  knuckleRadius: decimal("knuckleRadius", { precision: 10, scale: 3 }),
+  headFactor: decimal("headFactor", { precision: 10, scale: 4 }), // M factor for torispherical
+  
+  // Thickness measurements
+  previousThickness: decimal("previousThickness", { precision: 10, scale: 4 }),
+  actualThickness: decimal("actualThickness", { precision: 10, scale: 4 }),
+  minimumThickness: decimal("minimumThickness", { precision: 10, scale: 4 }),
+  
+  // Time span
+  timeSpan: decimal("timeSpan", { precision: 10, scale: 2 }), // Y - years between readings
+  nextInspectionYears: decimal("nextInspectionYears", { precision: 10, scale: 2 }), // Yn
+  
+  // Calculated results
+  corrosionAllowance: decimal("corrosionAllowance", { precision: 10, scale: 4 }), // Ca
+  corrosionRate: decimal("corrosionRate", { precision: 10, scale: 6 }), // Cr (in/year)
+  remainingLife: decimal("remainingLife", { precision: 10, scale: 2 }), // RL (years)
+  
+  // MAWP at next inspection
+  thicknessAtNextInspection: decimal("thicknessAtNextInspection", { precision: 10, scale: 4 }),
+  pressureAtNextInspection: decimal("pressureAtNextInspection", { precision: 10, scale: 2 }),
+  mawpAtNextInspection: decimal("mawpAtNextInspection", { precision: 10, scale: 2 }),
+  
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+});
+
+export type ComponentCalculation = typeof componentCalculations.$inferSelect;
+export type InsertComponentCalculation = typeof componentCalculations.$inferInsert;
+
+/**
+ * Inspection findings - detailed write-ups for each section
+ */
+export const inspectionFindings = mysqlTable("inspectionFindings", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  reportId: varchar("reportId", { length: 64 }).notNull(),
+  
+  section: varchar("section", { length: 255 }).notNull(), // "foundation", "shell", "heads", "appurtenances"
+  subsection: varchar("subsection", { length: 255 }), // e.g., "3.1.1", "3.2.1"
+  
+  findings: text("findings"),
+  notes: text("notes"),
+  
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+});
+
+export type InspectionFinding = typeof inspectionFindings.$inferSelect;
+export type InsertInspectionFinding = typeof inspectionFindings.$inferInsert;
+
+/**
+ * Recommendations for each section
+ */
+export const recommendations = mysqlTable("recommendations", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  reportId: varchar("reportId", { length: 64 }).notNull(),
+  
+  section: varchar("section", { length: 255 }).notNull(), // "foundation", "shell", "heads", "appurtenances", "next_inspection"
+  subsection: varchar("subsection", { length: 255 }),
+  
+  recommendation: text("recommendation"),
+  priority: mysqlEnum("priority", ["low", "medium", "high", "critical"]),
+  
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+});
+
+export type Recommendation = typeof recommendations.$inferSelect;
+export type InsertRecommendation = typeof recommendations.$inferInsert;
+
+/**
+ * Photos for inspection report
+ */
+export const inspectionPhotos = mysqlTable("inspectionPhotos", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  reportId: varchar("reportId", { length: 64 }).notNull(),
+  
+  photoUrl: text("photoUrl").notNull(),
+  caption: text("caption"),
+  section: varchar("section", { length: 255 }), // "foundation", "shell", "heads", "appurtenances", "general"
+  sequenceNumber: int("sequenceNumber"), // For ordering photos
+  
+  createdAt: timestamp("createdAt").defaultNow(),
+});
+
+export type InspectionPhoto = typeof inspectionPhotos.$inferSelect;
+export type InsertInspectionPhoto = typeof inspectionPhotos.$inferInsert;
+
+/**
+ * Appendix documents
+ */
+export const appendixDocuments = mysqlTable("appendixDocuments", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  reportId: varchar("reportId", { length: 64 }).notNull(),
+  
+  appendixType: mysqlEnum("appendixType", [
+    "thickness_record",      // Appendix A
+    "mechanical_integrity",  // Appendix B
+    "drawings",             // Appendix C
+    "checklist",            // Appendix D
+    "photographs",          // Appendix E
+    "manufacturer_data",    // Appendix F
+    "nde_records"           // Appendix G
+  ]).notNull(),
+  
+  documentUrl: text("documentUrl"),
+  documentName: text("documentName"),
+  sequenceNumber: int("sequenceNumber"),
+  
+  createdAt: timestamp("createdAt").defaultNow(),
+});
+
+export type AppendixDocument = typeof appendixDocuments.$inferSelect;
+export type InsertAppendixDocument = typeof appendixDocuments.$inferInsert;
+
+/**
+ * Inspection checklist items
+ */
+export const checklistItems = mysqlTable("checklistItems", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  reportId: varchar("reportId", { length: 64 }).notNull(),
+  
+  category: varchar("category", { length: 255 }).notNull(), // "foundation", "shell", "heads", etc.
+  itemNumber: varchar("itemNumber", { length: 50 }),
+  description: text("description").notNull(),
+  
+  status: mysqlEnum("status", ["satisfactory", "unsatisfactory", "not_applicable", "not_checked"]).default("not_checked"),
+  comments: text("comments"),
+  
+  sequenceNumber: int("sequenceNumber"),
+  
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+});
+
+export type ChecklistItem = typeof checklistItems.$inferSelect;
+export type InsertChecklistItem = typeof checklistItems.$inferInsert;
 

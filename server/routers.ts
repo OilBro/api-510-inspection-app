@@ -8,6 +8,7 @@ import { nanoid } from "nanoid";
 import { parseExcelFile, parsePDFFile } from "./fileParser";
 import { storagePut } from "./storage";
 import { fieldMappingRouter, unmatchedDataRouter } from "./fieldMappingRouters";
+import { professionalReportRouter } from "./professionalReportRouters";
 import * as fieldMappingDb from "./fieldMappingDb";
 
 export const appRouter = router({
@@ -509,6 +510,9 @@ export const appRouter = router({
   
   // Unmatched data management
   unmatchedData: unmatchedDataRouter,
+  
+  // Professional report generation
+  professionalReport: professionalReportRouter,
 });
 
 export type AppRouter = typeof appRouter;
