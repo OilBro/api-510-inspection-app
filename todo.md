@@ -138,3 +138,12 @@
 - [ ] Findings section empty (expected if no findings entered)
 - [ ] Recommendations section empty (expected if no recommendations entered)
 
+
+
+
+## 🔴 CRITICAL CALCULATION BUG
+- [x] TML readings not calculating Loss % and Corrosion Rate (mpy) - FIXED: Added auto-calculation in create/update mutations
+- [x] Need to auto-calculate loss percentage from nominal vs current thickness - FIXED: Loss % = (Nominal - Current) / Nominal × 100
+- [x] Need to auto-calculate corrosion rate in mpy (mils per year) - FIXED: Rate = (Previous - Current) / TimeSpan × 1000
+- [x] Recalculated all 150 existing TML readings in database
+

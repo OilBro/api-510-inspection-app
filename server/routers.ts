@@ -172,9 +172,34 @@ export const appRouter = router({
         status: z.enum(["good", "monitor", "critical"]).optional(),
       }))
       .mutation(async ({ input }) => {
+        // Auto-calculate loss and corrosion rate
+        let calculatedLoss: string | undefined = input.loss;
+        let calculatedCorrosionRate: string | undefined = input.corrosionRate;
+        
+        const current = input.currentThickness ? parseFloat(input.currentThickness) : null;
+        const previous = input.previousThickness ? parseFloat(input.previousThickness) : null;
+        const nominal = input.nominalThickness ? parseFloat(input.nominalThickness) : null;
+        
+        // Calculate loss percentage: (Nominal - Current) / Nominal * 100
+        if (nominal && current && nominal > 0) {
+          const lossPercent = ((nominal - current) / nominal) * 100;
+          calculatedLoss = lossPercent.toFixed(2);
+        }
+        
+        // Calculate corrosion rate in mpy (mils per year)
+        // Assuming 1 year time span if not specified - you may want to make this configurable
+        if (previous && current) {
+          const timeSpanYears = 1; // Default to 1 year, should be configurable
+          const thicknessLoss = previous - current;
+          const corrosionRateMpy = (thicknessLoss / timeSpanYears) * 1000; // Convert inches to mils
+          calculatedCorrosionRate = corrosionRateMpy.toFixed(2);
+        }
+        
         const reading = {
           id: nanoid(),
           ...input,
+          loss: calculatedLoss,
+          corrosionRate: calculatedCorrosionRate,
         };
         await db.createTmlReading(reading);
         return reading;
@@ -195,7 +220,44 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         const { id, ...data } = input;
-        await db.updateTmlReading(id, data);
+        
+        // Get existing reading to merge values for calculation
+        const existingReadings = await db.getTmlReadings('');
+        const existing = existingReadings.find(r => r.id === id);
+        
+        // Merge existing and new values
+        const current = data.currentThickness ? parseFloat(data.currentThickness) : 
+                       (existing?.currentThickness ? parseFloat(String(existing.currentThickness)) : null);
+        const previous = data.previousThickness ? parseFloat(data.previousThickness) : 
+                        (existing?.previousThickness ? parseFloat(String(existing.previousThickness)) : null);
+        const nominal = data.nominalThickness ? parseFloat(data.nominalThickness) : 
+                       (existing?.nominalThickness ? parseFloat(String(existing.nominalThickness)) : null);
+        
+        // Auto-calculate loss and corrosion rate if not explicitly provided
+        let calculatedLoss = data.loss;
+        let calculatedCorrosionRate = data.corrosionRate;
+        
+        // Calculate loss percentage: (Nominal - Current) / Nominal * 100
+        if (!calculatedLoss && nominal && current && nominal > 0) {
+          const lossPercent = ((nominal - current) / nominal) * 100;
+          calculatedLoss = lossPercent.toFixed(2);
+        }
+        
+        // Calculate corrosion rate in mpy (mils per year)
+        if (!calculatedCorrosionRate && previous && current) {
+          const timeSpanYears = 1; // Default to 1 year
+          const thicknessLoss = previous - current;
+          const corrosionRateMpy = (thicknessLoss / timeSpanYears) * 1000;
+          calculatedCorrosionRate = corrosionRateMpy.toFixed(2);
+        }
+        
+        const updateData = {
+          ...data,
+          loss: calculatedLoss,
+          corrosionRate: calculatedCorrosionRate,
+        };
+        
+        await db.updateTmlReading(id, updateData);
         return { success: true };
       }),
 
