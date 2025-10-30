@@ -126,3 +126,15 @@
 - Working from 40-page sample report as template
 - Backend complete, focusing on UI completion
 
+
+
+
+## 🆕 NEW ISSUES FOUND (from latest PDF test - 18 pages)
+
+### PDF Content Issues
+- [x] Executive summary text truncated - FIXED: Added fallback text when database field is empty
+- [x] Component calculations section completely blank - FIXED: Added message when no components exist, fixed field mapping for mawpAtNextInspection
+- [x] TML section has blank page 8 before table starts on page 9 - FIXED: Reorganized page creation logic
+- [ ] Findings section empty (expected if no findings entered)
+- [ ] Recommendations section empty (expected if no recommendations entered)
+

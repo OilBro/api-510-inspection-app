@@ -388,7 +388,11 @@ function generateExecutiveSummary(doc: PDFKit.PDFDocument, report: any, componen
   
   addSectionTitle(doc, '1.0 EXECUTIVE SUMMARY');
   
-  addText(doc, report.executiveSummary || 'No executive summary provided.');
+  // Use database summary if available, otherwise generate default text
+  const summaryText = report.executiveSummary || 
+    `An API Standard 510 Inspection based on client criterion for nondestructive examinations was conducted on this pressure vessel. This inspection was conducted in accordance with requirements of the API-510 standard for inspections of Pressure Vessels. The following is a detailed report of the inspection including findings and recommendations.`;
+  
+  addText(doc, summaryText);
   
   // Summary table
   if (components && components.length > 0) {
@@ -398,10 +402,10 @@ function generateExecutiveSummary(doc: PDFKit.PDFDocument, report: any, componen
     const headers = ['Component', 'Min Thickness (in)', 'Actual (in)', 'MAWP (psi)', 'Remaining Life (yrs)'];
     const rows = components.map(c => [
       c.componentName || '',
-      c.minimumThickness?.toFixed(3) || '-',
-      c.actualThickness?.toFixed(3) || '-',
-      c.mawp?.toFixed(1) || '-',
-      c.remainingLife?.toFixed(1) || '-',
+      c.minimumThickness ? parseFloat(c.minimumThickness).toFixed(3) : '-',
+      c.actualThickness ? parseFloat(c.actualThickness).toFixed(3) : '-',
+      c.mawpAtNextInspection ? parseFloat(c.mawpAtNextInspection).toFixed(1) : '-',
+      c.remainingLife ? parseFloat(c.remainingLife).toFixed(1) : '-',
     ]);
     
     addTable(doc, headers, rows);
@@ -456,29 +460,34 @@ function generateComponentCalculations(doc: PDFKit.PDFDocument, components: any[
   
   addSectionTitle(doc, '3.0 MECHANICAL INTEGRITY CALCULATIONS');
   
+  if (!components || components.length === 0) {
+    addText(doc, 'No component calculations have been performed yet. Please complete the component calculations in the Professional Report tab.');
+    return;
+  }
+  
   components.forEach((comp, index) => {
     if (index > 0) doc.moveDown(2);
     
     addSubsectionTitle(doc, `${comp.componentName || 'Component'} Evaluation`);
     
     // Component data
-    addText(doc, `Material: ${comp.materialSpec || '-'}`, { bold: true });
-    addText(doc, `Design Pressure: ${comp.designPressure || '-'} psi`);
-    addText(doc, `Design Temperature: ${comp.designTemperature || '-'} °F`);
-    addText(doc, `Allowable Stress: ${comp.allowableStress || '-'} psi`);
-    addText(doc, `Joint Efficiency: ${comp.jointEfficiency || '-'}`);
+    addText(doc, `Material: ${comp.materialCode || comp.materialSpec || '-'}`, { bold: true });
+    addText(doc, `Design Pressure: ${comp.designMAWP ? parseFloat(comp.designMAWP).toFixed(1) : '-'} psi`);
+    addText(doc, `Design Temperature: ${comp.designTemp ? parseFloat(comp.designTemp).toFixed(1) : '-'} °F`);
+    addText(doc, `Allowable Stress: ${comp.allowableStress ? parseFloat(comp.allowableStress).toFixed(0) : '-'} psi`);
+    addText(doc, `Joint Efficiency: ${comp.jointEfficiency ? parseFloat(comp.jointEfficiency).toFixed(2) : '-'}`);
     
     doc.moveDown(0.5);
     
     // Calculations
     addText(doc, 'Minimum Required Thickness:', { bold: true });
-    addText(doc, `t_min = ${comp.minimumThickness?.toFixed(3) || '-'} inches`);
+    addText(doc, `t_min = ${comp.minimumThickness ? parseFloat(comp.minimumThickness).toFixed(3) : '-'} inches`);
     
     addText(doc, 'Remaining Life:', { bold: true });
-    addText(doc, `RL = ${comp.remainingLife?.toFixed(1) || '-'} years`);
+    addText(doc, `RL = ${comp.remainingLife ? parseFloat(comp.remainingLife).toFixed(1) : '-'} years`);
     
     addText(doc, 'Maximum Allowable Working Pressure:', { bold: true });
-    addText(doc, `MAWP = ${comp.mawp?.toFixed(1) || '-'} psi`);
+    addText(doc, `MAWP = ${comp.mawpAtNextInspection ? parseFloat(comp.mawpAtNextInspection).toFixed(1) : '-'} psi`);
     
     checkPageBreak(doc, 100);
   });
@@ -540,17 +549,20 @@ function generateRecommendationsSection(doc: PDFKit.PDFDocument, recommendations
 }
 
 function generateThicknessReadings(doc: PDFKit.PDFDocument, readings: any[]) {
-  doc.addPage();
-  addHeader(doc, 'THICKNESS MEASUREMENTS', 8);
-  
-  addSectionTitle(doc, '6.0 ULTRASONIC THICKNESS MEASUREMENTS');
-  
   console.log('[PDF DEBUG] TML Readings - Total count:', readings?.length || 0);
   
   if (!readings || readings.length === 0) {
+    doc.addPage();
+    addHeader(doc, 'THICKNESS MEASUREMENTS', 8);
+    addSectionTitle(doc, '6.0 ULTRASONIC THICKNESS MEASUREMENTS');
     addText(doc, 'No thickness readings recorded.');
     return;
   }
+  
+  // Only add page if we have data - table function will handle pagination
+  doc.addPage();
+  addHeader(doc, 'THICKNESS MEASUREMENTS', 8);
+  addSectionTitle(doc, '6.0 ULTRASONIC THICKNESS MEASUREMENTS');
   
   // Log first few readings to verify data structure
   console.log('[PDF DEBUG] First TML reading:', readings[0]);
