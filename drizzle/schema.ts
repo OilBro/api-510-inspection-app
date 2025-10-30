@@ -427,8 +427,15 @@ export const checklistItems = mysqlTable("checklistItems", {
   
   category: varchar("category", { length: 255 }).notNull(), // "foundation", "shell", "heads", etc.
   itemNumber: varchar("itemNumber", { length: 50 }),
-  description: text("description").notNull(),
+  itemText: text("itemText").notNull(), // renamed from description
   
+  // Checkbox-style fields
+  checked: boolean("checked").default(false),
+  checkedBy: varchar("checkedBy", { length: 255 }),
+  checkedDate: timestamp("checkedDate"),
+  notes: text("notes"),
+  
+  // Status-style fields (for compatibility)
   status: mysqlEnum("status", ["satisfactory", "unsatisfactory", "not_applicable", "not_checked"]).default("not_checked"),
   comments: text("comments"),
   

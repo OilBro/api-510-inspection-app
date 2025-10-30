@@ -1,5 +1,21 @@
 # API 510 Professional Report System - TODO
 
+## 🚨 URGENT BUGS - FIX NOW
+- [ ] Fix PDF overlapping text - spacing/layout issues causing text overlap
+- [x] Fix checklist section not working - schema mismatch fixed, migration applied
+- [ ] Fix photo section not working - need to test upload functionality
+- [ ] Improve Docupipe import matching - many fields not being mapped correctly
+- [ ] Add logo support to PDF report header
+- [ ] Fix missing pages in generated PDF report
+
+## 📋 NEW FEATURE REQUESTS
+- [ ] Add component readings import button with Excel template support
+- [ ] Add component readings export button to download Excel template
+- [ ] Make PDF graphically cool and eye-catching with modern design
+- [ ] Add color-coded sections to PDF for easy reading
+- [ ] Add graphics/icons to PDF sections
+- [ ] Improve PDF typography and visual hierarchy
+
 ## Completed Features ✓
 - [x] Database schema for inspections, calculations, TML readings
 - [x] Backend API with tRPC routers

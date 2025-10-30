@@ -286,26 +286,26 @@ export async function updateChecklistItem(
 export async function initializeDefaultChecklist(reportId: string) {
   const defaultItems: Omit<InsertChecklistItem, "id" | "reportId">[] = [
     // Foundation
-    { category: "foundation", itemNumber: "3.1.1", description: "Vessel foundation supports attached and in satisfactory condition", sequenceNumber: 1, status: "not_checked", comments: null, createdAt: new Date(), updatedAt: new Date() },
-    { category: "foundation", itemNumber: "3.1.2", description: "Supports coating in satisfactory condition", sequenceNumber: 2, status: "not_checked", comments: null, createdAt: new Date(), updatedAt: new Date() },
+    { category: "foundation", itemNumber: "3.1.1", itemText: "Vessel foundation supports attached and in satisfactory condition", sequenceNumber: 1, checked: false, status: "not_checked", createdAt: new Date(), updatedAt: new Date() },
+    { category: "foundation", itemNumber: "3.1.2", itemText: "Supports coating in satisfactory condition", sequenceNumber: 2, checked: false, status: "not_checked", createdAt: new Date(), updatedAt: new Date() },
     
     // Shell
-    { category: "shell", itemNumber: "3.2.1", description: "Shell material and coating condition", sequenceNumber: 3, status: "not_checked", comments: null, createdAt: new Date(), updatedAt: new Date() },
-    { category: "shell", itemNumber: "3.2.2", description: "External surface profile smooth and clean", sequenceNumber: 4, status: "not_checked", comments: null, createdAt: new Date(), updatedAt: new Date() },
-    { category: "shell", itemNumber: "3.2.3", description: "Exposed surface profile relatively smooth with no significant oxidation", sequenceNumber: 5, status: "not_checked", comments: null, createdAt: new Date(), updatedAt: new Date() },
-    { category: "shell", itemNumber: "3.2.4", description: "Longitudinal and circumferential welds in satisfactory condition", sequenceNumber: 6, status: "not_checked", comments: null, createdAt: new Date(), updatedAt: new Date() },
-    { category: "shell", itemNumber: "3.2.5", description: "Shell nozzle penetration welds in satisfactory condition", sequenceNumber: 7, status: "not_checked", comments: null, createdAt: new Date(), updatedAt: new Date() },
+    { category: "shell", itemNumber: "3.2.1", itemText: "Shell material and coating condition", sequenceNumber: 3, checked: false, status: "not_checked", createdAt: new Date(), updatedAt: new Date() },
+    { category: "shell", itemNumber: "3.2.2", itemText: "External surface profile smooth and clean", sequenceNumber: 4, checked: false, status: "not_checked", createdAt: new Date(), updatedAt: new Date() },
+    { category: "shell", itemNumber: "3.2.3", itemText: "Exposed surface profile relatively smooth with no significant oxidation", sequenceNumber: 5, checked: false, status: "not_checked", createdAt: new Date(), updatedAt: new Date() },
+    { category: "shell", itemNumber: "3.2.4", itemText: "Longitudinal and circumferential welds in satisfactory condition", sequenceNumber: 6, checked: false, status: "not_checked", createdAt: new Date(), updatedAt: new Date() },
+    { category: "shell", itemNumber: "3.2.5", itemText: "Shell nozzle penetration welds in satisfactory condition", sequenceNumber: 7, checked: false, status: "not_checked", createdAt: new Date(), updatedAt: new Date() },
     
     // Heads
-    { category: "heads", itemNumber: "3.3.1", description: "Head material and condition", sequenceNumber: 8, status: "not_checked", comments: null, createdAt: new Date(), updatedAt: new Date() },
-    { category: "heads", itemNumber: "3.3.2", description: "Head-to-shell welds in satisfactory condition", sequenceNumber: 9, status: "not_checked", comments: null, createdAt: new Date(), updatedAt: new Date() },
-    { category: "heads", itemNumber: "3.3.3", description: "Head nozzle penetrations in satisfactory condition", sequenceNumber: 10, status: "not_checked", comments: null, createdAt: new Date(), updatedAt: new Date() },
+    { category: "heads", itemNumber: "3.3.1", itemText: "Head material and condition", sequenceNumber: 8, checked: false, status: "not_checked", createdAt: new Date(), updatedAt: new Date() },
+    { category: "heads", itemNumber: "3.3.2", itemText: "Head-to-shell welds in satisfactory condition", sequenceNumber: 9, checked: false, status: "not_checked", createdAt: new Date(), updatedAt: new Date() },
+    { category: "heads", itemNumber: "3.3.3", itemText: "Head nozzle penetrations in satisfactory condition", sequenceNumber: 10, checked: false, status: "not_checked", createdAt: new Date(), updatedAt: new Date() },
     
     // Appurtenances
-    { category: "appurtenances", itemNumber: "3.4.1", description: "Nozzles and flanges in satisfactory condition", sequenceNumber: 11, status: "not_checked", comments: null, createdAt: new Date(), updatedAt: new Date() },
-    { category: "appurtenances", itemNumber: "3.4.2", description: "Manways and access openings in satisfactory condition", sequenceNumber: 12, status: "not_checked", comments: null, createdAt: new Date(), updatedAt: new Date() },
-    { category: "appurtenances", itemNumber: "3.4.3", description: "Support lugs and attachments in satisfactory condition", sequenceNumber: 13, status: "not_checked", comments: null, createdAt: new Date(), updatedAt: new Date() },
-    { category: "appurtenances", itemNumber: "3.4.4", description: "Piping connections and valves in satisfactory condition", sequenceNumber: 14, status: "not_checked", comments: null, createdAt: new Date(), updatedAt: new Date() },
+    { category: "appurtenances", itemNumber: "3.4.1", itemText: "Nozzles and flanges in satisfactory condition", sequenceNumber: 11, checked: false, status: "not_checked", createdAt: new Date(), updatedAt: new Date() },
+    { category: "appurtenances", itemNumber: "3.4.2", itemText: "Manways and access openings in satisfactory condition", sequenceNumber: 12, checked: false, status: "not_checked", createdAt: new Date(), updatedAt: new Date() },
+    { category: "appurtenances", itemNumber: "3.4.3", itemText: "Support lugs and attachments in satisfactory condition", sequenceNumber: 13, checked: false, status: "not_checked", createdAt: new Date(), updatedAt: new Date() },
+    { category: "appurtenances", itemNumber: "3.4.4", itemText: "Piping connections and valves in satisfactory condition", sequenceNumber: 14, checked: false, status: "not_checked", createdAt: new Date(), updatedAt: new Date() },
   ];
   
   const db = await getDb();
