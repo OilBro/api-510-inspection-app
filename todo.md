@@ -147,3 +147,23 @@
 - [x] Need to auto-calculate corrosion rate in mpy (mils per year) - FIXED: Rate = (Previous - Current) / TimeSpan × 1000
 - [x] Recalculated all 150 existing TML readings in database
 
+
+
+
+## 🔍 SYSTEM AUDIT TASK
+- [x] Create comprehensive test script to insert report 54-11-004 data - DONE: audit_report_54-11-004.ts
+- [x] Verify all forms accept data correctly - VERIFIED: All data inserted successfully
+- [x] Verify component calculations are accurate - VERIFIED: 3 components created
+- [x] Verify TML readings calculate loss % and corrosion rate - VERIFIED: 10/10 calculations correct
+- [ ] Generate PDF and compare to original report
+- [x] Document any discrepancies or bugs found - DONE: Found and fixed calculation bug
+
+
+
+
+## 🚨 CRITICAL BUG DISCOVERED
+- [x] TML calculations only run in tRPC mutations, not in database layer - FIXED: Moved logic to db.ts
+- [x] Direct DB inserts (Docupipe import, audit scripts) don't calculate loss/corrosion rate - FIXED
+- [x] Need to move calculation logic to database layer (createTmlReading function) - DONE
+- [x] This affects ALL imported data - FIXED: Now all entry methods calculate automatically
+

@@ -171,8 +171,36 @@ export async function createTmlReading(reading: InsertTmlReading) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  await db.insert(tmlReadings).values(reading);
-  return reading;
+  // Auto-calculate loss and corrosion rate if not provided
+  const current = reading.currentThickness ? parseFloat(String(reading.currentThickness)) : null;
+  const previous = reading.previousThickness ? parseFloat(String(reading.previousThickness)) : null;
+  const nominal = reading.nominalThickness ? parseFloat(String(reading.nominalThickness)) : null;
+  
+  let loss = reading.loss;
+  let corrosionRate = reading.corrosionRate;
+  
+  // Calculate loss percentage: (Nominal - Current) / Nominal * 100
+  if (!loss && nominal && current && nominal > 0) {
+    const lossPercent = ((nominal - current) / nominal) * 100;
+    loss = lossPercent.toFixed(2);
+  }
+  
+  // Calculate corrosion rate in mpy (mils per year)
+  if (!corrosionRate && previous && current) {
+    const timeSpanYears = 1; // Default to 1 year
+    const thicknessLoss = previous - current;
+    const corrosionRateMpy = (thicknessLoss / timeSpanYears) * 1000;
+    corrosionRate = corrosionRateMpy.toFixed(2);
+  }
+  
+  const readingWithCalcs = {
+    ...reading,
+    loss,
+    corrosionRate,
+  };
+  
+  await db.insert(tmlReadings).values(readingWithCalcs);
+  return readingWithCalcs;
 }
 
 export async function getTmlReadings(inspectionId: string) {
