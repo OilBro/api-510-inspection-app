@@ -21,58 +21,56 @@
 - [x] Inspection findings, recommendations, photos, appendices tables
 - [x] Database helper functions for all professional report tables
 - [x] Default checklist initialization
+- [x] Professional Report tab UI with component calculations
+- [x] tRPC API routes for professional reports
+- [x] Auto-calculation on data entry
 
 ## In Progress 🚧
 
-### Phase 3: Professional PDF Generation (CURRENT)
-- [ ] PDF generation service with PDFKit
-- [ ] Cover page with logo and metadata
-- [ ] Table of contents with page numbers
-- [ ] Executive summary with TABLE A
-- [ ] Vessel data page (2-column layout)
-- [ ] Inspection results sections (3.1-3.4)
-- [ ] Recommendations sections (4.1-4.5)
-- [ ] Ultrasonic thickness measurements section
-- [ ] Appendix B: Mechanical Integrity Calculations
-  - [ ] Shell evaluation page with formulas
-  - [ ] Shell variable definitions page
-  - [ ] Head evaluation page with formulas
-  - [ ] Head variable definitions page
-- [ ] Appendix D: Inspection Checklist
-- [ ] Appendix E: Inspection Photographs
-- [ ] Professional formatting (headers, footers, page numbers)
+### Current Sprint
+- [x] Enhance Unmatched Data tab to support mapping to Professional Report fields
+- [x] Add Professional Report sections to field mapping dropdown options
+- [x] Allow mapping to component calculation fields (material, pressure, diameter, etc.)
+- [x] Allow mapping to report metadata fields (inspector, client, dates)
+
+### Phase 3: Professional PDF Generation
+- [x] PDF generation service with PDFKit
+- [x] Cover page with logo and metadata
+- [x] Table of contents with page numbers
+- [x] Executive summary with TABLE A
+- [x] Vessel data page (2-column layout)
+- [x] Inspection results sections (3.1-3.4)
+- [x] Recommendations sections (4.1-4.5)
+- [x] Ultrasonic thickness measurements section
+- [x] Appendix B: Mechanical Integrity Calculations
+  - [x] Shell evaluation page with formulas
+  - [x] Shell variable definitions page
+  - [x] Head evaluation page with formulas
+  - [x] Head variable definitions page
+- [x] Appendix D: Inspection Checklist
+- [x] Appendix E: Inspection Photographs
+- [x] Professional formatting (headers, footers, page numbers)
 
 ### Phase 4: Photo & Document Management
 - [ ] Photo upload component with section tagging
 - [ ] Photo preview and management
 - [ ] Document upload for appendices
-- [ ] Photo placement in PDF report
+- [ ] Photo placement in PDF report (already implemented in PDF generator)
 - [ ] Document embedding in PDF appendices
 
-### Phase 5: UI Components
-- [ ] Professional Report tab in inspection detail
-- [ ] Report metadata form (inspector, client, dates)
-- [ ] Component calculation forms (shell/head)
-- [ ] Inspection findings editor
-- [ ] Recommendations editor
-- [ ] Photo upload interface
-- [ ] Checklist interface
+### Phase 5: UI Components - Remaining
+- [x] Professional Report tab in inspection detail
+- [x] Report metadata form (inspector, client, dates)
+- [x] Component calculation forms (shell/head)
+- [ ] Inspection findings editor (placeholder exists)
+- [ ] Recommendations editor (placeholder exists)
+- [ ] Photo upload interface (placeholder exists)
+- [ ] Checklist interface (placeholder exists)
 - [ ] Document upload interface
-- [ ] "Generate Final Report" button
-
-### Phase 6: tRPC API Routes
-- [ ] Professional report CRUD operations
-- [ ] Component calculation operations
-- [ ] Inspection findings operations
-- [ ] Recommendations operations
-- [ ] Photo upload and management
-- [ ] Document upload and management
-- [ ] Checklist operations
-- [ ] PDF generation endpoint
 
 ### Phase 7: Verification & Testing
-- [ ] Verify shell calculations against sample report (54-11-005)
-- [ ] Verify head calculations against sample report
+- [ ] Verify shell calculations against sample report (54-11-005) - NEED INPUT VALUES
+- [ ] Verify head calculations against sample report - NEED INPUT VALUES
 - [ ] Test with multiple vessel types
 - [ ] Test with different head types
 - [ ] Validate PDF output matches original format
@@ -92,4 +90,5 @@
 - Photos tagged by section for proper placement
 - Appendices auto-generated from uploaded documents
 - Working from 40-page sample report as template
+- Backend complete, focusing on UI completion
 

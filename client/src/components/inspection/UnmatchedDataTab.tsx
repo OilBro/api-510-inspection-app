@@ -65,6 +65,74 @@ const FIELD_MAPPINGS = {
       executiveSummary: "Executive Summary",
     },
   },
+  professionalReport: {
+    label: "Professional Report - Metadata",
+    fields: {
+      reportNumber: "Report Number",
+      reportDate: "Report Date",
+      inspectorName: "Inspector Name",
+      inspectorCertification: "API 510 Certification",
+      employerName: "Employer/Company Name",
+      clientName: "Client Name",
+      clientLocation: "Client Location",
+      clientContact: "Client Contact",
+      clientApprovalName: "Client Approval Name",
+      clientApprovalTitle: "Client Approval Title",
+      executiveSummary: "Executive Summary",
+      governingComponent: "Governing Component",
+      nextExternalInspectionClient: "Next External Inspection (Client)",
+      nextExternalInspectionAPI: "Next External Inspection (API)",
+      nextInternalInspection: "Next Internal Inspection",
+      nextUTInspection: "Next UT Inspection",
+    },
+  },
+  componentCalculation: {
+    label: "Professional Report - Component Calculation",
+    fields: {
+      componentName: "Component Name",
+      componentType: "Component Type (shell/head)",
+      materialCode: "Material Code",
+      materialName: "Material Name",
+      designTemp: "Design Temperature (°F)",
+      designMAWP: "Design MAWP (psi)",
+      staticHead: "Static Head (ft)",
+      specificGravity: "Specific Gravity",
+      insideDiameter: "Inside Diameter (in)",
+      nominalThickness: "Nominal Thickness (in)",
+      allowableStress: "Allowable Stress (psi)",
+      jointEfficiency: "Joint Efficiency",
+      headType: "Head Type",
+      crownRadius: "Crown Radius (in)",
+      knuckleRadius: "Knuckle Radius (in)",
+      previousThickness: "Previous Thickness (in)",
+      actualThickness: "Actual Thickness (in)",
+      timeSpan: "Time Span (years)",
+      nextInspectionYears: "Years to Next Inspection",
+    },
+  },
+  inspectionFindings: {
+    label: "Professional Report - Findings",
+    fields: {
+      section: "Section (Foundation/Shell/Heads/Appurtenances)",
+      findingType: "Finding Type (observation/defect/recommendation)",
+      severity: "Severity (low/medium/high/critical)",
+      description: "Description",
+      location: "Location",
+      measurements: "Measurements",
+      photos: "Photo References",
+    },
+  },
+  recommendations: {
+    label: "Professional Report - Recommendations",
+    fields: {
+      category: "Category",
+      priority: "Priority (low/medium/high/critical)",
+      description: "Description",
+      justification: "Justification",
+      estimatedCost: "Estimated Cost",
+      targetDate: "Target Completion Date",
+    },
+  },
 };
 
 export default function UnmatchedDataTab({ inspectionId }: UnmatchedDataTabProps) {
@@ -105,8 +173,13 @@ export default function UnmatchedDataTab({ inspectionId }: UnmatchedDataTabProps
         sourceValue: fieldValue,
         learnMapping: true,
       });
-
-      toast.success("Field mapped successfully! The system will remember this mapping for future imports.");
+      toast.success("Field mapped successfully! System will remember this mapping.");
+      
+      // If mapping to professional report, provide additional guidance
+      if (mapping.section === 'professionalReport' || mapping.section === 'componentCalculation') {
+        toast.info("Mapped to Professional Report. Visit the Professional Report tab to see the data.");
+      }
+      
       utils.unmatchedData.list.invalidate({ inspectionId });
       
       // Clear the selection
