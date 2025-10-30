@@ -27,11 +27,12 @@
 
 ## In Progress 🚧
 
-### Current Sprint
-- [x] Enhance Unmatched Data tab to support mapping to Professional Report fields
-- [x] Add Professional Report sections to field mapping dropdown options
-- [x] Allow mapping to component calculation fields (material, pressure, diameter, etc.)
-- [x] Allow mapping to report metadata fields (inspector, client, dates)
+### Current Sprint - Completing Professional Report UI
+- [ ] Build Inspection Findings section UI
+- [ ] Build Recommendations section UI
+- [ ] Build Photos upload and management UI
+- [ ] Build Checklist section UI
+- [ ] Integrate all sections with PDF generation
 
 ### Phase 3: Professional PDF Generation
 - [x] PDF generation service with PDFKit

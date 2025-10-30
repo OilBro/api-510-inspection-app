@@ -8,6 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Loader2, Download, Plus, Trash2, Upload } from "lucide-react";
+import FindingsSection from "@/components/professionalReport/FindingsSection";
+import RecommendationsSection from "@/components/professionalReport/RecommendationsSection";
+import PhotosSection from "@/components/professionalReport/PhotosSection";
+import ChecklistSection from "@/components/professionalReport/ChecklistSection";
 import {
   Dialog,
   DialogContent,
@@ -807,33 +811,5 @@ function InspectionFindingsSection({ reportId }: { reportId: string }) {
   );
 }
 
-function RecommendationsSection({ reportId }: { reportId: string }) {
-  return (
-    <Card>
-      <CardContent className="p-8 text-center text-muted-foreground">
-        Recommendations section - Coming soon
-      </CardContent>
-    </Card>
-  );
-}
 
-function PhotosSection({ reportId }: { reportId: string }) {
-  return (
-    <Card>
-      <CardContent className="p-8 text-center text-muted-foreground">
-        Photos section - Coming soon
-      </CardContent>
-    </Card>
-  );
-}
-
-function ChecklistSection({ reportId }: { reportId: string}) {
-  return (
-    <Card>
-      <CardContent className="p-8 text-center text-muted-foreground">
-        Checklist section - Coming soon
-      </CardContent>
-    </Card>
-  );
-}
 

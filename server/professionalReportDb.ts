@@ -321,3 +321,23 @@ export async function initializeDefaultChecklist(reportId: string) {
   }
 }
 
+
+
+export async function deleteInspectionFinding(findingId: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db
+    .delete(inspectionFindings)
+    .where(eq(inspectionFindings.id, findingId));
+}
+
+export async function deleteRecommendation(recommendationId: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db
+    .delete(recommendations)
+    .where(eq(recommendations.id, recommendationId));
+}
+

@@ -337,11 +337,14 @@ export const inspectionFindings = mysqlTable("inspectionFindings", {
   id: varchar("id", { length: 64 }).primaryKey(),
   reportId: varchar("reportId", { length: 64 }).notNull(),
   
-  section: varchar("section", { length: 255 }).notNull(), // "foundation", "shell", "heads", "appurtenances"
-  subsection: varchar("subsection", { length: 255 }), // e.g., "3.1.1", "3.2.1"
+  section: varchar("section", { length: 255 }).notNull(), // "Foundation", "Shell", "Heads", "Appurtenances", etc.
+  findingType: varchar("findingType", { length: 50 }).notNull().default("observation"), // "observation", "defect", "recommendation"
+  severity: varchar("severity", { length: 50 }).notNull().default("low"), // "low", "medium", "high", "critical"
   
-  findings: text("findings"),
-  notes: text("notes"),
+  description: text("description").notNull(),
+  location: varchar("location", { length: 255 }),
+  measurements: text("measurements"),
+  photos: text("photos"), // Comma-separated photo references
   
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),

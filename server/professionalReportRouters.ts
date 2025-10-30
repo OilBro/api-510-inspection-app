@@ -13,9 +13,11 @@ import {
   createInspectionFinding,
   getInspectionFindings,
   updateInspectionFinding,
+  deleteInspectionFinding,
   createRecommendation,
   getRecommendations,
   updateRecommendation,
+  deleteRecommendation,
   createInspectionPhoto,
   getInspectionPhotos,
   deleteInspectionPhoto,
@@ -245,9 +247,12 @@ export const professionalReportRouter = router({
       .input(z.object({
         reportId: z.string(),
         section: z.string(),
-        subsection: z.string().optional(),
-        findings: z.string().optional(),
-        notes: z.string().optional(),
+        findingType: z.enum(['observation', 'defect', 'recommendation']).default('observation'),
+        severity: z.enum(['low', 'medium', 'high', 'critical']).default('low'),
+        description: z.string(),
+        location: z.string().optional(),
+        measurements: z.string().optional(),
+        photos: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
         const id = nanoid();
@@ -263,13 +268,24 @@ export const professionalReportRouter = router({
     update: protectedProcedure
       .input(z.object({
         findingId: z.string(),
-        data: z.object({
-          findings: z.string().optional(),
-          notes: z.string().optional(),
-        }),
+        section: z.string().optional(),
+        findingType: z.enum(['observation', 'defect', 'recommendation']).optional(),
+        severity: z.enum(['low', 'medium', 'high', 'critical']).optional(),
+        description: z.string().optional(),
+        location: z.string().optional(),
+        measurements: z.string().optional(),
+        photos: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
-        await updateInspectionFinding(input.findingId, input.data);
+        const { findingId, ...data } = input;
+        await updateInspectionFinding(findingId, data);
+        return { success: true };
+      }),
+    
+    delete: protectedProcedure
+      .input(z.object({ findingId: z.string() }))
+      .mutation(async ({ input }) => {
+        await deleteInspectionFinding(input.findingId);
         return { success: true };
       }),
   }),
@@ -311,6 +327,13 @@ export const professionalReportRouter = router({
       }))
       .mutation(async ({ input }) => {
         await updateRecommendation(input.recommendationId, input.data);
+        return { success: true };
+      }),
+    
+    delete: protectedProcedure
+      .input(z.object({ recommendationId: z.string() }))
+      .mutation(async ({ input }) => {
+        await deleteRecommendation(input.recommendationId);
         return { success: true };
       }),
   }),
@@ -357,10 +380,21 @@ export const professionalReportRouter = router({
         return await getChecklistItems(input.reportId);
       }),
     
+    initialize: protectedProcedure
+      .input(z.object({ reportId: z.string() }))
+      .mutation(async ({ input }) => {
+        await initializeDefaultChecklist(input.reportId);
+        return { success: true };
+      }),
+    
     update: protectedProcedure
       .input(z.object({
         itemId: z.string(),
-        status: z.enum(['satisfactory', 'unsatisfactory', 'not_applicable', 'not_checked']),
+        checked: z.boolean().optional(),
+        checkedBy: z.string().optional().nullable(),
+        checkedDate: z.date().optional().nullable(),
+        notes: z.string().optional(),
+        status: z.enum(['satisfactory', 'unsatisfactory', 'not_applicable', 'not_checked']).optional(),
         comments: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
