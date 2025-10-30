@@ -29,7 +29,7 @@ import {
   updateChecklistItem,
   initializeDefaultChecklist,
 } from "./professionalReportDb";
-import { generateProfessionalPDF } from "./professionalPdfGenerator";
+import { generateProfessionalPDF } from "./professionalPdfGeneratorFixed";
 import { evaluateShell, evaluateHead, ShellCalculationInputs, HeadCalculationInputs } from "./professionalCalculations";
 
 // ============================================================================

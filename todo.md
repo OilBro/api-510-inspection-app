@@ -1,12 +1,12 @@
 # API 510 Professional Report System - TODO
 
 ## 🚨 URGENT BUGS - FIX NOW
-- [ ] Fix PDF overlapping text - spacing/layout issues causing text overlap
 - [x] Fix checklist section not working - schema mismatch fixed, migration applied
+- [x] **CRITICAL: PDF generator creating blank pages - FIXED - completely rewrote generator**
+- [ ] Fix PDF overlapping text - spacing/layout issues causing text overlap
 - [ ] Fix photo section not working - need to test upload functionality
 - [ ] Improve Docupipe import matching - many fields not being mapped correctly
 - [ ] Add logo support to PDF report header
-- [ ] Fix missing pages in generated PDF report
 
 ## 📋 NEW FEATURE REQUESTS
 - [ ] Add component readings import button with Excel template support
