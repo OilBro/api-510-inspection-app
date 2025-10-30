@@ -178,3 +178,12 @@
 - [x] Check if database save is working - FIXED: Saves S3 URL instead of base64
 - [ ] Verify photo display in inspection view - Need to test
 
+
+
+
+## 🐛 PDF PHOTO RENDERING BUG
+- [x] Photos uploading successfully to S3 and saving to database - WORKING
+- [x] PDF generator showing "[Photo placeholder - image rendering to be implemented]" instead of actual photos - FIXED
+- [x] Need to implement actual image rendering in PDF generator - DONE: Implemented fetch + PDFKit image embedding
+- [x] Must fetch photo from S3 URL and embed in PDF - DONE: Fetches from S3 and renders with fit constraints
+

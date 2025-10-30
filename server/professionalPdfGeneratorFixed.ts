@@ -272,7 +272,7 @@ export async function generateProfessionalPDF(data: ProfessionalReportData): Pro
   console.log('[PDF DEBUG] Page count after checklist:', doc.bufferedPageRange().count);
   
   console.log('[PDF DEBUG] Generating photos...');
-  generatePhotos(doc, photos);
+  await generatePhotos(doc, photos);
   console.log('[PDF DEBUG] Final page count:', doc.bufferedPageRange().count);
   
   // Finalize
@@ -608,7 +608,7 @@ function generateChecklist(doc: PDFKit.PDFDocument, items: any[]) {
   });
 }
 
-function generatePhotos(doc: PDFKit.PDFDocument, photos: any[]) {
+async function generatePhotos(doc: PDFKit.PDFDocument, photos: any[]) {
   doc.addPage();
   addHeader(doc, 'PHOTOGRAPHS', 10);
   
@@ -619,18 +619,53 @@ function generatePhotos(doc: PDFKit.PDFDocument, photos: any[]) {
     return;
   }
   
-  photos.forEach((photo, index) => {
-    addSubsectionTitle(doc, `Photo ${index + 1}: ${photo.caption || 'Untitled'}`);
-    addText(doc, photo.description || '');
+  for (let i = 0; i < photos.length; i++) {
+    const photo = photos[i];
+    addSubsectionTitle(doc, `Photo ${i + 1}: ${photo.caption || 'Untitled'}`);
+    if (photo.description) {
+      addText(doc, photo.description);
+      doc.moveDown(0.5);
+    }
     
-    // TODO: Add actual photo rendering from base64/URL
-    addText(doc, '[Photo placeholder - image rendering to be implemented]', { 
-      fontSize: 9, 
-      align: 'center' 
-    });
+    // Render actual photo from URL
+    if (photo.photoUrl) {
+      try {
+        // Fetch image from URL
+        const response = await fetch(photo.photoUrl);
+        if (!response.ok) throw new Error(`Failed to fetch image: ${response.statusText}`);
+        
+        const imageBuffer = Buffer.from(await response.arrayBuffer());
+        
+        // Calculate image dimensions to fit on page
+        const maxWidth = 500;
+        const maxHeight = 350;
+        
+        // Check if we need a new page for the image
+        checkPageBreak(doc, maxHeight + 50);
+        
+        // Add image to PDF
+        doc.image(imageBuffer, {
+          fit: [maxWidth, maxHeight],
+          align: 'center',
+        });
+        
+        console.log(`[PDF] Rendered photo ${i + 1}: ${photo.caption}`);
+      } catch (error) {
+        console.error(`[PDF] Failed to render photo ${i + 1}:`, error);
+        addText(doc, `[Photo could not be loaded: ${photo.photoUrl}]`, { 
+          fontSize: 9, 
+          align: 'center' 
+        });
+      }
+    } else {
+      addText(doc, '[No photo URL provided]', { 
+        fontSize: 9, 
+        align: 'center' 
+      });
+    }
     
     doc.moveDown(2);
     checkPageBreak(doc, 200);
-  });
+  }
 }
 
