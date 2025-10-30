@@ -3,12 +3,13 @@
 ## 🚨 URGENT BUGS - FIX NOW
 
 ### CRITICAL PDF ISSUES (616 pages generated!)
-- [ ] PDF generating 616 pages instead of ~40 pages - investigate page generation loop
+- [x] PDF generating 616 pages instead of ~40 pages - FIXED: Table pagination now limits 30 rows per page
+- [x] TML numbers not displaying in PDF report - FIXED: Corrected field mapping (tmlId, component, currentThickness, etc.)
+- [x] Thickness measurement table only showing data in last column - FIXED: Updated to use correct schema fields
 - [ ] Executive summary text getting truncated
 - [ ] Component calculations section blank - no data rendered
 - [ ] Blank pages being created when no data exists
 - [ ] Need to skip sections with no data instead of creating blank pages
-- [ ] TML numbers not displaying in PDF report
 
 ### CRITICAL IMPORT ISSUES
 - [ ] Docupipe import not matching/inserting most data correctly

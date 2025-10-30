@@ -114,47 +114,74 @@ function checkPageBreak(doc: PDFKit.PDFDocument, requiredSpace: number) {
 
 function addTable(doc: PDFKit.PDFDocument, headers: string[], rows: string[][]) {
   const colWidth = CONTENT_WIDTH / headers.length;
-  let startY = doc.y;
+  const ROW_HEIGHT = 20;
+  const HEADER_HEIGHT = 25;
+  const MAX_ROWS_PER_PAGE = 30; // Limit rows per page to avoid issues
   
-  checkPageBreak(doc, 40 + (rows.length * 20));
-  
-  // Header row
-  doc.fillColor(COLORS.headerBg).rect(MARGIN, startY, CONTENT_WIDTH, 25).fill();
-  doc.fillColor(COLORS.text).font('Helvetica-Bold').fontSize(9);
-  
-  headers.forEach((header, i) => {
-    doc.text(header, MARGIN + (i * colWidth) + 5, startY + 8, {
-      width: colWidth - 10,
-      align: 'left'
-    });
-  });
-  
-  startY += 25;
-  
-  // Data rows
-  doc.font('Helvetica').fontSize(9);
-  rows.forEach((row, rowIndex) => {
-    const rowY = startY + (rowIndex * 20);
+  // Helper to draw table header
+  function drawTableHeader(y: number) {
+    doc.fillColor(COLORS.headerBg).rect(MARGIN, y, CONTENT_WIDTH, HEADER_HEIGHT).fill();
+    doc.fillColor(COLORS.text).font('Helvetica-Bold').fontSize(9);
     
-    // Alternate row background
-    if (rowIndex % 2 === 0) {
-      doc.fillColor('#f9fafb').rect(MARGIN, rowY, CONTENT_WIDTH, 20).fill();
-    }
-    
-    doc.fillColor(COLORS.text);
-    row.forEach((cell, colIndex) => {
-      doc.text(cell || '-', MARGIN + (colIndex * colWidth) + 5, rowY + 5, {
+    headers.forEach((header, i) => {
+      doc.text(header, MARGIN + (i * colWidth) + 5, y + 8, {
         width: colWidth - 10,
         align: 'left'
       });
     });
-  });
+    
+    return y + HEADER_HEIGHT;
+  }
   
-  // Border
-  doc.strokeColor(COLORS.border).lineWidth(1);
-  doc.rect(MARGIN, doc.y, CONTENT_WIDTH, 25 + (rows.length * 20)).stroke();
-  
-  doc.y = startY + (rows.length * 20) + 10;
+  // Split rows into chunks if needed
+  let rowIndex = 0;
+  while (rowIndex < rows.length) {
+    const remainingRows = rows.length - rowIndex;
+    const rowsThisPage = Math.min(remainingRows, MAX_ROWS_PER_PAGE);
+    
+    // Check if we need a page break
+    const neededSpace = HEADER_HEIGHT + (rowsThisPage * ROW_HEIGHT) + 20;
+    checkPageBreak(doc, neededSpace);
+    
+    // Draw header
+    let currentY = drawTableHeader(doc.y);
+    const tableStartY = currentY - HEADER_HEIGHT;
+    
+    // Draw rows for this page
+    doc.font('Helvetica').fontSize(9);
+    for (let i = 0; i < rowsThisPage; i++) {
+      const row = rows[rowIndex + i];
+      const rowY = currentY + (i * ROW_HEIGHT);
+      
+      // Alternate row background
+      if (i % 2 === 0) {
+        doc.fillColor('#f9fafb').rect(MARGIN, rowY, CONTENT_WIDTH, ROW_HEIGHT).fill();
+      }
+      
+      doc.fillColor(COLORS.text);
+      row.forEach((cell, colIndex) => {
+        doc.text(cell || '-', MARGIN + (colIndex * colWidth) + 5, rowY + 5, {
+          width: colWidth - 10,
+          align: 'left'
+        });
+      });
+    }
+    
+    // Draw border around this table section
+    const tableHeight = HEADER_HEIGHT + (rowsThisPage * ROW_HEIGHT);
+    doc.strokeColor(COLORS.border).lineWidth(1);
+    doc.rect(MARGIN, tableStartY, CONTENT_WIDTH, tableHeight).stroke();
+    
+    // Update position
+    doc.y = currentY + (rowsThisPage * ROW_HEIGHT) + 10;
+    rowIndex += rowsThisPage;
+    
+    // If more rows remain, add a page break
+    if (rowIndex < rows.length) {
+      doc.addPage();
+      doc.y = MARGIN + 60;
+    }
+  }
 }
 
 // ============================================================================
@@ -518,19 +545,30 @@ function generateThicknessReadings(doc: PDFKit.PDFDocument, readings: any[]) {
   
   addSectionTitle(doc, '6.0 ULTRASONIC THICKNESS MEASUREMENTS');
   
+  console.log('[PDF DEBUG] TML Readings - Total count:', readings?.length || 0);
+  
   if (!readings || readings.length === 0) {
     addText(doc, 'No thickness readings recorded.');
     return;
   }
   
-  const headers = ['TML #', 'Location', 'Reading (in)', 'Min Req (in)', 'Status'];
+  // Log first few readings to verify data structure
+  console.log('[PDF DEBUG] First TML reading:', readings[0]);
+  
+  const headers = ['TML #', 'Component', 'Current (in)', 'Previous (in)', 'Nominal (in)', 'Loss (in)', 'Rate (mpy)', 'Status'];
   const rows = readings.map(r => [
-    r.tmlNumber || '-',
-    r.location || '-',
-    r.reading?.toFixed(3) || '-',
-    r.minRequired?.toFixed(3) || '-',
+    r.tmlId || '-',
+    r.component || '-',
+    r.currentThickness ? parseFloat(r.currentThickness).toFixed(3) : '-',
+    r.previousThickness ? parseFloat(r.previousThickness).toFixed(3) : '-',
+    r.nominalThickness ? parseFloat(r.nominalThickness).toFixed(3) : '-',
+    r.loss ? parseFloat(r.loss).toFixed(2) : '-',
+    r.corrosionRate ? parseFloat(r.corrosionRate).toFixed(2) : '-',
     r.status || '-',
   ]);
+  
+  console.log('[PDF DEBUG] TML table rows created:', rows.length);
+  console.log('[PDF DEBUG] First row data:', rows[0]);
   
   addTable(doc, headers, rows);
 }
