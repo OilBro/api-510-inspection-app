@@ -187,3 +187,18 @@
 - [x] Need to implement actual image rendering in PDF generator - DONE: Implemented fetch + PDFKit image embedding
 - [x] Must fetch photo from S3 URL and embed in PDF - DONE: Fetches from S3 and renders with fit constraints
 
+
+
+
+## 🎨 PDF LOGO INTEGRATION
+- [x] Convert BMP logo to PNG format - DONE: 200x84px PNG created
+- [x] Logo stored in client/public/oilpro-logo.png
+- [x] Add company header to all PDF pages - DONE:
+  * OilPro logo (top left, 100x42px)
+  * OILPRO CONSULTING LLC
+  * Phone: 337-446-7459
+  * Website: www.oilproconsulting.com
+- [x] Update addHeader function to include logo and company info - DONE
+- [x] Made all generate functions async to support logo rendering
+- [x] Logo loads from filesystem at PDF generation time
+

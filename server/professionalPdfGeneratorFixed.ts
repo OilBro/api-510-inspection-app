@@ -36,14 +36,31 @@ const COLORS = {
 // HELPER FUNCTIONS
 // ============================================================================
 
-function addHeader(doc: PDFKit.PDFDocument, title: string, pageNum?: number) {
+async function addHeader(doc: PDFKit.PDFDocument, title: string, pageNum?: number, logoBuffer?: Buffer) {
   const startY = doc.y;
   
-  // Company name
-  doc.font('Helvetica-Bold').fontSize(10).fillColor(COLORS.primary);
-  doc.text('OILPRO CONSULTING LLC', MARGIN, MARGIN);
+  // Add logo if provided (top left)
+  if (logoBuffer) {
+    try {
+      doc.image(logoBuffer, MARGIN, MARGIN, {
+        width: 100, // Scale down to fit header
+        height: 42,
+      });
+    } catch (error) {
+      console.error('[PDF] Failed to add logo:', error);
+    }
+  }
   
-  // Page number
+  // Company information (right side of logo)
+  const companyX = MARGIN + 110;
+  doc.font('Helvetica-Bold').fontSize(11).fillColor(COLORS.primary);
+  doc.text('OILPRO CONSULTING LLC', companyX, MARGIN);
+  
+  doc.font('Helvetica').fontSize(9).fillColor(COLORS.text);
+  doc.text('Phone: 337-446-7459', companyX, MARGIN + 14);
+  doc.text('www.oilproconsulting.com', companyX, MARGIN + 26);
+  
+  // Page number (far right)
   if (pageNum) {
     doc.font('Helvetica').fontSize(9).fillColor(COLORS.secondary);
     doc.text(`Page ${pageNum}`, PAGE_WIDTH - MARGIN - 60, MARGIN, {
@@ -52,10 +69,10 @@ function addHeader(doc: PDFKit.PDFDocument, title: string, pageNum?: number) {
     });
   }
   
-  // Title
+  // Title (centered below header)
   if (title) {
     doc.font('Helvetica-Bold').fontSize(12).fillColor(COLORS.text);
-    doc.text(title, MARGIN, MARGIN + 20, {
+    doc.text(title, MARGIN, MARGIN + 50, {
       width: CONTENT_WIDTH,
       align: 'center'
     });
@@ -63,9 +80,9 @@ function addHeader(doc: PDFKit.PDFDocument, title: string, pageNum?: number) {
   
   // Separator line
   doc.strokeColor(COLORS.border).lineWidth(1);
-  doc.moveTo(MARGIN, MARGIN + 45).lineTo(PAGE_WIDTH - MARGIN, MARGIN + 45).stroke();
+  doc.moveTo(MARGIN, MARGIN + 70).lineTo(PAGE_WIDTH - MARGIN, MARGIN + 70).stroke();
   
-  doc.y = MARGIN + 55;
+  doc.y = MARGIN + 80;
   doc.fillColor(COLORS.text);
 }
 
@@ -196,6 +213,17 @@ export interface ProfessionalReportData {
 export async function generateProfessionalPDF(data: ProfessionalReportData): Promise<Buffer> {
   const { reportId, inspectionId } = data;
   
+  // Load company logo
+  let logoBuffer: Buffer | undefined;
+  try {
+    const logoPath = './client/public/oilpro-logo.png';
+    const fs = await import('fs');
+    logoBuffer = fs.readFileSync(logoPath);
+    console.log('[PDF] Logo loaded successfully');
+  } catch (error) {
+    console.error('[PDF] Failed to load logo:', error);
+  }
+  
   // Fetch all data
   const report = await getProfessionalReport(reportId);
   if (!report) throw new Error('Report not found');
@@ -240,39 +268,39 @@ export async function generateProfessionalPDF(data: ProfessionalReportData): Pro
   console.log('[PDF DEBUG] Page count after cover:', doc.bufferedPageRange().count);
   
   console.log('[PDF DEBUG] Generating TOC...');
-  generateTableOfContents(doc);
+  await generateTableOfContents(doc, logoBuffer);
   console.log('[PDF DEBUG] Page count after TOC:', doc.bufferedPageRange().count);
   
   console.log('[PDF DEBUG] Generating executive summary...');
-  generateExecutiveSummary(doc, report, components);
+  await generateExecutiveSummary(doc, report, components, logoBuffer);
   console.log('[PDF DEBUG] Page count after exec summary:', doc.bufferedPageRange().count);
   
   console.log('[PDF DEBUG] Generating vessel data...');
-  generateVesselData(doc, inspection);
+  await generateVesselData(doc, inspection, logoBuffer);
   console.log('[PDF DEBUG] Page count after vessel data:', doc.bufferedPageRange().count);
   
   console.log('[PDF DEBUG] Generating component calculations...');
-  generateComponentCalculations(doc, components);
+  await generateComponentCalculations(doc, components, logoBuffer);
   console.log('[PDF DEBUG] Page count after components:', doc.bufferedPageRange().count);
   
   console.log('[PDF DEBUG] Generating findings...');
-  generateInspectionFindings(doc, findings);
+  await generateInspectionFindings(doc, findings, logoBuffer);
   console.log('[PDF DEBUG] Page count after findings:', doc.bufferedPageRange().count);
   
   console.log('[PDF DEBUG] Generating recommendations...');
-  generateRecommendationsSection(doc, recommendations);
+  await generateRecommendationsSection(doc, recommendations, logoBuffer);
   console.log('[PDF DEBUG] Page count after recommendations:', doc.bufferedPageRange().count);
   
   console.log('[PDF DEBUG] Generating thickness readings...');
-  generateThicknessReadings(doc, tmlReadings);
+  await generateThicknessReadings(doc, tmlReadings, logoBuffer);
   console.log('[PDF DEBUG] Page count after TML:', doc.bufferedPageRange().count);
   
   console.log('[PDF DEBUG] Generating checklist...');
-  generateChecklist(doc, checklist);
+  await generateChecklist(doc, checklist, logoBuffer);
   console.log('[PDF DEBUG] Page count after checklist:', doc.bufferedPageRange().count);
   
   console.log('[PDF DEBUG] Generating photos...');
-  await generatePhotos(doc, photos);
+  await generatePhotos(doc, photos, logoBuffer);
   console.log('[PDF DEBUG] Final page count:', doc.bufferedPageRange().count);
   
   // Finalize
@@ -360,9 +388,9 @@ function generateCoverPage(doc: PDFKit.PDFDocument, report: any, inspection: any
   });
 }
 
-function generateTableOfContents(doc: PDFKit.PDFDocument) {
+async function generateTableOfContents(doc: PDFKit.PDFDocument, logoBuffer?: Buffer) {
   doc.addPage();
-  addHeader(doc, 'TABLE OF CONTENTS', 2);
+  await addHeader(doc, 'TABLE OF CONTENTS', 2, logoBuffer);
   
   const sections = [
     '1.0 EXECUTIVE SUMMARY',
@@ -382,9 +410,9 @@ function generateTableOfContents(doc: PDFKit.PDFDocument) {
   });
 }
 
-function generateExecutiveSummary(doc: PDFKit.PDFDocument, report: any, components: any[]) {
+async function generateExecutiveSummary(doc: PDFKit.PDFDocument, report: any, components: any[], logoBuffer?: Buffer) {
   doc.addPage();
-  addHeader(doc, 'EXECUTIVE SUMMARY', 3);
+  await addHeader(doc, 'EXECUTIVE SUMMARY', 3, logoBuffer);
   
   addSectionTitle(doc, '1.0 EXECUTIVE SUMMARY');
   
@@ -412,9 +440,9 @@ function generateExecutiveSummary(doc: PDFKit.PDFDocument, report: any, componen
   }
 }
 
-function generateVesselData(doc: PDFKit.PDFDocument, inspection: any) {
+async function generateVesselData(doc: PDFKit.PDFDocument, inspection: any, logoBuffer?: Buffer) {
   doc.addPage();
-  addHeader(doc, 'VESSEL DATA', 4);
+  await addHeader(doc, 'VESSEL DATA', 4, logoBuffer);
   
   addSectionTitle(doc, '2.0 VESSEL DATA');
   
@@ -454,9 +482,9 @@ function generateVesselData(doc: PDFKit.PDFDocument, inspection: any) {
   doc.y = leftY + 20;
 }
 
-function generateComponentCalculations(doc: PDFKit.PDFDocument, components: any[]) {
+async function generateComponentCalculations(doc: PDFKit.PDFDocument, components: any[], logoBuffer?: Buffer) {
   doc.addPage();
-  addHeader(doc, 'COMPONENT CALCULATIONS', 5);
+  await addHeader(doc, 'COMPONENT CALCULATIONS', 5, logoBuffer);
   
   addSectionTitle(doc, '3.0 MECHANICAL INTEGRITY CALCULATIONS');
   
@@ -493,9 +521,9 @@ function generateComponentCalculations(doc: PDFKit.PDFDocument, components: any[
   });
 }
 
-function generateInspectionFindings(doc: PDFKit.PDFDocument, findings: any[]) {
+async function generateInspectionFindings(doc: PDFKit.PDFDocument, findings: any[], logoBuffer?: Buffer) {
   doc.addPage();
-  addHeader(doc, 'INSPECTION FINDINGS', 6);
+  await addHeader(doc, 'INSPECTION FINDINGS', 6, logoBuffer);
   
   addSectionTitle(doc, '4.0 INSPECTION FINDINGS');
   
@@ -521,9 +549,9 @@ function generateInspectionFindings(doc: PDFKit.PDFDocument, findings: any[]) {
   });
 }
 
-function generateRecommendationsSection(doc: PDFKit.PDFDocument, recommendations: any[]) {
+async function generateRecommendationsSection(doc: PDFKit.PDFDocument, recommendations: any[], logoBuffer?: Buffer) {
   doc.addPage();
-  addHeader(doc, 'RECOMMENDATIONS', 7);
+  await addHeader(doc, 'RECOMMENDATIONS', 7, logoBuffer);
   
   addSectionTitle(doc, '5.0 RECOMMENDATIONS');
   
@@ -548,12 +576,12 @@ function generateRecommendationsSection(doc: PDFKit.PDFDocument, recommendations
   });
 }
 
-function generateThicknessReadings(doc: PDFKit.PDFDocument, readings: any[]) {
+async function generateThicknessReadings(doc: PDFKit.PDFDocument, readings: any[], logoBuffer?: Buffer) {
   console.log('[PDF DEBUG] TML Readings - Total count:', readings?.length || 0);
   
   if (!readings || readings.length === 0) {
     doc.addPage();
-    addHeader(doc, 'THICKNESS MEASUREMENTS', 8);
+    await addHeader(doc, 'THICKNESS MEASUREMENTS', 8, logoBuffer);
     addSectionTitle(doc, '6.0 ULTRASONIC THICKNESS MEASUREMENTS');
     addText(doc, 'No thickness readings recorded.');
     return;
@@ -561,7 +589,7 @@ function generateThicknessReadings(doc: PDFKit.PDFDocument, readings: any[]) {
   
   // Only add page if we have data - table function will handle pagination
   doc.addPage();
-  addHeader(doc, 'THICKNESS MEASUREMENTS', 8);
+  await addHeader(doc, 'THICKNESS MEASUREMENTS', 8, logoBuffer);
   addSectionTitle(doc, '6.0 ULTRASONIC THICKNESS MEASUREMENTS');
   
   // Log first few readings to verify data structure
@@ -585,9 +613,9 @@ function generateThicknessReadings(doc: PDFKit.PDFDocument, readings: any[]) {
   addTable(doc, headers, rows);
 }
 
-function generateChecklist(doc: PDFKit.PDFDocument, items: any[]) {
+async function generateChecklist(doc: PDFKit.PDFDocument, items: any[], logoBuffer?: Buffer) {
   doc.addPage();
-  addHeader(doc, 'INSPECTION CHECKLIST', 9);
+  await addHeader(doc, 'INSPECTION CHECKLIST', 9, logoBuffer);
   
   addSectionTitle(doc, '7.0 API 510 INSPECTION CHECKLIST');
   
@@ -608,9 +636,9 @@ function generateChecklist(doc: PDFKit.PDFDocument, items: any[]) {
   });
 }
 
-async function generatePhotos(doc: PDFKit.PDFDocument, photos: any[]) {
+async function generatePhotos(doc: PDFKit.PDFDocument, photos: any[], logoBuffer?: Buffer) {
   doc.addPage();
-  addHeader(doc, 'PHOTOGRAPHS', 10);
+  await addHeader(doc, 'PHOTOGRAPHS', 10, logoBuffer);
   
   addSectionTitle(doc, '8.0 INSPECTION PHOTOGRAPHS');
   
