@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { protectedProcedure, router } from "./_core/trpc";
+import { storagePut } from "./storage";
 import {
   createProfessionalReport,
   getProfessionalReport,
@@ -344,6 +345,29 @@ export const professionalReportRouter = router({
       .input(z.object({ reportId: z.string() }))
       .query(async ({ input }) => {
         return await getInspectionPhotos(input.reportId);
+      }),
+    
+    upload: protectedProcedure
+      .input(z.object({
+        base64Data: z.string(),
+        filename: z.string(),
+        contentType: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        // Remove data URL prefix if present
+        const base64Match = input.base64Data.match(/^data:([^;]+);base64,(.+)$/);
+        const base64String = base64Match ? base64Match[2] : input.base64Data;
+        const buffer = Buffer.from(base64String, 'base64');
+        
+        // Generate unique filename
+        const timestamp = Date.now();
+        const ext = input.filename.split('.').pop() || 'jpg';
+        const key = `inspection-photos/${timestamp}-${nanoid()}.${ext}`;
+        
+        // Upload to S3
+        const { url } = await storagePut(key, buffer, input.contentType);
+        
+        return { url };
       }),
     
     create: protectedProcedure

@@ -167,3 +167,14 @@
 - [x] Need to move calculation logic to database layer (createTmlReading function) - DONE
 - [x] This affects ALL imported data - FIXED: Now all entry methods calculate automatically
 
+
+
+
+## 🚨 NEW CRITICAL BUG - PHOTOS
+- [x] Photos not uploading correctly - FIXED: Implemented S3 upload endpoint
+- [x] Photos not saving to database - FIXED: Now uploads to S3 first, then saves URL
+- [x] Need to investigate photo upload flow (frontend → S3 → database) - DONE
+- [x] Check if S3 upload is working - FIXED: Added professionalReport.photos.upload mutation
+- [x] Check if database save is working - FIXED: Saves S3 URL instead of base64
+- [ ] Verify photo display in inspection view - Need to test
+

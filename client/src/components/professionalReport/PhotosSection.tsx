@@ -170,6 +170,8 @@ function PhotoUploadForm({ reportId, onSubmit, onCancel, uploading }: PhotoUploa
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const uploadMutation = trpc.professionalReport.photos.upload.useMutation();
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -190,12 +192,27 @@ function PhotoUploadForm({ reportId, onSubmit, onCancel, uploading }: PhotoUploa
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // For now, we'll use the preview URL as the photo URL
-    // In production, you'd upload to S3 first
+    let finalPhotoUrl = formData.photoUrl;
+    
+    // If user selected a file, upload to S3 first
+    if (selectedFile && previewUrl) {
+      try {
+        const result = await uploadMutation.mutateAsync({
+          base64Data: previewUrl,
+          filename: selectedFile.name,
+          contentType: selectedFile.type,
+        });
+        finalPhotoUrl = result.url;
+      } catch (error) {
+        toast.error('Failed to upload photo');
+        return;
+      }
+    }
+    
     const photoData = {
       reportId,
       ...formData,
-      photoUrl: previewUrl || formData.photoUrl,
+      photoUrl: finalPhotoUrl,
     };
     
     onSubmit(photoData);
