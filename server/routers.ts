@@ -426,20 +426,49 @@ export const appRouter = router({
             return isNaN(num) ? null : Math.floor(num);
           };
 
-          // Create inspection from parsed data - only include defined values
+          // Create inspection from pars          // Check for existing field mappings to auto-apply
+          const existingMappings = await fieldMappingDb.getFieldMappings(ctx.user.id);
+          const mappingLookup = new Map<string, any>();
+          existingMappings.forEach((m: any) => {
+            mappingLookup.set(m.sourceField, { targetSection: m.targetSection, targetField: m.targetField, id: m.id });
+          });
+
+          // Create inspection record
           const inspection: any = {
             id: nanoid(),
             userId: ctx.user.id,
             vesselTagNumber: parsedData.vesselTagNumber || `IMPORT-${Date.now()}`,
             status: "draft" as const,
           };
+
+          // Track successfully mapped fields for learning
+          const successfulMappings: Array<{sourceField: string, targetSection: string, targetField: string, sourceValue: string}> = [];
+          
+          // Helper to track successful mapping
+          const trackMapping = (sourceField: string, targetField: string, value: any) => {
+            successfulMappings.push({
+              sourceField,
+              targetSection: 'inspection',
+              targetField,
+              sourceValue: String(value)
+            });
+          };
           
           // Only add optional fields if they have values
-          if (parsedData.vesselName) inspection.vesselName = String(parsedData.vesselName).substring(0, 500);
-          if (parsedData.manufacturer) inspection.manufacturer = String(parsedData.manufacturer).substring(0, 500);
+          if (parsedData.vesselName) {
+            inspection.vesselName = String(parsedData.vesselName).substring(0, 500);
+            trackMapping('vesselName', 'vesselName', parsedData.vesselName);
+          }
+          if (parsedData.manufacturer) {
+            inspection.manufacturer = String(parsedData.manufacturer).substring(0, 500);
+            trackMapping('manufacturer', 'manufacturer', parsedData.manufacturer);
+          }
           if (parsedData.yearBuilt) {
             const year = parseInt(parsedData.yearBuilt);
-            if (year) inspection.yearBuilt = year;
+            if (year) {
+              inspection.yearBuilt = year;
+              trackMapping('yearBuilt', 'yearBuilt', parsedData.yearBuilt);
+            }
           }
           if (parsedData.designPressure) {
             const val = parseNumeric(parsedData.designPressure);
@@ -465,6 +494,28 @@ export const appRouter = router({
           }
 
           await db.createInspection(inspection);
+
+          // Save field mappings for successfully imported fields
+          for (const mapping of successfulMappings) {
+            // Check if mapping already exists
+            const existing = await fieldMappingDb.findSimilarMapping(ctx.user.id, mapping.sourceField);
+            if (existing) {
+              // Update usage count
+              await fieldMappingDb.updateFieldMappingUsage(existing.id);
+            } else {
+              // Create new mapping
+              await fieldMappingDb.createFieldMapping({
+                id: nanoid(),
+                userId: ctx.user.id,
+                sourceField: mapping.sourceField,
+                sourceValue: mapping.sourceValue,
+                targetSection: mapping.targetSection,
+                targetField: mapping.targetField,
+                confidence: "1.00",
+                usageCount: 1,
+              });
+            }
+          }
 
           // Create TML readings if available
           if (parsedData.tmlReadings && parsedData.tmlReadings.length > 0) {

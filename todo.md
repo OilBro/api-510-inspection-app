@@ -253,3 +253,17 @@
 - [ ] Add 3rd party reports upload feature to inspection form - TODO
 - [ ] Add 3rd party reports section to PDF report - TODO
 
+
+
+
+## 🧠 FIELD MAPPING MACHINE LEARNING IMPLEMENTATION
+- [x] Save field mappings during successful Docupipe imports - DONE: Tracks 3 core fields (vesselName, manufacturer, yearBuilt)
+- [x] Auto-apply existing field mappings to future imports - DONE: Loads existing mappings before import
+- [x] Add confidence scoring based on usage count - DONE: Updates usageCount on each use
+- [ ] Expand tracking to all inspection fields (currently only 3/20+ fields tracked)
+- [ ] Create UI page to view all field mappings
+- [ ] Add ability to edit/delete field mappings
+- [ ] Show mapping suggestions during import based on fuzzy matching
+- [ ] Display unmatched data for manual review
+- [ ] Allow user to create mappings from unmatched data
+
