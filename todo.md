@@ -214,3 +214,20 @@
 - [x] Validate imported data before saving to database - DONE: Uses existing mutation validation
 - [x] Show import success/error feedback to user - DONE: Toast notifications
 
+
+
+
+## 🐛 COMPONENT IMPORT BUG
+- [x] Component import failing with Excel files - FIXED: Now only accepts CSV files
+- [x] Update file accept to only show .csv - DONE: Changed accept=".csv"
+- [x] Added validation to reject non-CSV files with helpful error message
+- [ ] Future: Add proper Excel file parsing library (xlsx) for .xlsx support
+
+## 📊 TML IMPORT/EXPORT FEATURE
+- [x] Add "Export Template" button to TML Readings section - DONE
+- [x] Generate CSV template with TML reading columns - DONE: 5 column template
+- [x] Add "Import" button to TML Readings section - DONE
+- [x] Support CSV file import to populate TML readings - DONE
+- [x] Auto-calculate loss % and corrosion rate on import - DONE: Uses same calculation logic
+- [x] Show import success/error feedback - DONE: Toast notifications
+

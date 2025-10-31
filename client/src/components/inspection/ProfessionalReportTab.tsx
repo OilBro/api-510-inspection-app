@@ -450,13 +450,15 @@ function ComponentCalculationsSection({ reportId }: { reportId: string }) {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (!file.name.endsWith(".csv")) {
+      toast.error("Please upload a CSV file. Click 'Export Template' to get the correct format.");
+      e.target.value = "";
+      return;
+    }
+
     toast.info("Importing components...");
 
     try {
-      if (file.name.endsWith(".pdf")) {
-        // TODO: Implement PDF parsing
-        toast.error("PDF import not yet implemented");
-      } else if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls") || file.name.endsWith(".csv")) {
         // Read CSV/Excel file
         const text = await file.text();
         const lines = text.split("\n").filter(line => line.trim());
@@ -499,7 +501,6 @@ function ComponentCalculationsSection({ reportId }: { reportId: string }) {
         }
 
         toast.success(`Imported ${dataLines.length} components`);
-      }
     } catch (error) {
       console.error("Import error:", error);
       toast.error("Failed to import file");
@@ -538,7 +539,7 @@ function ComponentCalculationsSection({ reportId }: { reportId: string }) {
           <input
             id="component-import-input"
             type="file"
-            accept=".xlsx,.xls,.pdf"
+            accept=".csv"
             className="hidden"
             onChange={handleImportFile}
           />

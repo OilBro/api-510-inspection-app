@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
-import { Plus, Trash2, Save } from "lucide-react";
+import { Plus, Trash2, Save, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
 import {
   Table,
@@ -105,6 +105,109 @@ export default function ThicknessAnalysisTab({ inspectionId }: ThicknessAnalysis
     }
   };
 
+  const handleExportTemplate = () => {
+    const headers = [
+      "TML ID",
+      "Component (Shell/Head/Nozzle/Flange/Support)",
+      "Nominal Thickness (in)",
+      "Previous Thickness (in)",
+      "Current Thickness (in)"
+    ];
+
+    const csvContent = headers.join(",") + "\n";
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `tml-readings-template.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Template downloaded");
+  };
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith(".csv")) {
+      toast.error("Please upload a CSV file. Click 'Export Template' to get the correct format.");
+      e.target.value = "";
+      return;
+    }
+
+    toast.info("Importing TML readings...");
+
+    try {
+      const text = await file.text();
+      const lines = text.split("\n").filter(line => line.trim());
+      
+      if (lines.length < 2) {
+        toast.error("File is empty or invalid");
+        return;
+      }
+
+      const dataLines = lines.slice(1);
+      let successCount = 0;
+
+      for (const line of dataLines) {
+        const values = line.split(",");
+        const tmlData = {
+          tmlId: values[0]?.trim() || "",
+          component: values[1]?.trim() || "",
+          nominalThickness: values[2]?.trim() || "",
+          previousThickness: values[3]?.trim() || "",
+          currentThickness: values[4]?.trim() || "",
+        };
+
+        if (tmlData.tmlId && tmlData.component) {
+          // Calculate loss and corrosion rate
+          const current = parseFloat(tmlData.currentThickness) || 0;
+          const previous = parseFloat(tmlData.previousThickness) || 0;
+          const nominal = parseFloat(tmlData.nominalThickness) || 0;
+
+          let loss = "0";
+          let corrosionRate = "0";
+          let status: "good" | "monitor" | "critical" = "good";
+
+          if (nominal && current) {
+            loss = ((nominal - current) / nominal * 100).toFixed(2);
+            
+            if (parseFloat(loss) > 20) {
+              status = "critical";
+            } else if (parseFloat(loss) > 10) {
+              status = "monitor";
+            }
+          }
+
+          if (previous && current) {
+            corrosionRate = (((previous - current) * 1000) / 5).toFixed(2);
+          }
+
+          await createMutation.mutateAsync({
+            inspectionId,
+            tmlId: tmlData.tmlId,
+            component: tmlData.component,
+            currentThickness: tmlData.currentThickness || undefined,
+            previousThickness: tmlData.previousThickness || undefined,
+            nominalThickness: tmlData.nominalThickness || undefined,
+            loss,
+            corrosionRate,
+            status,
+          });
+          successCount++;
+        }
+      }
+
+      toast.success(`Imported ${successCount} TML readings`);
+      utils.tmlReadings.list.invalidate();
+    } catch (error) {
+      console.error("Import error:", error);
+      toast.error("Failed to import file");
+    }
+
+    e.target.value = "";
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "good":
@@ -189,10 +292,27 @@ export default function ThicknessAnalysisTab({ inspectionId }: ThicknessAnalysis
             </div>
           </div>
 
-          <Button onClick={handleAddReading} disabled={createMutation.isPending}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Reading
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={handleExportTemplate} variant="outline">
+              <Download className="mr-2 h-4 w-4" />
+              Export Template
+            </Button>
+            <Button onClick={() => document.getElementById('tml-import-input')?.click()} variant="outline">
+              <Upload className="mr-2 h-4 w-4" />
+              Import
+            </Button>
+            <input
+              id="tml-import-input"
+              type="file"
+              accept=".csv"
+              className="hidden"
+              onChange={handleImportFile}
+            />
+            <Button onClick={handleAddReading} disabled={createMutation.isPending}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Reading
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
