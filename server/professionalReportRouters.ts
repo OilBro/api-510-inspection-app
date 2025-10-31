@@ -156,15 +156,21 @@ export const professionalReportRouter = router({
           
           const results = evaluateShell(inputs);
           
+          // Helper to safely format numbers, returning undefined for invalid values
+          const safeFormat = (value: number, decimals: number) => {
+            if (!isFinite(value) || isNaN(value)) return undefined;
+            return value.toFixed(decimals);
+          };
+          
           calculatedData = {
             ...calculatedData,
-            minimumThickness: results.t_min.toFixed(4),
-            corrosionAllowance: results.Ca.toFixed(4),
-            corrosionRate: results.Cr.toFixed(6),
-            remainingLife: results.RL.toFixed(2),
-            thicknessAtNextInspection: results.t_next.toFixed(4),
-            pressureAtNextInspection: results.P_next.toFixed(2),
-            mawpAtNextInspection: results.MAWP.toFixed(2),
+            minimumThickness: safeFormat(results.t_min, 4),
+            corrosionAllowance: safeFormat(results.Ca, 4),
+            corrosionRate: safeFormat(results.Cr, 6),
+            remainingLife: safeFormat(results.RL, 2),
+            thicknessAtNextInspection: safeFormat(results.t_next, 4),
+            pressureAtNextInspection: safeFormat(results.P_next, 2),
+            mawpAtNextInspection: safeFormat(results.MAWP, 2),
           };
         } else if (componentType === 'head') {
           const D = parseFloat(data.insideDiameter || '0');
@@ -191,16 +197,22 @@ export const professionalReportRouter = router({
           
           const results = evaluateHead(inputs);
           
+          // Helper to safely format numbers, returning undefined for invalid values
+          const safeFormat = (value: number, decimals: number) => {
+            if (!isFinite(value) || isNaN(value)) return undefined;
+            return value.toFixed(decimals);
+          };
+          
           calculatedData = {
             ...calculatedData,
-            headFactor: results.M?.toFixed(4) || '1.0',
-            minimumThickness: results.t_min.toFixed(4),
-            corrosionAllowance: results.Ca.toFixed(4),
-            corrosionRate: results.Cr.toFixed(6),
-            remainingLife: results.RL.toFixed(2),
-            thicknessAtNextInspection: results.t_next.toFixed(4),
-            pressureAtNextInspection: results.P_next.toFixed(2),
-            mawpAtNextInspection: results.MAWP.toFixed(2),
+            headFactor: results.M && isFinite(results.M) ? results.M.toFixed(4) : undefined,
+            minimumThickness: safeFormat(results.t_min, 4),
+            corrosionAllowance: safeFormat(results.Ca, 4),
+            corrosionRate: safeFormat(results.Cr, 6),
+            remainingLife: safeFormat(results.RL, 2),
+            thicknessAtNextInspection: safeFormat(results.t_next, 4),
+            pressureAtNextInspection: safeFormat(results.P_next, 2),
+            mawpAtNextInspection: safeFormat(results.MAWP, 2),
           };
         }
         

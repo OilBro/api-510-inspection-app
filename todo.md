@@ -231,3 +231,13 @@
 - [x] Auto-calculate loss % and corrosion rate on import - DONE: Uses same calculation logic
 - [x] Show import success/error feedback - DONE: Toast notifications
 
+
+
+
+## 🚨 COMPONENT IMPORT CALCULATION BUG
+- [x] Component import failing with -Infinity and invalid calculation values - FIXED
+- [x] remainingLife showing -Infinity (division by zero) - FIXED: Added safeFormat helper
+- [x] corrosionRate showing negative values causing DB insert errors - FIXED: Returns undefined for invalid values
+- [x] Need to fix auto-calculation logic in component creation to handle missing/incomplete data - DONE
+- [x] Should only calculate when all required fields are present - DONE: Invalid results (Infinity, NaN) now return undefined
+
