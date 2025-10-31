@@ -241,3 +241,15 @@
 - [x] Need to fix auto-calculation logic in component creation to handle missing/incomplete data - DONE
 - [x] Should only calculate when all required fields are present - DONE: Invalid results (Infinity, NaN) now return undefined
 
+
+
+
+## 📄 PDF REPORT IMPROVEMENTS
+- [x] Remove blank pages between sections - FIXED: addTable now adds headers on continuation pages
+- [x] Add section headers that repeat on continuation pages - FIXED: Shows "SECTION (continued)" on each page
+- [x] Add better table pagination with "continued on next page" indicators - DONE
+- [ ] Fix page numbering showing "Page 4" on page 10 (incorrect page numbers) - TODO
+- [ ] Add nozzle inspection section to PDF report - TODO
+- [ ] Add 3rd party reports upload feature to inspection form - TODO
+- [ ] Add 3rd party reports section to PDF report - TODO
+

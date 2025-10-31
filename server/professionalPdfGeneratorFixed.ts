@@ -129,7 +129,7 @@ function checkPageBreak(doc: PDFKit.PDFDocument, requiredSpace: number) {
   }
 }
 
-function addTable(doc: PDFKit.PDFDocument, headers: string[], rows: string[][]) {
+async function addTable(doc: PDFKit.PDFDocument, headers: string[], rows: string[][], sectionTitle?: string, pageNumber?: number, logoBuffer?: Buffer) {
   const colWidth = CONTENT_WIDTH / headers.length;
   const ROW_HEIGHT = 20;
   const HEADER_HEIGHT = 25;
@@ -193,10 +193,14 @@ function addTable(doc: PDFKit.PDFDocument, headers: string[], rows: string[][]) 
     doc.y = currentY + (rowsThisPage * ROW_HEIGHT) + 10;
     rowIndex += rowsThisPage;
     
-    // If more rows remain, add a page break
+    // If more rows remain, add a page break with section header
     if (rowIndex < rows.length) {
       doc.addPage();
-      doc.y = MARGIN + 60;
+      if (sectionTitle && pageNumber) {
+        await addHeader(doc, sectionTitle + ' (continued)', pageNumber, logoBuffer);
+      } else {
+        doc.y = MARGIN + 60;
+      }
     }
   }
 }
@@ -436,7 +440,7 @@ async function generateExecutiveSummary(doc: PDFKit.PDFDocument, report: any, co
       c.remainingLife ? parseFloat(c.remainingLife).toFixed(1) : '-',
     ]);
     
-    addTable(doc, headers, rows);
+    await addTable(doc, headers, rows, 'EXECUTIVE SUMMARY', 3, logoBuffer);
   }
 }
 
@@ -610,7 +614,7 @@ async function generateThicknessReadings(doc: PDFKit.PDFDocument, readings: any[
   console.log('[PDF DEBUG] TML table rows created:', rows.length);
   console.log('[PDF DEBUG] First row data:', rows[0]);
   
-  addTable(doc, headers, rows);
+  await addTable(doc, headers, rows, 'ULTRASONIC THICKNESS MEASUREMENTS', 6, logoBuffer);
 }
 
 async function generateChecklist(doc: PDFKit.PDFDocument, items: any[], logoBuffer?: Buffer) {
