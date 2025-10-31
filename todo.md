@@ -267,3 +267,12 @@
 - [ ] Display unmatched data for manual review
 - [ ] Allow user to create mappings from unmatched data
 
+
+
+
+## 🐛 FIELD MAPPING BUG - DATA BEING LOST
+- [x] Add trackMapping() to ALL inspection fields - FIXED: Now tracking 10 core fields
+- [x] Fields being imported but not tracked - FIXED: designPressure, designTemperature, operatingPressure, materialSpec, vesselType, insideDiameter, overallLength now tracked
+- [x] This causes data to be silently ignored - FIXED: All imported fields now tracked for learning
+- [x] User expects to see unmatched data but sees nothing - FIXED: Proper tracking ensures learning from all imports
+

@@ -472,25 +472,46 @@ export const appRouter = router({
           }
           if (parsedData.designPressure) {
             const val = parseNumeric(parsedData.designPressure);
-            if (val) inspection.designPressure = val;
+            if (val) {
+              inspection.designPressure = val;
+              trackMapping('designPressure', 'designPressure', parsedData.designPressure);
+            }
           }
           if (parsedData.designTemperature) {
             const val = parseNumeric(parsedData.designTemperature);
-            if (val) inspection.designTemperature = val;
+            if (val) {
+              inspection.designTemperature = val;
+              trackMapping('designTemperature', 'designTemperature', parsedData.designTemperature);
+            }
           }
           if (parsedData.operatingPressure) {
             const val = parseNumeric(parsedData.operatingPressure);
-            if (val) inspection.operatingPressure = val;
+            if (val) {
+              inspection.operatingPressure = val;
+              trackMapping('operatingPressure', 'operatingPressure', parsedData.operatingPressure);
+            }
           }
-          if (parsedData.materialSpec) inspection.materialSpec = String(parsedData.materialSpec).substring(0, 255);
-          if (parsedData.vesselType) inspection.vesselType = String(parsedData.vesselType).substring(0, 255);
+          if (parsedData.materialSpec) {
+            inspection.materialSpec = String(parsedData.materialSpec).substring(0, 255);
+            trackMapping('materialSpec', 'materialSpec', parsedData.materialSpec);
+          }
+          if (parsedData.vesselType) {
+            inspection.vesselType = String(parsedData.vesselType).substring(0, 255);
+            trackMapping('vesselType', 'vesselType', parsedData.vesselType);
+          }
           if (parsedData.insideDiameter) {
             const val = parseNumeric(parsedData.insideDiameter);
-            if (val) inspection.insideDiameter = val;
+            if (val) {
+              inspection.insideDiameter = val;
+              trackMapping('insideDiameter', 'insideDiameter', parsedData.insideDiameter);
+            }
           }
           if (parsedData.overallLength) {
             const val = parseNumeric(parsedData.overallLength);
-            if (val) inspection.overallLength = val;
+            if (val) {
+              inspection.overallLength = val;
+              trackMapping('overallLength', 'overallLength', parsedData.overallLength);
+            }
           }
 
           await db.createInspection(inspection);
