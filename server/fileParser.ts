@@ -3,6 +3,8 @@ import * as pdf from "pdf-parse";
 import { invokeLLM } from "./_core/llm";
 import { parseDocument, parseAndStandardizeDocument } from "./docupipe";
 import { parseDocupipeStandard, type DocupipeStandardFormat } from "./docupipeStandardParser";
+import { parseAndStandardizeWithManus, parseDocumentWithManus } from "./manusParser";
+import { ENV } from "./_core/env";
 
 interface ParsedVesselData {
   vesselTagNumber?: string;
@@ -154,14 +156,25 @@ export async function parseExcelFile(buffer: Buffer): Promise<ParsedVesselData> 
 /**
  * Parse PDF file using Docupipe standardized extraction
  */
-export async function parsePDFFile(buffer: Buffer): Promise<ParsedVesselData> {
+export async function parsePDFFile(buffer: Buffer, parserType?: "docupipe" | "manus"): Promise<ParsedVesselData> {
+  // Use provided parser type or fall back to ENV configuration
+  const selectedParser = parserType || ENV.parserType;
+  console.log(`[PDF Parser] Using parser: ${selectedParser}`);
+  
   try {
-    console.log("[PDF Parser] Starting Docupipe standardized extraction...");
-    
-    // Try Docupipe standardized extraction first
+    // Try selected parser's standardized extraction first
     try {
-      const standardizedData = await parseAndStandardizeDocument(buffer, "inspection-report.pdf");
-      console.log("[PDF Parser] Docupipe standardization successful");
+      let standardizedData: any;
+      
+      if (selectedParser === "manus") {
+        console.log("[PDF Parser] Starting Manus API standardized extraction...");
+        standardizedData = await parseAndStandardizeWithManus(buffer, "inspection-report.pdf");
+        console.log("[PDF Parser] Manus standardization successful");
+      } else {
+        console.log("[PDF Parser] Starting Docupipe standardized extraction...");
+        standardizedData = await parseAndStandardizeDocument(buffer, "inspection-report.pdf");
+        console.log("[PDF Parser] Docupipe standardization successful");
+      }
       
       // Parse the standardized format
       const parsedData = parseDocupipeStandard(standardizedData as DocupipeStandardFormat);
@@ -207,11 +220,13 @@ export async function parsePDFFile(buffer: Buffer): Promise<ParsedVesselData> {
           calculatedMAWP: reading.calculatedMAWP,
         })),
       };
-    } catch (docupipeError) {
-      console.warn("[PDF Parser] Docupipe standardization failed, falling back to basic parsing:", docupipeError);
+    } catch (parserError) {
+      console.warn(`[PDF Parser] ${selectedParser} standardization failed, falling back to basic parsing:`, parserError);
       
-      // Fallback to basic Docupipe parsing + LLM extraction
-      const docResult = await parseDocument(buffer, "inspection-report.pdf");
+      // Fallback to basic parsing + LLM extraction
+      const docResult = selectedParser === "manus" 
+        ? await parseDocumentWithManus(buffer, "inspection-report.pdf")
+        : await parseDocument(buffer, "inspection-report.pdf");
       const fullText = docResult.result.text;
 
       // Use LLM to extract structured data from text

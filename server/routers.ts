@@ -391,6 +391,7 @@ export const appRouter = router({
         fileData: z.string(), // Base64 encoded file
         fileName: z.string(),
         fileType: z.enum(["pdf", "excel"]),
+        parserType: z.enum(["docupipe", "manus"]).optional(), // Optional parser selection
       }))
       .mutation(async ({ ctx, input }) => {
         try {
@@ -402,7 +403,7 @@ export const appRouter = router({
           if (input.fileType === "excel") {
             parsedData = await parseExcelFile(buffer);
           } else {
-            parsedData = await parsePDFFile(buffer);
+            parsedData = await parsePDFFile(buffer, input.parserType);
           }
 
           // Upload file to S3

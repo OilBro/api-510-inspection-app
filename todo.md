@@ -317,3 +317,16 @@
 - [x] Check if checklistItems field is being populated in parsedData - FIXED: Added to ParsedInspectionData interface
 - [x] Status mapping logic added: satisfactory/completed/yes/pass/ok/good → checked=true
 
+
+
+
+## 🆕 PARSER SELECTION FEATURE (User Request)
+- [x] Add configuration option to choose between Docupipe API and Manus API for PDF parsing
+- [x] Implement Manus API parser using built-in Forge API
+- [x] Add parser selection logic in fileParser.ts with fallback support
+- [x] Add ENV variable for default parser selection (PARSER_TYPE: 'docupipe' | 'manus')
+- [x] Add parserType parameter to parseFile tRPC mutation
+- [ ] Add UI toggle on import page to let users choose parser
+- [ ] Test both parsers with sample PDF files
+- [ ] Document parser differences and use cases
+

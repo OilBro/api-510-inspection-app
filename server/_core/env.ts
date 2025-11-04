@@ -9,6 +9,7 @@ export const ENV = {
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
   docupipeApiKey: process.env.DOCUPIPE_API_KEY || "",
   docupipeSchemaId: process.env.DOCUPIPE_SCHEMA_ID || "",
+  parserType: (process.env.PARSER_TYPE || "docupipe") as "docupipe" | "manus",
 };
 
 // Debug logging for Docupipe env vars
