@@ -303,6 +303,12 @@
 
 
 
+## ✅ DOCUPIPE API KEY BUG FIXED
+- [x] "DOCUPIPE_API_KEY is not configured" error during import - FIXED
+- [x] Environment variables not properly loaded in docupipe.ts - FIXED: Now using ENV object
+- [x] Added docupipeApiKey and docupipeSchemaId to ENV object in server/_core/env.ts
+- [x] Updated docupipe.ts to use ENV.docupipeApiKey instead of process.env.DOCUPIPE_API_KEY
+
 ## 🐛 CHECKLIST NOT IMPORTING AT ALL
 - [x] No checklist items being imported during Docupipe import - FIXED: Added checklist parsing
 - [x] Review dialog not showing (means no checklist data in response) - FIXED: Added inspectionChecklist to DocupipeStandardFormat

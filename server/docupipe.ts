@@ -1,8 +1,8 @@
 import { ENV } from "./_core/env";
 
 const DOCUPIPE_API_URL = "https://app.docupipe.ai";
-const DOCUPIPE_API_KEY = process.env.DOCUPIPE_API_KEY;
-const DOCUPIPE_SCHEMA_ID = process.env.DOCUPIPE_SCHEMA_ID; // Schema ID for API 510 standardization
+const DOCUPIPE_API_KEY = ENV.docupipeApiKey;
+const DOCUPIPE_SCHEMA_ID = ENV.docupipeSchemaId; // Schema ID for API 510 standardization
 
 // Log API key status on module load
 if (DOCUPIPE_API_KEY) {

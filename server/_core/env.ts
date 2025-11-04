@@ -7,4 +7,6 @@ export const ENV = {
   isProduction: process.env.NODE_ENV === "production",
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
+  docupipeApiKey: process.env.DOCUPIPE_API_KEY ?? "",
+  docupipeSchemaId: process.env.DOCUPIPE_SCHEMA_ID ?? "",
 };
