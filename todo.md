@@ -300,3 +300,14 @@
 - [x] Show preview of how many items will be checked vs unchecked - DONE: Count shown in dialog description
 - [x] Add "Skip Checklist" option for users who don't want to import checklist
 
+
+
+
+## 🐛 CHECKLIST NOT IMPORTING AT ALL
+- [x] No checklist items being imported during Docupipe import - FIXED: Added checklist parsing
+- [x] Review dialog not showing (means no checklist data in response) - FIXED: Added inspectionChecklist to DocupipeStandardFormat
+- [x] Need to check if Docupipe is returning checklist data - DONE: Now parsing it
+- [x] Need to verify checklist parsing logic in docupipeStandardParser.ts - FIXED: Added parseChecklist logic
+- [x] Check if checklistItems field is being populated in parsedData - FIXED: Added to ParsedInspectionData interface
+- [x] Status mapping logic added: satisfactory/completed/yes/pass/ok/good → checked=true
+

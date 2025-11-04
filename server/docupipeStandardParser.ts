@@ -68,6 +68,15 @@ export interface DocupipeStandardFormat {
       actualThickness: number;
     }>;
   };
+  inspectionChecklist?: Array<{
+    category: string;
+    itemNumber?: string;
+    itemText: string;
+    status: string;
+    notes?: string;
+    checkedBy?: string;
+    checkedDate?: string;
+  }>;
 }
 
 export interface ParsedInspectionData {
@@ -115,6 +124,18 @@ export interface ParsedInspectionData {
     currentThickness: number;
     minimumRequired?: number;
     calculatedMAWP?: number;
+  }>;
+  
+  // Checklist items
+  checklistItems?: Array<{
+    category: string;
+    itemNumber?: string;
+    itemText: string;
+    checked: boolean;
+    originalStatus?: string;
+    notes?: string;
+    checkedBy?: string;
+    checkedDate?: string;
   }>;
 }
 
@@ -191,6 +212,22 @@ export function parseDocupipeStandard(data: DocupipeStandardFormat): ParsedInspe
       currentThickness: summary.actualMeasuredThickness,
       minimumRequired: summary.minimumRequiredThickness,
       calculatedMAWP: summary.calculatedMAWP,
+    }));
+  }
+  
+  // Map checklist items if present
+  if (data.inspectionChecklist && data.inspectionChecklist.length > 0) {
+    result.checklistItems = data.inspectionChecklist.map(item => ({
+      category: item.category || 'General',
+      itemNumber: item.itemNumber,
+      itemText: item.itemText,
+      checked: ['satisfactory', 'completed', 'yes', 'pass', 'ok', 'good'].includes(
+        item.status?.toLowerCase()?.trim() || ''
+      ),
+      originalStatus: item.status, // Store original for review
+      notes: item.notes,
+      checkedBy: item.checkedBy,
+      checkedDate: item.checkedDate,
     }));
   }
   
