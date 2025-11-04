@@ -326,7 +326,7 @@
 - [x] Add parser selection logic in fileParser.ts with fallback support
 - [x] Add ENV variable for default parser selection (PARSER_TYPE: 'docupipe' | 'manus')
 - [x] Add parserType parameter to parseFile tRPC mutation
-- [ ] Add UI toggle on import page to let users choose parser
+- [x] Add UI toggle on import page to let users choose parser
 - [ ] Test both parsers with sample PDF files
 - [ ] Document parser differences and use cases
 

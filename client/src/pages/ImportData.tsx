@@ -9,6 +9,7 @@ import { Settings, ArrowLeft, Upload, FileText, FileSpreadsheet, CheckCircle2, A
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { APP_TITLE } from "@/const";
 import { toast } from "sonner";
 
@@ -19,6 +20,7 @@ export default function ImportData() {
   const [parseResult, setParseResult] = useState<any>(null);
   const [showChecklistReview, setShowChecklistReview] = useState(false);
   const [checklistItems, setChecklistItems] = useState<any[]>([]);
+  const [parserType, setParserType] = useState<"docupipe" | "manus">("docupipe");
   
   const parseMutation = trpc.importedFiles.parseFile.useMutation();
   const finalizeMutation = trpc.importedFiles.finalizeChecklistImport.useMutation();
@@ -66,6 +68,7 @@ export default function ImportData() {
             fileData: base64Content,
             fileName: selectedFile.name,
             fileType,
+            parserType, // Pass selected parser type
           });
 
           setParseResult(result);
@@ -193,6 +196,20 @@ export default function ImportData() {
             <CardDescription>Select a PDF or Excel file to import inspection data</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="parser">PDF Parser (for PDF files only)</Label>
+              <Select value={parserType} onValueChange={(value: "docupipe" | "manus") => setParserType(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="docupipe">Docupipe API (Recommended)</SelectItem>
+                  <SelectItem value="manus">Manus Built-in API</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">Choose which parser to use for PDF extraction. Docupipe is optimized for API 510 reports.</p>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="file">Select File</Label>
               <Input
