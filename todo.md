@@ -346,3 +346,14 @@
 - [x] Fix any API integration issues
 - [x] Verify both parsers work end-to-end
 
+
+
+
+## 🚨 CRITICAL: Manus Parser Still Requires Docupipe API Key - FIXED ✅
+- [x] Investigate why Manus parser calls Docupipe even when selected
+- [x] Implement independent PDF text extraction for Manus parser
+- [x] Remove Docupipe dependency from Manus parser
+- [x] Use alternative PDF parsing library or method (pdfjs-dist)
+- [x] Test Manus parser works without Docupipe API key
+- [x] Verify both parsers can work independently
+

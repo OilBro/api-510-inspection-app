@@ -1,7 +1,6 @@
 import { ENV } from './_core/env';
 import { invokeLLM } from './_core/llm';
 import { storagePut } from '../storage';
-import { parseDocument } from './docupipe';
 
 /**
  * Manus API Parser - Uses Manus built-in LLM with PDF file_url for parsing
@@ -31,26 +30,44 @@ interface ManusParseResponse {
 }
 
 /**
- * Parse PDF using Docupipe's text extraction (reused for consistency)
+ * Parse PDF using pdf-parse library (independent of Docupipe)
  * Extracts text content from PDF file
  */
 export async function parseWithManusAPI(
   fileBuffer: Buffer,
   filename: string
 ): Promise<ManusParseResponse> {
-  console.log("[Manus Parser] Starting PDF text extraction using Docupipe...");
+  console.log("[Manus Parser] Starting independent PDF text extraction...");
   
   try {
-    // Use Docupipe's parseDocument for text extraction
-    const docResult = await parseDocument(fileBuffer, filename);
+    // Use pdfjs-dist directly for PDF parsing
+    const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
     
-    console.log("[Manus Parser] Text extraction successful, length:", docResult.result.text.length);
+    // Convert Buffer to Uint8Array (required by pdfjs-dist)
+    const uint8Array = new Uint8Array(fileBuffer);
+    
+    // Load PDF document
+    const loadingTask = pdfjsLib.getDocument({ data: uint8Array });
+    const pdfDocument = await loadingTask.promise;
+    
+    // Extract text from all pages
+    const numPages = pdfDocument.numPages;
+    let fullText = '';
+    
+    for (let i = 1; i <= numPages; i++) {
+      const page = await pdfDocument.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items.map((item: any) => item.str).join(' ');
+      fullText += pageText + '\n';
+    }
+    
+    console.log("[Manus Parser] Text extraction successful, pages:", numPages, "length:", fullText.length);
 
     return {
-      text: docResult.result.text,
-      pages: docResult.result.pages || [],
+      text: fullText,
+      pages: [],
       metadata: {
-        numPages: docResult.result.pages?.length || 0,
+        numPages: numPages,
       },
     };
   } catch (error) {
