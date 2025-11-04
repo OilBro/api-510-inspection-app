@@ -65,7 +65,12 @@ export async function uploadDocument(
   fileBuffer: Buffer,
   filename: string
 ): Promise<DocupipeUploadResponse> {
+  console.log("[Docupipe uploadDocument] API key check:", DOCUPIPE_API_KEY ? "PRESENT (" + DOCUPIPE_API_KEY.substring(0, 10) + "...)" : "MISSING");
+  console.log("[Docupipe uploadDocument] ENV.docupipeApiKey:", ENV.docupipeApiKey ? "PRESENT (" + ENV.docupipeApiKey.substring(0, 10) + "...)" : "MISSING");
+  
+  console.log("[Docupipe] API key check - value:", DOCUPIPE_API_KEY ? "PRESENT (" + DOCUPIPE_API_KEY.substring(0, 10) + "...)" : "MISSING/EMPTY", "| length:", DOCUPIPE_API_KEY ? DOCUPIPE_API_KEY.length : 0);
   if (!DOCUPIPE_API_KEY) {
+    console.error("[Docupipe] ERROR: API key check failed!");
     throw new Error("DOCUPIPE_API_KEY is not configured");
   }
 
@@ -100,7 +105,9 @@ export async function uploadDocument(
  * Check the status of a Docupipe job
  */
 export async function checkJobStatus(jobId: string): Promise<DocupipeJobStatus> {
+  console.log("[Docupipe] API key check - value:", DOCUPIPE_API_KEY ? "PRESENT (" + DOCUPIPE_API_KEY.substring(0, 10) + "...)" : "MISSING/EMPTY", "| length:", DOCUPIPE_API_KEY ? DOCUPIPE_API_KEY.length : 0);
   if (!DOCUPIPE_API_KEY) {
+    console.error("[Docupipe] ERROR: API key check failed!");
     throw new Error("DOCUPIPE_API_KEY is not configured");
   }
 
@@ -161,7 +168,9 @@ export async function waitForJobCompletion(
 export async function getDocumentResult(
   documentId: string
 ): Promise<DocupipeDocumentResult> {
+  console.log("[Docupipe] API key check - value:", DOCUPIPE_API_KEY ? "PRESENT (" + DOCUPIPE_API_KEY.substring(0, 10) + "...)" : "MISSING/EMPTY", "| length:", DOCUPIPE_API_KEY ? DOCUPIPE_API_KEY.length : 0);
   if (!DOCUPIPE_API_KEY) {
+    console.error("[Docupipe] ERROR: API key check failed!");
     throw new Error("DOCUPIPE_API_KEY is not configured");
   }
 
@@ -188,7 +197,9 @@ export async function standardizeDocument(
   documentId: string,
   schemaId?: string
 ): Promise<DocupipeStandardizeResponse> {
+  console.log("[Docupipe] API key check - value:", DOCUPIPE_API_KEY ? "PRESENT (" + DOCUPIPE_API_KEY.substring(0, 10) + "...)" : "MISSING/EMPTY", "| length:", DOCUPIPE_API_KEY ? DOCUPIPE_API_KEY.length : 0);
   if (!DOCUPIPE_API_KEY) {
+    console.error("[Docupipe] ERROR: API key check failed!");
     throw new Error("DOCUPIPE_API_KEY is not configured");
   }
 
@@ -224,7 +235,9 @@ export async function standardizeDocument(
 export async function getStandardizationResult(
   standardizationId: string
 ): Promise<DocupipeStandardizationResult> {
+  console.log("[Docupipe] API key check - value:", DOCUPIPE_API_KEY ? "PRESENT (" + DOCUPIPE_API_KEY.substring(0, 10) + "...)" : "MISSING/EMPTY", "| length:", DOCUPIPE_API_KEY ? DOCUPIPE_API_KEY.length : 0);
   if (!DOCUPIPE_API_KEY) {
+    console.error("[Docupipe] ERROR: API key check failed!");
     throw new Error("DOCUPIPE_API_KEY is not configured");
   }
 
