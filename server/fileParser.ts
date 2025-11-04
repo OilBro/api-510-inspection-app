@@ -162,75 +162,18 @@ export async function parsePDFFile(buffer: Buffer, parserType?: "docupipe" | "ma
   console.log(`[PDF Parser] Using parser: ${selectedParser}`);
   
   try {
-    // Try selected parser's standardized extraction first
-    try {
-      let standardizedData: any;
-      
-      if (selectedParser === "manus") {
-        console.log("[PDF Parser] Starting Manus API standardized extraction...");
-        standardizedData = await parseAndStandardizeWithManus(buffer, "inspection-report.pdf");
-        console.log("[PDF Parser] Manus standardization successful");
-      } else {
-        console.log("[PDF Parser] Starting Docupipe standardized extraction...");
-        standardizedData = await parseAndStandardizeDocument(buffer, "inspection-report.pdf");
-        console.log("[PDF Parser] Docupipe standardization successful");
-      }
-      
-      // Parse the standardized format
-      const parsedData = parseDocupipeStandard(standardizedData as DocupipeStandardFormat);
-      
-      return {
-        vesselTagNumber: parsedData.vesselTagNumber,
-        vesselName: parsedData.vesselName,
-        manufacturer: parsedData.manufacturer,
-        yearBuilt: parsedData.yearBuilt,
-        designPressure: parsedData.designPressure,
-        designTemperature: parsedData.designTemperature,
-        operatingPressure: parsedData.operatingPressure,
-        materialSpec: parsedData.materialSpec,
-        vesselType: parsedData.vesselType,
-        insideDiameter: parsedData.insideDiameter,
-        overallLength: parsedData.overallLength,
-        
-        // Additional standardized fields
-        reportNumber: parsedData.reportNumber,
-        reportDate: parsedData.reportDate,
-        inspectionDate: parsedData.inspectionDate,
-        inspectionType: parsedData.inspectionType,
-        inspectionCompany: parsedData.inspectionCompany,
-        inspectorName: parsedData.inspectorName,
-        inspectorCert: parsedData.inspectorCert,
-        clientName: parsedData.clientName,
-        clientLocation: parsedData.clientLocation,
-        product: parsedData.product,
-        nbNumber: parsedData.nbNumber,
-        constructionCode: parsedData.constructionCode,
-        vesselConfiguration: parsedData.vesselConfiguration,
-        headType: parsedData.headType,
-        insulationType: parsedData.insulationType,
-        executiveSummary: parsedData.executiveSummary,
-        
-        tmlReadings: parsedData.tmlReadings.map(reading => ({
-          cmlNumber: reading.cmlNumber,
-          location: reading.location,
-          component: reading.component,
-          currentThickness: reading.currentThickness,
-          nominalThickness: reading.nominalThickness,
-          minimumRequired: reading.minimumRequired,
-          calculatedMAWP: reading.calculatedMAWP,
-        })),
-      };
-    } catch (parserError) {
-      console.warn(`[PDF Parser] ${selectedParser} standardization failed, falling back to basic parsing:`, parserError);
-      
-      // Fallback to basic parsing + LLM extraction
-      const docResult = selectedParser === "manus" 
-        ? await parseDocumentWithManus(buffer, "inspection-report.pdf")
-        : await parseDocument(buffer, "inspection-report.pdf");
-      const fullText = docResult.result.text;
+    // Use basic parsing + LLM extraction (standardization APIs are unreliable)
+    console.log("[PDF Parser] Using basic parsing + LLM extraction...");
+    
+    const docResult = selectedParser === "manus" 
+      ? await parseDocumentWithManus(buffer, "inspection-report.pdf")
+      : await parseDocument(buffer, "inspection-report.pdf");
+    
+    const fullText = docResult.result.text;
+    console.log(`[PDF Parser] Text extracted (${fullText.length} chars), using LLM for structured extraction...`);
 
-      // Use LLM to extract structured data from text
-      const llmResponse = await invokeLLM({
+    // Use LLM to extract structured data from text
+    const llmResponse = await invokeLLM({
         messages: [
           {
             role: "system",
@@ -280,15 +223,14 @@ export async function parsePDFFile(buffer: Buffer, parserType?: "docupipe" | "ma
             },
           },
         },
-      });
+    });
 
-      const messageContent = llmResponse.choices[0].message.content;
-      const contentStr = typeof messageContent === 'string' ? messageContent : JSON.stringify(messageContent);
-      const extracted = JSON.parse(contentStr || "{}");
-      console.log("[PDF Parser] LLM extraction completed");
-      
-      return extracted;
-    }
+    const messageContent = llmResponse.choices[0].message.content;
+    const contentStr = typeof messageContent === 'string' ? messageContent : JSON.stringify(messageContent);
+    const extracted = JSON.parse(contentStr || "{}");
+    console.log("[PDF Parser] LLM extraction completed");
+    
+    return extracted;
   } catch (error) {
     console.error("[PDF Parser] Error:", error);
     throw new Error(`Failed to parse PDF file: ${error instanceof Error ? error.message : "Unknown error"}`);

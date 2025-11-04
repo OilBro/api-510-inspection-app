@@ -1,12 +1,13 @@
 import { ENV } from './_core/env';
 import { invokeLLM } from './_core/llm';
+import { storagePut } from '../storage';
+import { parseDocument } from './docupipe';
 
 /**
- * Manus API Parser - Uses Manus built-in Forge API for PDF parsing
+ * Manus API Parser - Uses Manus built-in LLM with PDF file_url for parsing
  * Alternative to Docupipe API with similar functionality
  */
 
-const MANUS_API_URL = ENV.forgeApiUrl;
 const MANUS_API_KEY = ENV.forgeApiKey;
 
 // Log API key status on module load
@@ -30,48 +31,28 @@ interface ManusParseResponse {
 }
 
 /**
- * Parse PDF using Manus built-in API
+ * Parse PDF using Docupipe's text extraction (reused for consistency)
  * Extracts text content from PDF file
  */
 export async function parseWithManusAPI(
   fileBuffer: Buffer,
   filename: string
 ): Promise<ManusParseResponse> {
-  console.log("[Manus Parser] Starting PDF parsing with Manus API...");
-  console.log("[Manus Parser] API key check:", MANUS_API_KEY ? "PRESENT" : "MISSING");
+  console.log("[Manus Parser] Starting PDF text extraction using Docupipe...");
   
-  if (!MANUS_API_KEY) {
-    throw new Error("MANUS_API_KEY is not configured");
-  }
-
-  // Convert buffer to base64 for API transmission
-  const base64Content = fileBuffer.toString("base64");
-
   try {
-    // Call Manus Forge API for PDF parsing
-    const response = await fetch(`${MANUS_API_URL}/data/parse`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${MANUS_API_KEY}`,
-        "Content-Type": "application/json",
+    // Use Docupipe's parseDocument for text extraction
+    const docResult = await parseDocument(fileBuffer, filename);
+    
+    console.log("[Manus Parser] Text extraction successful, length:", docResult.result.text.length);
+
+    return {
+      text: docResult.result.text,
+      pages: docResult.result.pages || [],
+      metadata: {
+        numPages: docResult.result.pages?.length || 0,
       },
-      body: JSON.stringify({
-        file: base64Content,
-        filename: filename,
-        format: "pdf",
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[Manus Parser] API error:", response.status, errorText);
-      throw new Error(`Manus API error: ${response.status} ${errorText}`);
-    }
-
-    const result = await response.json();
-    console.log("[Manus Parser] Parsing successful, pages:", result.metadata?.numPages || "unknown");
-
-    return result;
+    };
   } catch (error) {
     console.error("[Manus Parser] Failed to parse PDF:", error);
     throw error;

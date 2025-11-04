@@ -226,7 +226,9 @@ export async function standardizeDocument(
     throw new Error(`Docupipe standardization failed: ${response.status} - ${errorText}`);
   }
 
-  return await response.json();
+  const result = await response.json();
+  console.log("[Docupipe] Standardization response:", JSON.stringify(result));
+  return result;
 }
 
 /**
@@ -266,9 +268,14 @@ export async function waitForStandardizationCompletion(
   standardizationId: string,
   maxWaitSeconds: number = 120
 ): Promise<DocupipeStandardizationResult> {
-  let waitSeconds = 2;
+  let waitSeconds = 3; // Start with 3 seconds to give API time to register the standardization
   let totalWaited = 0;
   let result: DocupipeStandardizationResult;
+
+  // Initial wait before first check
+  console.log("[Docupipe] Waiting 3 seconds before first status check...");
+  await new Promise((resolve) => setTimeout(resolve, 3000));
+  totalWaited += 3;
 
   do {
     result = await getStandardizationResult(standardizationId);
@@ -314,7 +321,17 @@ export async function parseAndStandardizeDocument(
   console.log("[Docupipe] Document processing completed");
 
   // Step 3: Start standardization
-  const { standardizationId } = await standardizeDocument(documentId, schemaId);
+  const standardizationResponse = await standardizeDocument(documentId, schemaId);
+  console.log("[Docupipe] Standardization response:", JSON.stringify(standardizationResponse));
+  
+  // Extract standardization ID from response (could be standardizationId or id)
+  const standardizationId = standardizationResponse.standardizationId || standardizationResponse.id || standardizationResponse.standardizationIds?.[0];
+  
+  if (!standardizationId) {
+    console.error("[Docupipe] No standardization ID found in response:", standardizationResponse);
+    throw new Error("Failed to get standardization ID from Docupipe response");
+  }
+  
   console.log("[Docupipe] Standardization started:", standardizationId);
 
   // Step 4: Wait for standardization

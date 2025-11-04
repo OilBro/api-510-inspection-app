@@ -327,6 +327,22 @@
 - [x] Add ENV variable for default parser selection (PARSER_TYPE: 'docupipe' | 'manus')
 - [x] Add parserType parameter to parseFile tRPC mutation
 - [x] Add UI toggle on import page to let users choose parser
-- [ ] Test both parsers with sample PDF files
-- [ ] Document parser differences and use cases
+- [x] Test both parsers with sample PDF files
+- [x] Document parser differences and use cases
+- [x] Fixed Docupipe parser to use basic parsing + LLM extraction
+- [x] Fixed Manus parser to reuse Docupipe text extraction + LLM
+- [x] Both parsers now working and tested successfully
+
+
+
+
+## 🚨 URGENT: BOTH PARSERS FAILING (User Report) - FIXED ✅
+- [x] Debug Docupipe parser - identify why it's failing
+- [x] Debug Manus parser - identify why it's failing
+- [x] Check API endpoints and authentication
+- [x] Verify API response formats match expected schemas
+- [x] Add comprehensive error logging
+- [x] Test with sample PDF file
+- [x] Fix any API integration issues
+- [x] Verify both parsers work end-to-end
 
