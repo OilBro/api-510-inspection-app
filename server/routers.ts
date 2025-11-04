@@ -567,49 +567,31 @@ export const appRouter = router({
             }
           }
 
-          // Create checklist items if available
+          // Prepare checklist items for review (don't create yet)
+          let checklistPreview: any[] = [];
           if (parsedData.checklistItems && parsedData.checklistItems.length > 0) {
-            // First, create a professional report if it doesn't exist
-            const reportId = nanoid();
-            await professionalReportDb.createProfessionalReport({
-              id: reportId,
-              inspectionId: inspection.id,
-              reportNumber: `RPT-${Date.now()}`,
-              reportDate: new Date(),
-            });
-
-            for (const item of parsedData.checklistItems) {
-              const checklistRecord: any = {
-                id: nanoid(),
-                reportId,
+            checklistPreview = parsedData.checklistItems.map(item => {
+              const preview: any = {
                 category: item.category || 'General',
+                itemNumber: item.itemNumber,
                 itemText: item.itemText || item.description || 'Imported checklist item',
+                notes: item.notes,
+                checkedBy: item.checkedBy,
+                checkedDate: item.checkedDate,
               };
               
-              // Handle checked status
+              // Auto-map checked status for preview
               if (item.checked !== undefined) {
-                checklistRecord.checked = Boolean(item.checked);
+                preview.checked = Boolean(item.checked);
               } else if (item.status) {
-                // Map status to checked boolean
-                checklistRecord.checked = item.status === 'satisfactory' || item.status === 'completed' || item.status === 'yes';
-                checklistRecord.status = item.status;
+                preview.checked = item.status === 'satisfactory' || item.status === 'completed' || item.status === 'yes';
+                preview.originalStatus = item.status;
+              } else {
+                preview.checked = false;
               }
               
-              if (item.itemNumber) checklistRecord.itemNumber = String(item.itemNumber);
-              if (item.notes) checklistRecord.notes = String(item.notes);
-              if (item.checkedBy) checklistRecord.checkedBy = String(item.checkedBy);
-              if (item.checkedDate) checklistRecord.checkedDate = new Date(item.checkedDate);
-              
-              await professionalReportDb.createChecklistItem(checklistRecord);
-              
-              // Track mapping for learning
-              successfulMappings.push({
-                sourceField: 'checklistItems',
-                targetSection: 'checklist',
-                targetField: 'itemText',
-                sourceValue: checklistRecord.itemText
-              });
-            }
+              return preview;
+            });
           }
 
           // Create imported file record
@@ -670,6 +652,8 @@ export const appRouter = router({
             inspectionId: inspection.id,
             parsedData,
             unmatchedCount: unmatchedFields.length,
+            checklistPreview, // Send checklist items for review
+            requiresChecklistReview: checklistPreview.length > 0,
           };
         } catch (error) {
           console.error("Error parsing file:", error);
@@ -681,6 +665,60 @@ export const appRouter = router({
             fileType: input.fileType,
           });
           throw new Error(`Failed to parse ${input.fileType} file: ${errorMessage}`);
+        }
+      }),
+
+    // Finalize checklist import after user review
+    finalizeChecklistImport: protectedProcedure
+      .input(z.object({
+        inspectionId: z.string(),
+        checklistItems: z.array(z.object({
+          category: z.string(),
+          itemNumber: z.string().optional(),
+          itemText: z.string(),
+          checked: z.boolean(),
+          notes: z.string().optional(),
+          checkedBy: z.string().optional(),
+          checkedDate: z.string().optional(),
+        })),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          // Create professional report if it doesn't exist
+          const reportId = nanoid();
+          await professionalReportDb.createProfessionalReport({
+            id: reportId,
+            inspectionId: input.inspectionId,
+            reportNumber: `RPT-${Date.now()}`,
+            reportDate: new Date(),
+          });
+
+          // Create checklist items
+          for (const item of input.checklistItems) {
+            const checklistRecord: any = {
+              id: nanoid(),
+              reportId,
+              category: item.category,
+              itemText: item.itemText,
+              checked: item.checked,
+            };
+            
+            if (item.itemNumber) checklistRecord.itemNumber = item.itemNumber;
+            if (item.notes) checklistRecord.notes = item.notes;
+            if (item.checkedBy) checklistRecord.checkedBy = item.checkedBy;
+            if (item.checkedDate) checklistRecord.checkedDate = new Date(item.checkedDate);
+            
+            await professionalReportDb.createChecklistItem(checklistRecord);
+          }
+
+          return {
+            success: true,
+            reportId,
+            itemsCreated: input.checklistItems.length,
+          };
+        } catch (error) {
+          console.error("Error finalizing checklist import:", error);
+          throw new Error("Failed to finalize checklist import");
         }
       }),
   }),

@@ -287,3 +287,16 @@
 - [x] Track checklist field mappings for learning - DONE: Tracks each imported item
 - [x] Handle both default checklist items and custom items from import - DONE: Imports all items from Docupipe
 
+
+
+
+## ✅ CHECKLIST IMPORT REVIEW FEATURE
+- [x] Split import into two phases: parse → review → finalize - DONE
+- [x] Return parsed checklist items to frontend for review - DONE: Added checklistPreview to response
+- [x] Create review UI showing all checklist items with checkboxes - DONE: Dialog with scrollable list
+- [x] Allow user to toggle checked status before finalizing - DONE: Individual checkbox toggles
+- [x] Add "Check All" and "Uncheck All" quick actions - DONE
+- [x] Only create database records after user approval - DONE: finalizeChecklistImport endpoint
+- [x] Show preview of how many items will be checked vs unchecked - DONE: Count shown in dialog description
+- [x] Add "Skip Checklist" option for users who don't want to import checklist
+

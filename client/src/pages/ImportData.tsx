@@ -5,7 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
-import { Settings, ArrowLeft, Upload, FileText, FileSpreadsheet, CheckCircle2, AlertCircle } from "lucide-react";
+import { Settings, ArrowLeft, Upload, FileText, FileSpreadsheet, CheckCircle2, AlertCircle, X } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { APP_TITLE } from "@/const";
 import { toast } from "sonner";
 
@@ -14,8 +17,11 @@ export default function ImportData() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [parseResult, setParseResult] = useState<any>(null);
+  const [showChecklistReview, setShowChecklistReview] = useState(false);
+  const [checklistItems, setChecklistItems] = useState<any[]>([]);
   
   const parseMutation = trpc.importedFiles.parseFile.useMutation();
+  const finalizeMutation = trpc.importedFiles.finalizeChecklistImport.useMutation();
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -63,12 +69,20 @@ export default function ImportData() {
           });
 
           setParseResult(result);
-          toast.success("File imported successfully!");
           
-          // Redirect to inspection after 2 seconds
-          setTimeout(() => {
-            setLocation(`/inspections/${result.inspectionId}`);
-          }, 2000);
+          // Check if checklist review is required
+          if (result.requiresChecklistReview && result.checklistPreview) {
+            setChecklistItems(result.checklistPreview);
+            setShowChecklistReview(true);
+            setUploading(false);
+            toast.success("File imported! Please review checklist items.");
+          } else {
+            toast.success("File imported successfully!");
+            // Redirect to inspection after 2 seconds
+            setTimeout(() => {
+              setLocation(`/inspections/${result.inspectionId}`);
+            }, 2000);
+          }
         } catch (error) {
           console.error("Parse error:", error);
           const errorMessage = error instanceof Error ? error.message : "Unknown error";
@@ -268,6 +282,113 @@ export default function ImportData() {
           </CardContent>
         </Card>
       </main>
+
+      {/* Checklist Review Dialog */}
+      <Dialog open={showChecklistReview} onOpenChange={setShowChecklistReview}>
+        <DialogContent className="max-w-4xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Review Checklist Items</DialogTitle>
+            <DialogDescription>
+              {checklistItems.length} checklist items were found in the import. Please review and adjust the checked status before finalizing.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <ScrollArea className="h-[400px] pr-4">
+            <div className="space-y-4">
+              {checklistItems.map((item, index) => (
+                <div key={index} className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-gray-50">
+                  <Checkbox
+                    checked={item.checked}
+                    onCheckedChange={(checked) => {
+                      const updated = [...checklistItems];
+                      updated[index].checked = checked;
+                      setChecklistItems(updated);
+                    }}
+                    className="mt-1"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-sm">{item.category}</span>
+                      {item.itemNumber && (
+                        <span className="text-xs text-gray-500">#{item.itemNumber}</span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-700 mt-1">{item.itemText}</p>
+                    {item.originalStatus && (
+                      <p className="text-xs text-gray-500 mt-1">Original status: {item.originalStatus}</p>
+                    )}
+                    {item.notes && (
+                      <p className="text-xs text-gray-600 mt-1 italic">{item.notes}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+
+          <DialogFooter className="flex justify-between items-center">
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const updated = checklistItems.map(item => ({ ...item, checked: true }));
+                  setChecklistItems(updated);
+                }}
+              >
+                Check All
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const updated = checklistItems.map(item => ({ ...item, checked: false }));
+                  setChecklistItems(updated);
+                }}
+              >
+                Uncheck All
+              </Button>
+            </div>
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowChecklistReview(false);
+                  setLocation(`/inspections/${parseResult.inspectionId}`);
+                }}
+              >
+                Skip Checklist
+              </Button>
+              <Button
+                onClick={async () => {
+                  try {
+                    await finalizeMutation.mutateAsync({
+                      inspectionId: parseResult.inspectionId,
+                      checklistItems: checklistItems.map(item => ({
+                        category: item.category,
+                        itemNumber: item.itemNumber,
+                        itemText: item.itemText,
+                        checked: item.checked,
+                        notes: item.notes,
+                        checkedBy: item.checkedBy,
+                        checkedDate: item.checkedDate,
+                      })),
+                    });
+                    toast.success(`${checklistItems.length} checklist items imported!`);
+                    setShowChecklistReview(false);
+                    setLocation(`/inspections/${parseResult.inspectionId}`);
+                  } catch (error) {
+                    toast.error("Failed to finalize checklist import");
+                  }
+                }}
+                disabled={finalizeMutation.isPending}
+              >
+                {finalizeMutation.isPending ? "Importing..." : "Finalize Import"}
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
