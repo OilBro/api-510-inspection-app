@@ -10,6 +10,7 @@ import { storagePut } from "./storage";
 import { fieldMappingRouter, unmatchedDataRouter } from "./fieldMappingRouters";
 import { professionalReportRouter } from "./professionalReportRouters";
 import * as fieldMappingDb from "./fieldMappingDb";
+import * as professionalReportDb from "./professionalReportDb";
 
 export const appRouter = router({
   system: systemRouter,
@@ -563,6 +564,51 @@ export const appRouter = router({
               }
               
               await db.createTmlReading(tmlRecord);
+            }
+          }
+
+          // Create checklist items if available
+          if (parsedData.checklistItems && parsedData.checklistItems.length > 0) {
+            // First, create a professional report if it doesn't exist
+            const reportId = nanoid();
+            await professionalReportDb.createProfessionalReport({
+              id: reportId,
+              inspectionId: inspection.id,
+              reportNumber: `RPT-${Date.now()}`,
+              reportDate: new Date(),
+            });
+
+            for (const item of parsedData.checklistItems) {
+              const checklistRecord: any = {
+                id: nanoid(),
+                reportId,
+                category: item.category || 'General',
+                itemText: item.itemText || item.description || 'Imported checklist item',
+              };
+              
+              // Handle checked status
+              if (item.checked !== undefined) {
+                checklistRecord.checked = Boolean(item.checked);
+              } else if (item.status) {
+                // Map status to checked boolean
+                checklistRecord.checked = item.status === 'satisfactory' || item.status === 'completed' || item.status === 'yes';
+                checklistRecord.status = item.status;
+              }
+              
+              if (item.itemNumber) checklistRecord.itemNumber = String(item.itemNumber);
+              if (item.notes) checklistRecord.notes = String(item.notes);
+              if (item.checkedBy) checklistRecord.checkedBy = String(item.checkedBy);
+              if (item.checkedDate) checklistRecord.checkedDate = new Date(item.checkedDate);
+              
+              await professionalReportDb.createChecklistItem(checklistRecord);
+              
+              // Track mapping for learning
+              successfulMappings.push({
+                sourceField: 'checklistItems',
+                targetSection: 'checklist',
+                targetField: 'itemText',
+                sourceValue: checklistRecord.itemText
+              });
             }
           }
 

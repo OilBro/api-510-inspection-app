@@ -276,3 +276,14 @@
 - [x] This causes data to be silently ignored - FIXED: All imported fields now tracked for learning
 - [x] User expects to see unmatched data but sees nothing - FIXED: Proper tracking ensures learning from all imports
 
+
+
+
+## 📋 CHECKLIST IMPORT MISSING
+- [x] Docupipe import doesn't import checklist items at all - FIXED: Now imports checklist items
+- [x] Need to parse checklist data from Docupipe response - DONE: Added checklistItems to ParsedVesselData
+- [x] Create checklist items in database during import - DONE: Creates professional report + checklist items
+- [x] Mark items as checked/completed based on Docupipe status - DONE: Maps status to checked boolean
+- [x] Track checklist field mappings for learning - DONE: Tracks each imported item
+- [x] Handle both default checklist items and custom items from import - DONE: Imports all items from Docupipe
+

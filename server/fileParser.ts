@@ -46,6 +46,18 @@ interface ParsedVesselData {
     minimumRequired?: number;
     calculatedMAWP?: number;
   }>;
+  
+  checklistItems?: Array<{
+    category?: string;
+    itemNumber?: string;
+    itemText?: string;
+    description?: string;
+    checked?: boolean;
+    status?: string;
+    notes?: string;
+    checkedBy?: string;
+    checkedDate?: string;
+  }>;
 }
 
 /**
