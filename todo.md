@@ -372,3 +372,13 @@
 - [x] Add success message with continue/view options
 - [x] Test multi-file upload and merge functionality
 
+
+
+
+## 🚨 CRITICAL ISSUES (User Report)
+- [x] Parser dropdown not showing on import page (VERIFIED: It's showing)
+- [x] Multi-source import UI implemented (backend ready, needs UI testing)
+- [x] Cannot edit imported TML readings after import (FIXED: Edit in Thickness Analysis tab)
+- [x] Gaps/blank spaces in generated reports between headers and data tables (FIXED: Removed extra spacing)
+- [ ] Export worksheet functionality not working (needs investigation)
+

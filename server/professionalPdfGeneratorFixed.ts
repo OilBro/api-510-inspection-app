@@ -158,9 +158,12 @@ async function addTable(doc: PDFKit.PDFDocument, headers: string[], rows: string
     
     // Check if we need a page break
     const neededSpace = HEADER_HEIGHT + (rowsThisPage * ROW_HEIGHT) + 20;
-    checkPageBreak(doc, neededSpace);
+    if (doc.y + neededSpace > PAGE_HEIGHT - MARGIN) {
+      doc.addPage();
+      doc.y = MARGIN + 60; // Start below header space
+    }
     
-    // Draw header
+    // Draw header directly at current position (no extra spacing)
     let currentY = drawTableHeader(doc.y);
     const tableStartY = currentY - HEADER_HEIGHT;
     

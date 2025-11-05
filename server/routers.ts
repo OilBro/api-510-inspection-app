@@ -571,7 +571,7 @@ export const appRouter = router({
               const tmlRecord: any = {
                 id: nanoid(),
                 inspectionId: inspection.id,
-                location: reading.tmlId || `TML-${nanoid()}`,
+                tmlId: reading.tmlId || `TML-${nanoid()}`,
                 component: reading.component || "Unknown",
               };
               
@@ -582,11 +582,11 @@ export const appRouter = router({
               }
               if (reading.previousThickness) {
                 const val = parseFloat(String(reading.previousThickness));
-                if (!isNaN(val)) tmlRecord.previousReading = val;
+                if (!isNaN(val)) tmlRecord.previousThickness = val;
               }
               if (reading.currentThickness) {
                 const val = typeof reading.currentThickness === 'number' ? reading.currentThickness : parseFloat(String(reading.currentThickness));
-                if (!isNaN(val)) tmlRecord.currentReading = val;
+                if (!isNaN(val)) tmlRecord.currentThickness = val;
               }
               
               await db.createTmlReading(tmlRecord);
