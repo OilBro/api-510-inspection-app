@@ -101,6 +101,8 @@ export const tmlReadings = mysqlTable("tmlReadings", {
   component: varchar("component", { length: 255 }).notNull(),
   currentThickness: decimal("currentThickness", { precision: 10, scale: 4 }),
   previousThickness: decimal("previousThickness", { precision: 10, scale: 4 }),
+  previousInspectionDate: timestamp("previousInspectionDate"),
+  currentInspectionDate: timestamp("currentInspectionDate"),
   nominalThickness: decimal("nominalThickness", { precision: 10, scale: 4 }),
   loss: decimal("loss", { precision: 10, scale: 4 }),
   lossPercent: decimal("lossPercent", { precision: 10, scale: 2 }),

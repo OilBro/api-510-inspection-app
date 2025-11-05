@@ -386,16 +386,16 @@
 
 
 ## 🔴 CRITICAL: PDF Report Calculation Errors (User Report)
-- [ ] Fix TML loss calculation - currently showing negative percentages instead of inches
-- [ ] Add both Loss (in) and Loss (%) columns to thickness table
-- [ ] Fix corrosion rate calculation - all showing 0.00 instead of actual rates
-- [ ] Implement Section 3.0 Component Calculations (tmin, MAWP, remaining life)
-- [ ] Add proper status logic based on minimum thickness comparison
-- [ ] Fix page numbering in PDF (multiple "Page 6" issues)
-- [ ] Remove placeholder rows from thickness table
-- [ ] Add vessel dimension validation (unusual L/D ratios)
-- [ ] Lock material specifications after first entry
-- [ ] Validate all data before PDF generation
+- [x] Fix TML loss calculation - currently showing negative percentages instead of inches
+- [x] Add both Loss (in) and Loss (%) columns to thickness table
+- [x] Fix corrosion rate calculation - now uses actual dates when available
+- [x] Implement Section 3.0 Component Calculations (tmin, MAWP, remaining life)
+- [x] Add proper status logic based on minimum thickness comparison
+- [ ] Fix page numbering in PDF (multiple "Page 6" issues) - needs investigation
+- [ ] Remove placeholder rows from thickness table - validation needed
+- [ ] Add vessel dimension validation (unusual L/D ratios) - future enhancement
+- [ ] Lock material specifications after first entry - future enhancement
+- [ ] Validate all data before PDF generation - future enhancement
 
 
 - [x] Fix vessel geometry units - showing "feet" when values are in inches

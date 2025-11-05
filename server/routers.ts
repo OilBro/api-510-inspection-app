@@ -253,10 +253,47 @@ export const appRouter = router({
         
         // Calculate corrosion rate in mpy (mils per year)
         if (!calculatedCorrosionRate && previous && current) {
-          const timeSpanYears = 1; // Default to 1 year
+          let timeSpanYears = 1; // Default to 1 year
+          
+          // Try to get actual time span from dates
+          const prevDate = data.previousInspectionDate || existing?.previousInspectionDate;
+          const currDate = data.currentInspectionDate || existing?.currentInspectionDate;
+          
+          if (prevDate && currDate) {
+            const prevTime = prevDate instanceof Date ? prevDate.getTime() : new Date(prevDate).getTime();
+            const currTime = currDate instanceof Date ? currDate.getTime() : new Date(currDate).getTime();
+            const monthsDiff = (currTime - prevTime) / (1000 * 60 * 60 * 24 * 30.44);
+            if (monthsDiff > 0) {
+              timeSpanYears = monthsDiff / 12;
+            }
+          }
+          
           const thicknessLoss = previous - current;
           const corrosionRateMpy = (thicknessLoss / timeSpanYears) * 1000;
           calculatedCorrosionRate = corrosionRateMpy.toFixed(2);
+        }
+        
+        // Auto-calculate status if not provided
+        let calculatedStatus = data.status;
+        if (!calculatedStatus && current !== null && nominal !== null) {
+          // Get inspection data for status calculation
+          const inspection = await db.getInspection(existing?.inspectionId || '');
+          if (inspection && inspection.designPressure && inspection.insideDiameter) {
+            const { calculateTMLStatus } = require('./tmlStatusCalculator');
+            try {
+              calculatedStatus = calculateTMLStatus({
+                currentThickness: current,
+                nominalThickness: nominal,
+                designPressure: parseFloat(String(inspection.designPressure)),
+                insideDiameter: parseFloat(String(inspection.insideDiameter)),
+                materialSpec: String(inspection.materialSpec || 'SA-516-70'),
+                designTemperature: parseFloat(String(inspection.designTemperature || 500)),
+                corrosionAllowance: 0.125
+              });
+            } catch (error) {
+              console.error('[TML Update] Status calculation failed:', error);
+            }
+          }
         }
         
         const updateData = {
@@ -264,6 +301,7 @@ export const appRouter = router({
           loss: calculatedLoss,
           lossPercent: calculatedLossPercent,
           corrosionRate: calculatedCorrosionRate,
+          status: calculatedStatus,
         };
         
         await db.updateTmlReading(id, updateData);

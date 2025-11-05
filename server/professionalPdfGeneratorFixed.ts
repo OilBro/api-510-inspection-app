@@ -287,7 +287,7 @@ export async function generateProfessionalPDF(data: ProfessionalReportData): Pro
   console.log('[PDF DEBUG] Page count after vessel data:', doc.bufferedPageRange().count);
   
   console.log('[PDF DEBUG] Generating component calculations...');
-  await generateComponentCalculations(doc, components, logoBuffer);
+  await generateComponentCalculations(doc, components, logoBuffer, inspection, tmlReadings);
   console.log('[PDF DEBUG] Page count after components:', doc.bufferedPageRange().count);
   
   console.log('[PDF DEBUG] Generating findings...');
@@ -489,11 +489,54 @@ async function generateVesselData(doc: PDFKit.PDFDocument, inspection: any, logo
   doc.y = leftY + 20;
 }
 
-async function generateComponentCalculations(doc: PDFKit.PDFDocument, components: any[], logoBuffer?: Buffer) {
+async function generateComponentCalculations(doc: PDFKit.PDFDocument, components: any[], logoBuffer?: Buffer, inspection?: any, tmlReadings?: any[]) {
   doc.addPage();
   await addHeader(doc, 'COMPONENT CALCULATIONS', 5, logoBuffer);
   
   addSectionTitle(doc, '3.0 MECHANICAL INTEGRITY CALCULATIONS');
+  
+  // If no pre-calculated components, try to auto-generate from inspection data
+  if ((!components || components.length === 0) && inspection && tmlReadings && tmlReadings.length > 0) {
+    const { calculateComponent } = require('./componentCalculations');
+    
+    // Find minimum thickness from TML readings
+    const minReading = tmlReadings.reduce((min, r) => {
+      const current = r.currentThickness ? parseFloat(r.currentThickness) : Infinity;
+      return current < min ? current : min;
+    }, Infinity);
+    
+    if (minReading !== Infinity && inspection.designPressure && inspection.insideDiameter) {
+      try {
+        const shellCalc = calculateComponent({
+          designPressure: parseFloat(inspection.designPressure) || 150,
+          designTemperature: parseFloat(inspection.designTemperature) || 500,
+          insideDiameter: parseFloat(inspection.insideDiameter) || 95,
+          materialSpec: inspection.materialSpec || 'SA-516-70',
+          nominalThickness: parseFloat(inspection.nominalThickness) || 0.625,
+          actualThickness: minReading,
+          corrosionAllowance: 0.125,
+          jointEfficiency: 0.85,
+          componentType: 'shell',
+          corrosionRate: 0
+        });
+        
+        components = [{
+          componentName: 'Shell',
+          materialCode: shellCalc.material,
+          designMAWP: shellCalc.designPressure,
+          designTemp: shellCalc.designTemperature,
+          allowableStress: shellCalc.allowableStress,
+          jointEfficiency: 0.85,
+          minimumThickness: shellCalc.minimumRequiredThickness,
+          remainingLife: shellCalc.remainingLife,
+          mawpAtNextInspection: shellCalc.mawp,
+          status: shellCalc.status
+        }];
+      } catch (error) {
+        console.error('[PDF] Auto-calculation failed:', error);
+      }
+    }
+  }
   
   if (!components || components.length === 0) {
     addText(doc, 'No component calculations have been performed yet. Please complete the component calculations in the Professional Report tab.');
