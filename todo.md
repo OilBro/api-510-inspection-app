@@ -382,3 +382,21 @@
 - [x] Gaps/blank spaces in generated reports between headers and data tables (FIXED: Removed extra spacing)
 - [ ] Export worksheet functionality not working (needs investigation)
 
+
+
+
+## 🔴 CRITICAL: PDF Report Calculation Errors (User Report)
+- [ ] Fix TML loss calculation - currently showing negative percentages instead of inches
+- [ ] Add both Loss (in) and Loss (%) columns to thickness table
+- [ ] Fix corrosion rate calculation - all showing 0.00 instead of actual rates
+- [ ] Implement Section 3.0 Component Calculations (tmin, MAWP, remaining life)
+- [ ] Add proper status logic based on minimum thickness comparison
+- [ ] Fix page numbering in PDF (multiple "Page 6" issues)
+- [ ] Remove placeholder rows from thickness table
+- [ ] Add vessel dimension validation (unusual L/D ratios)
+- [ ] Lock material specifications after first entry
+- [ ] Validate all data before PDF generation
+
+
+- [x] Fix vessel geometry units - showing "feet" when values are in inches
+

@@ -238,10 +238,17 @@ export const appRouter = router({
         let calculatedLoss = data.loss;
         let calculatedCorrosionRate = data.corrosionRate;
         
-        // Calculate loss percentage: (Nominal - Current) / Nominal * 100
-        if (!calculatedLoss && nominal && current && nominal > 0) {
-          const lossPercent = ((nominal - current) / nominal) * 100;
-          calculatedLoss = lossPercent.toFixed(2);
+        // Calculate loss in inches: Nominal - Current
+        let calculatedLossPercent;
+        if (!calculatedLoss && nominal !== null && current !== null) {
+          const lossInches = nominal - current;
+          calculatedLoss = lossInches.toFixed(4);
+          
+          // Also calculate percentage
+          if (nominal > 0) {
+            const lossPercent = (lossInches / nominal) * 100;
+            calculatedLossPercent = lossPercent.toFixed(2);
+          }
         }
         
         // Calculate corrosion rate in mpy (mils per year)
@@ -255,6 +262,7 @@ export const appRouter = router({
         const updateData = {
           ...data,
           loss: calculatedLoss,
+          lossPercent: calculatedLossPercent,
           corrosionRate: calculatedCorrosionRate,
         };
         

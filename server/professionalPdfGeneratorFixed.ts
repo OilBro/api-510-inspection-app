@@ -464,7 +464,7 @@ async function generateVesselData(doc: PDFKit.PDFDocument, inspection: any, logo
     ['Material Specification', inspection.materialSpec || '-'],
     ['Vessel Type', inspection.vesselType || '-'],
     ['Inside Diameter', `${inspection.insideDiameter || '-'} inches`],
-    ['Overall Length', `${inspection.overallLength || '-'} feet`],
+    ['Overall Length', `${inspection.overallLength || '-'} inches`],
   ];
   
   // Two-column layout
@@ -602,14 +602,15 @@ async function generateThicknessReadings(doc: PDFKit.PDFDocument, readings: any[
   // Log first few readings to verify data structure
   console.log('[PDF DEBUG] First TML reading:', readings[0]);
   
-  const headers = ['TML #', 'Component', 'Current (in)', 'Previous (in)', 'Nominal (in)', 'Loss (in)', 'Rate (mpy)', 'Status'];
+  const headers = ['TML #', 'Component', 'Current (in)', 'Previous (in)', 'Nominal (in)', 'Loss (in)', 'Loss (%)', 'Rate (mpy)', 'Status'];
   const rows = readings.map(r => [
     r.tmlId || '-',
     r.component || '-',
     r.currentThickness ? parseFloat(r.currentThickness).toFixed(3) : '-',
     r.previousThickness ? parseFloat(r.previousThickness).toFixed(3) : '-',
     r.nominalThickness ? parseFloat(r.nominalThickness).toFixed(3) : '-',
-    r.loss ? parseFloat(r.loss).toFixed(2) : '-',
+    r.loss ? parseFloat(r.loss).toFixed(4) : '-',
+    r.lossPercent ? parseFloat(r.lossPercent).toFixed(2) : '-',
     r.corrosionRate ? parseFloat(r.corrosionRate).toFixed(2) : '-',
     r.status || '-',
   ]);

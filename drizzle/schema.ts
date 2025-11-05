@@ -102,7 +102,8 @@ export const tmlReadings = mysqlTable("tmlReadings", {
   currentThickness: decimal("currentThickness", { precision: 10, scale: 4 }),
   previousThickness: decimal("previousThickness", { precision: 10, scale: 4 }),
   nominalThickness: decimal("nominalThickness", { precision: 10, scale: 4 }),
-  loss: decimal("loss", { precision: 10, scale: 2 }),
+  loss: decimal("loss", { precision: 10, scale: 4 }),
+  lossPercent: decimal("lossPercent", { precision: 10, scale: 2 }),
   corrosionRate: decimal("corrosionRate", { precision: 10, scale: 2 }),
   status: mysqlEnum("status", ["good", "monitor", "critical"]).default("good").notNull(),
   
