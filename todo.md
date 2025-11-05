@@ -400,3 +400,8 @@
 
 - [x] Fix vessel geometry units - showing "feet" when values are in inches
 
+
+
+- [x] Fix Overall Length label in PDF - currently shows "feet" but value is in inches (e.g., 216 inches labeled as 216 feet)
+- [x] Consolidate PDF generators - replaced old professionalPdfGenerator.ts with Fixed version
+
