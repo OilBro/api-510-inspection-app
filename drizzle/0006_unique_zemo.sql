@@ -1,0 +1,1 @@
+ALTER TABLE `importedFiles` ADD `parserType` varchar(50);

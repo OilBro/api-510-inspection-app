@@ -357,3 +357,18 @@
 - [x] Test Manus parser works without Docupipe API key
 - [x] Verify both parsers can work independently
 
+
+
+
+## 🆕 MULTI-SOURCE DATA IMPORT (User Request)
+- [x] Design workflow for uploading multiple files to same report
+- [x] Add draft/work-in-progress inspection status (already exists)
+- [x] Create data structure for tracking data sources
+- [x] Update database schema to support draft inspections
+- [x] Add parserType field to track which parser was used
+- [x] Implement merge logic for combining data from multiple uploads
+- [x] Handle conflicts when same field has different values (only fill empty fields)
+- [x] Build UI for "Add More Data" / "Continue Uploading" flow
+- [x] Add success message with continue/view options
+- [x] Test multi-file upload and merge functionality
+

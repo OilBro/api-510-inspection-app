@@ -392,6 +392,7 @@ export const appRouter = router({
         fileName: z.string(),
         fileType: z.enum(["pdf", "excel"]),
         parserType: z.enum(["docupipe", "manus"]).optional(), // Optional parser selection
+        inspectionId: z.string().optional(), // Optional: append to existing inspection
       }))
       .mutation(async ({ ctx, input }) => {
         try {
@@ -435,13 +436,32 @@ export const appRouter = router({
             mappingLookup.set(m.sourceField, { targetSection: m.targetSection, targetField: m.targetField, id: m.id });
           });
 
-          // Create inspection record
-          const inspection: any = {
-            id: nanoid(),
-            userId: ctx.user.id,
-            vesselTagNumber: parsedData.vesselTagNumber || `IMPORT-${Date.now()}`,
-            status: "draft" as const,
-          };
+          // Get or create inspection record
+          let inspection: any;
+          let isNewInspection = false;
+          
+          if (input.inspectionId) {
+            // Append to existing inspection
+            inspection = await db.getInspection(input.inspectionId);
+            if (!inspection) {
+              throw new Error(`Inspection ${input.inspectionId} not found`);
+            }
+            // Verify ownership
+            if (inspection.userId !== ctx.user.id) {
+              throw new Error("Unauthorized: Cannot modify another user's inspection");
+            }
+            console.log(`[Multi-Source Import] Appending to existing inspection: ${input.inspectionId}`);
+          } else {
+            // Create new inspection
+            isNewInspection = true;
+            inspection = {
+              id: nanoid(),
+              userId: ctx.user.id,
+              vesselTagNumber: parsedData.vesselTagNumber || `IMPORT-${Date.now()}`,
+              status: "draft" as const,
+            };
+            console.log(`[Multi-Source Import] Creating new inspection: ${inspection.id}`);
+          }
 
           // Track successfully mapped fields for learning
           const successfulMappings: Array<{sourceField: string, targetSection: string, targetField: string, sourceValue: string}> = [];
@@ -456,59 +476,59 @@ export const appRouter = router({
             });
           };
           
-          // Only add optional fields if they have values
-          if (parsedData.vesselName) {
+          // Merge optional fields (only update if new value exists and old doesn't, or if creating new)
+          if (parsedData.vesselName && (isNewInspection || !inspection.vesselName)) {
             inspection.vesselName = String(parsedData.vesselName).substring(0, 500);
             trackMapping('vesselName', 'vesselName', parsedData.vesselName);
           }
-          if (parsedData.manufacturer) {
+          if (parsedData.manufacturer && (isNewInspection || !inspection.manufacturer)) {
             inspection.manufacturer = String(parsedData.manufacturer).substring(0, 500);
             trackMapping('manufacturer', 'manufacturer', parsedData.manufacturer);
           }
-          if (parsedData.yearBuilt) {
+          if (parsedData.yearBuilt && (isNewInspection || !inspection.yearBuilt)) {
             const year = parseInt(parsedData.yearBuilt);
             if (year) {
               inspection.yearBuilt = year;
               trackMapping('yearBuilt', 'yearBuilt', parsedData.yearBuilt);
             }
           }
-          if (parsedData.designPressure) {
+          if (parsedData.designPressure && (isNewInspection || !inspection.designPressure)) {
             const val = parseNumeric(parsedData.designPressure);
             if (val) {
               inspection.designPressure = val;
               trackMapping('designPressure', 'designPressure', parsedData.designPressure);
             }
           }
-          if (parsedData.designTemperature) {
+          if (parsedData.designTemperature && (isNewInspection || !inspection.designTemperature)) {
             const val = parseNumeric(parsedData.designTemperature);
             if (val) {
               inspection.designTemperature = val;
               trackMapping('designTemperature', 'designTemperature', parsedData.designTemperature);
             }
           }
-          if (parsedData.operatingPressure) {
+          if (parsedData.operatingPressure && (isNewInspection || !inspection.operatingPressure)) {
             const val = parseNumeric(parsedData.operatingPressure);
             if (val) {
               inspection.operatingPressure = val;
               trackMapping('operatingPressure', 'operatingPressure', parsedData.operatingPressure);
             }
           }
-          if (parsedData.materialSpec) {
+          if (parsedData.materialSpec && (isNewInspection || !inspection.materialSpec)) {
             inspection.materialSpec = String(parsedData.materialSpec).substring(0, 255);
             trackMapping('materialSpec', 'materialSpec', parsedData.materialSpec);
           }
-          if (parsedData.vesselType) {
+          if (parsedData.vesselType && (isNewInspection || !inspection.vesselType)) {
             inspection.vesselType = String(parsedData.vesselType).substring(0, 255);
             trackMapping('vesselType', 'vesselType', parsedData.vesselType);
           }
-          if (parsedData.insideDiameter) {
+          if (parsedData.insideDiameter && (isNewInspection || !inspection.insideDiameter)) {
             const val = parseNumeric(parsedData.insideDiameter);
             if (val) {
               inspection.insideDiameter = val;
               trackMapping('insideDiameter', 'insideDiameter', parsedData.insideDiameter);
             }
           }
-          if (parsedData.overallLength) {
+          if (parsedData.overallLength && (isNewInspection || !inspection.overallLength)) {
             const val = parseNumeric(parsedData.overallLength);
             if (val) {
               inspection.overallLength = val;
@@ -516,7 +536,12 @@ export const appRouter = router({
             }
           }
 
-          await db.createInspection(inspection);
+          // Create or update inspection
+          if (isNewInspection) {
+            await db.createInspection(inspection);
+          } else {
+            await db.updateInspection(inspection.id, inspection);
+          }
 
           // Save field mappings for successfully imported fields
           for (const mapping of successfulMappings) {
@@ -605,6 +630,7 @@ export const appRouter = router({
             fileType: input.fileType,
             fileUrl,
             fileSize: buffer.length,
+            parserType: input.parserType || "docupipe",
             extractedData: JSON.stringify(parsedData),
             processingStatus: "completed",
           });
@@ -651,10 +677,14 @@ export const appRouter = router({
           return {
             success: true,
             inspectionId: inspection.id,
+            isNewInspection,
             parsedData,
             unmatchedCount: unmatchedFields.length,
             checklistPreview, // Send checklist items for review
             requiresChecklistReview: checklistPreview.length > 0,
+            message: isNewInspection 
+              ? `Created new inspection ${inspection.id}` 
+              : `Added data to existing inspection ${inspection.id}`,
           };
         } catch (error) {
           console.error("Error parsing file:", error);

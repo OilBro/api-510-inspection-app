@@ -164,6 +164,7 @@ export const importedFiles = mysqlTable("importedFiles", {
   fileType: mysqlEnum("fileType", ["pdf", "excel"]).notNull(),
   fileUrl: text("fileUrl"),
   fileSize: int("fileSize"),
+  parserType: varchar("parserType", { length: 50 }), // "docupipe" or "manus"
   
   extractedData: text("extractedData"), // JSON string
   processingStatus: mysqlEnum("processingStatus", ["pending", "processing", "completed", "failed"]).default("pending").notNull(),

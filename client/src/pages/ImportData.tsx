@@ -21,6 +21,8 @@ export default function ImportData() {
   const [showChecklistReview, setShowChecklistReview] = useState(false);
   const [checklistItems, setChecklistItems] = useState<any[]>([]);
   const [parserType, setParserType] = useState<"docupipe" | "manus">("docupipe");
+  const [existingInspectionId, setExistingInspectionId] = useState<string | null>(null);
+  const [continueMode, setContinueMode] = useState(false);
   
   const parseMutation = trpc.importedFiles.parseFile.useMutation();
   const finalizeMutation = trpc.importedFiles.finalizeChecklistImport.useMutation();
@@ -69,6 +71,7 @@ export default function ImportData() {
             fileName: selectedFile.name,
             fileType,
             parserType, // Pass selected parser type
+            inspectionId: existingInspectionId || undefined, // Append to existing if selected
           });
 
           setParseResult(result);
@@ -80,11 +83,16 @@ export default function ImportData() {
             setUploading(false);
             toast.success("File imported! Please review checklist items.");
           } else {
-            toast.success("File imported successfully!");
-            // Redirect to inspection after 2 seconds
-            setTimeout(() => {
-              setLocation(`/inspections/${result.inspectionId}`);
-            }, 2000);
+            const message = result.isNewInspection 
+              ? "New inspection created successfully!" 
+              : "Data added to existing inspection!";
+            toast.success(message);
+            
+            // Set continue mode and store inspection ID
+            setExistingInspectionId(result.inspectionId);
+            setContinueMode(true);
+            setSelectedFile(null); // Clear file selection
+            setUploading(false);
           }
         } catch (error) {
           console.error("Parse error:", error);
@@ -233,8 +241,44 @@ export default function ImportData() {
               size="lg"
             >
               <Upload className="mr-2 h-4 w-4" />
-              {uploading ? "Processing..." : "Upload and Import"}
+              {uploading ? "Processing..." : continueMode ? "Add Another File" : "Upload and Import"}
             </Button>
+
+            {continueMode && parseResult && (
+              <div className="p-4 bg-green-50 rounded-lg border border-green-200 space-y-3">
+                <div className="flex items-start space-x-3">
+                  <CheckCircle2 className="h-6 w-6 text-green-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-medium text-green-900">Data successfully added!</p>
+                    <p className="text-sm text-green-700 mt-1">
+                      {parseResult.message || "Your data has been imported."}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => setLocation(`/inspections/${existingInspectionId}`)}
+                    variant="default"
+                    className="flex-1"
+                  >
+                    View Inspection
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setContinueMode(false);
+                      setExistingInspectionId(null);
+                      setParseResult(null);
+                    }}
+                    variant="outline"
+                  >
+                    Start New
+                  </Button>
+                </div>
+                <p className="text-xs text-green-600">
+                  💡 You can upload more files to add additional data to this inspection
+                </p>
+              </div>
+            )}
 
             {uploading && (
               <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
