@@ -627,7 +627,7 @@ async function generateRecommendationsSection(doc: PDFKit.PDFDocument, recommend
 }
 
 async function generateThicknessReadings(doc: PDFKit.PDFDocument, readings: any[], logoBuffer?: Buffer) {
-  console.log('[PDF DEBUG] TML Readings - Total count:', readings?.length || 0);
+    // TML Readings count: ${readings?.length || 0}
   
   if (!readings || readings.length === 0) {
     doc.addPage();
@@ -642,8 +642,7 @@ async function generateThicknessReadings(doc: PDFKit.PDFDocument, readings: any[
   await addHeader(doc, 'THICKNESS MEASUREMENTS', 8, logoBuffer);
   addSectionTitle(doc, '6.0 ULTRASONIC THICKNESS MEASUREMENTS');
   
-  // Log first few readings to verify data structure
-  console.log('[PDF DEBUG] First TML reading:', readings[0]);
+  // First TML reading structure verified
   
   const headers = ['TML #', 'Component', 'Current (in)', 'Previous (in)', 'Nominal (in)', 'Loss (in)', 'Loss (%)', 'Rate (mpy)', 'Status'];
   const rows = readings.map(r => [
@@ -658,8 +657,7 @@ async function generateThicknessReadings(doc: PDFKit.PDFDocument, readings: any[
     r.status || '-',
   ]);
   
-  console.log('[PDF DEBUG] TML table rows created:', rows.length);
-  console.log('[PDF DEBUG] First row data:', rows[0]);
+  // TML table rows created: ${rows.length}
   
   await addTable(doc, headers, rows, 'ULTRASONIC THICKNESS MEASUREMENTS', 6, logoBuffer);
 }
