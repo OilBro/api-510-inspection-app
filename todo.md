@@ -430,3 +430,14 @@
 - [ ] Add torispherical head crown radius input
 - [ ] Apply all enhanced validations from document
 
+
+
+
+## 🔵 REMAINING ENHANCEMENTS FROM 906-LINE DOCUMENT
+- [x] Add thick-wall vs thin-wall validation (P > 0.385SE check) to shell calculations
+- [ ] Enhance remaining life calculation with next inspection interval per API 510
+- [ ] Add CalculationDetails component to show calculation steps and verification
+- [ ] Create verification test cases using Vitest
+- [ ] Add inspection history fields to database schema
+- [ ] Add safety factor input to remaining life calculation
+

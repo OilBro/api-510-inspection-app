@@ -171,6 +171,16 @@ export default function CalculationsTab({ inspectionId }: CalculationsTabProps) 
       );
     }
 
+    // SAFETY CHECK: Thin-wall theory applicability per ASME UG-27
+    // Thin-wall applies when P ≤ 0.385 × S × E
+    if (P > 0.385 * S * E) {
+      toast.error(
+        "⚠️ CRITICAL: Pressure exceeds thin-wall theory limits (P > 0.385×S×E). " +
+        "Use thick-wall formula (UCS-66) instead. This calculation is NOT valid."
+      );
+      return;
+    }
+
     // Calculate thickness
     // t = (P * R) / (S * E - 0.6 * P) + CA
     const t = (P * R) / denominator + CA;
