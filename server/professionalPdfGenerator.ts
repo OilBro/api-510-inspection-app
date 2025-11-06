@@ -13,7 +13,9 @@ import {
   getInspectionPhotos,
   getChecklistItems,
 } from "./professionalReportDb";
-import { getInspection, getTmlReadings } from "./db";
+import { getInspection, getTmlReadings, getDb } from "./db";
+import { ffsAssessments, inLieuOfAssessments } from "../drizzle/schema";
+import { eq } from "drizzle-orm";
 
 // ============================================================================
 // PDF CONFIGURATION
@@ -759,15 +761,11 @@ async function generatePhotos(doc: PDFKit.PDFDocument, photos: any[], logoBuffer
 
 async function generateFfsAssessment(doc: PDFKit.PDFDocument, inspectionId: string, logoBuffer?: Buffer) {
   // Fetch FFS assessment data from database
-  const { getDb } = require('./db');
   const db = await getDb();
   if (!db) {
     console.log('[PDF] Database not available for FFS assessment');
     return;
   }
-  
-  const { ffsAssessments } = require('../drizzle/schema');
-  const { eq } = require('drizzle-orm');
   
   const assessments = await db.select().from(ffsAssessments).where(eq(ffsAssessments.inspectionId, inspectionId));
   
@@ -821,15 +819,11 @@ async function generateFfsAssessment(doc: PDFKit.PDFDocument, inspectionId: stri
 
 async function generateInLieuOfQualification(doc: PDFKit.PDFDocument, inspectionId: string, logoBuffer?: Buffer) {
   // Fetch In-Lieu-Of assessment data from database
-  const { getDb } = require('./db');
   const db = await getDb();
   if (!db) {
     console.log('[PDF] Database not available for In-Lieu-Of assessment');
     return;
   }
-  
-  const { inLieuOfAssessments } = require('../drizzle/schema');
-  const { eq } = require('drizzle-orm');
   
   const assessments = await db.select().from(inLieuOfAssessments).where(eq(inLieuOfAssessments.inspectionId, inspectionId));
   

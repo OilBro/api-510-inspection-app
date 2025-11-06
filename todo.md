@@ -475,3 +475,10 @@
 - [x] Include next inspection interval recommendations
 - [ ] Test PDF generation with FFS and In-Lieu-Of data
 
+
+
+
+## 🔴 CRITICAL: Professional Report Generation Error
+- [x] Fix Drizzle ORM error in professional report generation (moved imports to top of file)
+- [ ] Test report generation after fix
+
