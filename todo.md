@@ -405,3 +405,17 @@
 - [x] Fix Overall Length label in PDF - currently shows "feet" but value is in inches (e.g., 216 inches labeled as 216 feet)
 - [x] Consolidate PDF generators - replaced old professionalPdfGenerator.ts with Fixed version
 
+
+
+
+## 🔴 CRITICAL FIXES FROM CODE REVIEW
+- [x] Fix External/Internal Inspection Update Bug - data not saving to database (DATA LOSS)
+- [ ] Add validation to prevent division by zero in calculations
+- [ ] Fix remaining life calculation for negative or zero results
+- [ ] Add critical warnings display for safety issues
+- [ ] Fix corrosion rate calculation date hardcoding (currently hardcoded to 5 years)
+- [ ] Add input validation for all numeric fields
+- [ ] Add calculation verification display
+- [ ] Add formula display for each calculation
+- [ ] Separate calculation logic from UI components
+

@@ -242,6 +242,16 @@ export async function getExternalInspection(inspectionId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function updateExternalInspection(id: string, data: Partial<InsertExternalInspection>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(externalInspections).set({
+    ...data,
+    updatedAt: new Date(),
+  }).where(eq(externalInspections.id, id));
+}
+
 // ============= Internal Inspection Functions =============
 
 export async function saveInternalInspection(inspection: InsertInternalInspection) {
@@ -258,6 +268,16 @@ export async function getInternalInspection(inspectionId: string) {
   
   const result = await db.select().from(internalInspections).where(eq(internalInspections.inspectionId, inspectionId)).limit(1);
   return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updateInternalInspection(id: string, data: Partial<InsertInternalInspection>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(internalInspections).set({
+    ...data,
+    updatedAt: new Date(),
+  }).where(eq(internalInspections.id, id));
 }
 
 // ============= Imported File Functions =============

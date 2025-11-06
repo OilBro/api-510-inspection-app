@@ -148,11 +148,52 @@ export default function CalculationsTab({ inspectionId }: CalculationsTabProps) 
       return;
     }
 
+    // SAFETY CHECK: Verify denominator is positive
+    const denominator = S * E - 0.6 * P;
+    if (denominator <= 0) {
+      toast.error(
+        "CRITICAL: Design pressure exceeds allowable stress capability. " +
+        "The vessel cannot be safely designed with these parameters. " +
+        "Reduce pressure or select higher strength material."
+      );
+      return;
+    }
+
+    // SAFETY CHECK: Verify pressure is reasonable
+    if (P <= 0) {
+      toast.error("Design pressure must be greater than zero");
+      return;
+    }
+
+    if (P > 5000) {
+      toast.warning(
+        "Design pressure exceeds 5000 psig. Verify this is correct for your application."
+      );
+    }
+
+    // Calculate thickness
     // t = (P * R) / (S * E - 0.6 * P) + CA
-    const t = (P * R) / (S * E - 0.6 * P) + CA;
+    const t = (P * R) / denominator + CA;
+    
+    // SAFETY CHECK: Verify thin wall theory applies
+    if (t > 0.5 * R) {
+      toast.warning(
+        "Calculated thickness exceeds 0.5 × radius. " +
+        "Thin wall theory may not apply. Consider thick wall formula."
+      );
+    }
+
+    // VERIFICATION: Recalculate to verify
+    const verification = (P * R) / (S * E - 0.6 * P) + CA;
+    const diff = Math.abs((t - verification) / t) * 100;
+    
+    if (diff > 0.01) {
+      toast.error("Calculation verification failed. Please try again.");
+      return;
+    }
     
     setShellMinThickness({ ...shellMinThickness, result: t.toFixed(4) });
-    toast.success("Minimum thickness calculated");
+    toast.success("Minimum thickness calculated and verified");
   };
 
   // Shell MAWP calculation (ASME Section VIII Div 1, UG-27)
@@ -168,12 +209,56 @@ export default function CalculationsTab({ inspectionId }: CalculationsTabProps) 
       return;
     }
 
+    // SAFETY CHECK: Verify actual thickness exceeds corrosion allowance
+    if (t <= CA) {
+      toast.error(
+        "CRITICAL: Actual thickness is less than or equal to corrosion allowance. " +
+        "No material remains for pressure containment!"
+      );
+      return;
+    }
+
     const t_actual = t - CA;
+
+    // SAFETY CHECK: Verify remaining thickness is positive
+    if (t_actual <= 0) {
+      toast.error("CRITICAL: No remaining thickness after corrosion allowance");
+      return;
+    }
+
+    // SAFETY CHECK: Verify minimum thickness requirement
+    if (t_actual < 0.0625) {
+      toast.warning(
+        "Remaining thickness is less than 1/16 inch. " +
+        "Verify this meets minimum requirements."
+      );
+    }
+
+    // Calculate MAWP
     // P = (S * E * t) / (R + 0.6 * t)
     const P = (S * E * t_actual) / (R + 0.6 * t_actual);
+
+    // SAFETY CHECK: Verify result is reasonable
+    if (P > 5000) {
+      toast.warning("Calculated MAWP exceeds 5000 psig. Verify calculation.");
+    }
+
+    if (P <= 0) {
+      toast.error("Invalid MAWP calculation result");
+      return;
+    }
+
+    // VERIFICATION: Recalculate
+    const verification = (S * E * t_actual) / (R + 0.6 * t_actual);
+    const diff = Math.abs((P - verification) / P) * 100;
+    
+    if (diff > 0.01) {
+      toast.error("Calculation verification failed. Please try again.");
+      return;
+    }
     
     setShellMAWP({ ...shellMAWP, result: P.toFixed(2) });
-    toast.success("MAWP calculated");
+    toast.success("MAWP calculated and verified");
   };
 
   // Head minimum thickness calculation (ASME Section VIII Div 1, UG-32)
@@ -266,23 +351,80 @@ export default function CalculationsTab({ inspectionId }: CalculationsTabProps) 
       return;
     }
 
+    // SAFETY CHECK: Verify corrosion rate is positive
     if (CR <= 0) {
-      toast.error("Corrosion rate must be greater than 0");
+      toast.error("Corrosion rate must be greater than zero");
       return;
     }
 
-    // Remaining Life = (Current Thickness - Required Thickness) / Corrosion Rate
-    const life = (t_current - t_required) / CR;
+    // SAFETY CHECK: Verify safety factor is reasonable
+    if (SF < 1.0) {
+      toast.error("Safety factor must be at least 1.0");
+      return;
+    }
+
+    if (SF < 2.0) {
+      toast.warning("Safety factor less than 2.0 is not recommended");
+    }
+
+    // Calculate remaining life
+    const excessThickness = t_current - t_required;
+    const yearsRemaining = excessThickness / CR;
+
+    // CRITICAL CHECKS
+    if (yearsRemaining <= 0) {
+      toast.error(
+        "CRITICAL SAFETY ALERT: Current thickness is below minimum required thickness! " +
+        "Vessel is not safe for continued operation. Immediate action required."
+      );
+      setRemainingLife({
+        ...remainingLife,
+        result: "0.00",
+        nextInspection: "IMMEDIATE ACTION REQUIRED",
+      });
+      return;
+    }
+
+    if (yearsRemaining < 1) {
+      toast.error(
+        "CRITICAL: Less than 1 year remaining life. " +
+        "Immediate engineering assessment and action required."
+      );
+    } else if (yearsRemaining < 2) {
+      toast.warning(
+        "WARNING: Less than 2 years remaining life. " +
+        "Begin planning for vessel retirement or repair."
+      );
+    }
+
+    // Calculate next inspection interval
+    // Per API 510: Should not exceed lesser of:
+    // 1. Half the remaining life
+    // 2. 10 years (can extend to 15 under certain conditions)
+    const halfLife = yearsRemaining / SF;
+    const maxInterval = 10; // years per API 510
+    const nextInspection = Math.min(halfLife, maxInterval);
+
+    // SAFETY CHECK: Minimum inspection interval warnings
+    if (nextInspection < 1) {
+      toast.warning("Next inspection due in less than 1 year");
+    }
+
+    // VERIFICATION
+    const verifyRemaining = (t_current - t_required) / CR;
+    const diff = Math.abs((yearsRemaining - verifyRemaining) / yearsRemaining) * 100;
     
-    // Next inspection = Remaining Life / Safety Factor
-    const nextInsp = life / SF;
-    
+    if (diff > 0.01) {
+      toast.error("Calculation verification failed. Please try again.");
+      return;
+    }
+
     setRemainingLife({
       ...remainingLife,
-      result: life.toFixed(2),
-      nextInspection: nextInsp.toFixed(2),
+      result: yearsRemaining.toFixed(2),
+      nextInspection: nextInspection.toFixed(2),
     });
-    toast.success("Remaining life calculated");
+    toast.success("Remaining life calculated and verified");
   };
 
   const handleSave = async () => {

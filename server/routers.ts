@@ -339,7 +339,14 @@ export const appRouter = router({
         const existing = await db.getExternalInspection(input.inspectionId);
         
         if (existing) {
-          // Update not implemented in schema, would need to add
+          // FIX: Now actually updating!
+          await db.updateExternalInspection(existing.id, {
+            visualCondition: input.visualCondition,
+            corrosionObserved: input.corrosionObserved,
+            damageMechanism: input.damageMechanism,
+            findings: input.findings,
+            recommendations: input.recommendations,
+          });
           return { success: true, id: existing.id };
         } else {
           const inspection = {
@@ -373,6 +380,13 @@ export const appRouter = router({
         const existing = await db.getInternalInspection(input.inspectionId);
         
         if (existing) {
+          // FIX: Now actually updating!
+          await db.updateInternalInspection(existing.id, {
+            internalCondition: input.internalCondition,
+            corrosionPattern: input.corrosionPattern,
+            findings: input.findings,
+            recommendations: input.recommendations,
+          });
           return { success: true, id: existing.id };
         } else {
           const inspection = {
