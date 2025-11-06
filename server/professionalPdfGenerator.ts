@@ -306,6 +306,14 @@ export async function generateProfessionalPDF(data: ProfessionalReportData): Pro
   await generateChecklist(doc, checklist, logoBuffer);
   console.log('[PDF DEBUG] Page count after checklist:', doc.bufferedPageRange().count);
   
+  console.log('[PDF DEBUG] Generating FFS assessment...');
+  await generateFfsAssessment(doc, inspectionId, logoBuffer);
+  console.log('[PDF DEBUG] Page count after FFS:', doc.bufferedPageRange().count);
+  
+  console.log('[PDF DEBUG] Generating In-Lieu-Of qualification...');
+  await generateInLieuOfQualification(doc, inspectionId, logoBuffer);
+  console.log('[PDF DEBUG] Page count after In-Lieu-Of:', doc.bufferedPageRange().count);
+  
   console.log('[PDF DEBUG] Generating photos...');
   await generatePhotos(doc, photos, logoBuffer);
   console.log('[PDF DEBUG] Final page count:', doc.bufferedPageRange().count);
@@ -743,6 +751,135 @@ async function generatePhotos(doc: PDFKit.PDFDocument, photos: any[], logoBuffer
     
     doc.moveDown(2);
     checkPageBreak(doc, 200);
+  }
+}
+
+
+
+
+async function generateFfsAssessment(doc: PDFKit.PDFDocument, inspectionId: string, logoBuffer?: Buffer) {
+  // Fetch FFS assessment data from database
+  const { getDb } = require('./db');
+  const db = await getDb();
+  if (!db) {
+    console.log('[PDF] Database not available for FFS assessment');
+    return;
+  }
+  
+  const { ffsAssessments } = require('../drizzle/schema');
+  const { eq } = require('drizzle-orm');
+  
+  const assessments = await db.select().from(ffsAssessments).where(eq(ffsAssessments.inspectionId, inspectionId));
+  
+  if (!assessments || assessments.length === 0) {
+    console.log('[PDF] No FFS assessments found');
+    return;
+  }
+  
+  doc.addPage();
+  await addHeader(doc, 'FITNESS-FOR-SERVICE ASSESSMENT', 11, logoBuffer);
+  
+  addSectionTitle(doc, '9.0 FITNESS-FOR-SERVICE ASSESSMENT (API 579)');
+  
+  addText(doc, 'Fitness-For-Service (FFS) assessment performed per API 579-1/ASME FFS-1 to evaluate the structural integrity of components with identified flaws or damage.');
+  doc.moveDown();
+  
+  for (const assessment of assessments) {
+    addSubsectionTitle(doc, `Component: ${assessment.componentName || 'Unknown'}`);
+    
+    const data = [
+      ['Assessment Level', `Level ${assessment.assessmentLevel}`],
+      ['Assessment Type', assessment.assessmentType || '-'],
+      ['Flaw Type', assessment.flawType || '-'],
+      ['Flaw Depth (in)', assessment.flawDepth?.toFixed(3) || '-'],
+      ['Flaw Length (in)', assessment.flawLength?.toFixed(2) || '-'],
+      ['Remaining Thickness (in)', assessment.remainingThickness?.toFixed(3) || '-'],
+      ['Required Thickness (in)', assessment.requiredThickness?.toFixed(3) || '-'],
+      ['Remaining Strength Factor', assessment.rsf?.toFixed(3) || '-'],
+      ['Acceptance Criteria', assessment.acceptanceCriteria || '-'],
+      ['Result', assessment.result || '-'],
+      ['Remaining Life (years)', assessment.remainingLife?.toFixed(1) || '-'],
+      ['Next Inspection (years)', assessment.nextInspectionInterval?.toFixed(1) || '-'],
+    ];
+    
+    addTable(doc, ['Parameter', 'Value'], data);
+    doc.moveDown();
+    
+    if (assessment.recommendations) {
+      addSubsectionTitle(doc, 'Recommendations');
+      addText(doc, assessment.recommendations);
+      doc.moveDown();
+    }
+    
+    if (assessment.warnings) {
+      addSubsectionTitle(doc, 'Warnings');
+      addText(doc, assessment.warnings, { fontSize: 10 });
+      doc.moveDown();
+    }
+  }
+}
+
+async function generateInLieuOfQualification(doc: PDFKit.PDFDocument, inspectionId: string, logoBuffer?: Buffer) {
+  // Fetch In-Lieu-Of assessment data from database
+  const { getDb } = require('./db');
+  const db = await getDb();
+  if (!db) {
+    console.log('[PDF] Database not available for In-Lieu-Of assessment');
+    return;
+  }
+  
+  const { inLieuOfAssessments } = require('../drizzle/schema');
+  const { eq } = require('drizzle-orm');
+  
+  const assessments = await db.select().from(inLieuOfAssessments).where(eq(inLieuOfAssessments.inspectionId, inspectionId));
+  
+  if (!assessments || assessments.length === 0) {
+    console.log('[PDF] No In-Lieu-Of assessments found');
+    return;
+  }
+  
+  doc.addPage();
+  await addHeader(doc, 'IN-LIEU-OF INTERNAL INSPECTION', 12, logoBuffer);
+  
+  addSectionTitle(doc, '10.0 IN-LIEU-OF INTERNAL INSPECTION QUALIFICATION (API 510 Section 6.4)');
+  
+  addText(doc, 'Assessment performed to determine if external inspection combined with thickness measurements can be used in lieu of internal inspection per API 510 Section 6.4.');
+  doc.moveDown();
+  
+  for (const assessment of assessments) {
+    const data = [
+      ['Qualification Method', assessment.qualificationMethod || '-'],
+      ['External Inspection Effective', assessment.externalInspectionEffective ? 'Yes' : 'No'],
+      ['Corrosion Mechanism Known', assessment.corrosionMechanismKnown ? 'Yes' : 'No'],
+      ['Process Monitoring Active', assessment.processMonitoringActive ? 'Yes' : 'No'],
+      ['Thickness Monitoring Adequate', assessment.thicknessMonitoringAdequate ? 'Yes' : 'No'],
+      ['Minimum Thickness Maintained', assessment.minimumThicknessMaintained ? 'Yes' : 'No'],
+      ['Corrosion Rate (mpy)', assessment.corrosionRate?.toFixed(3) || '-'],
+      ['Remaining Life (years)', assessment.remainingLife?.toFixed(1) || '-'],
+      ['Next Inspection Interval (years)', assessment.nextInspectionInterval?.toFixed(1) || '-'],
+      ['Qualification Result', assessment.qualificationResult || '-'],
+    ];
+    
+    addTable(doc, ['Criteria', 'Status'], data);
+    doc.moveDown();
+    
+    if (assessment.justification) {
+      addSubsectionTitle(doc, 'Justification');
+      addText(doc, assessment.justification);
+      doc.moveDown();
+    }
+    
+    if (assessment.limitations) {
+      addSubsectionTitle(doc, 'Limitations');
+      addText(doc, assessment.limitations);
+      doc.moveDown();
+    }
+    
+    if (assessment.recommendations) {
+      addSubsectionTitle(doc, 'Recommendations');
+      addText(doc, assessment.recommendations);
+      doc.moveDown();
+    }
   }
 }
 

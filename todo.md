@@ -465,3 +465,13 @@
 - [ ] Build In-Lieu-Of qualification UI
 - [ ] Generate FFS assessment reports
 
+
+
+
+## 🔵 ADD FFS & IN-LIEU-OF TO PROFESSIONAL REPORT
+- [x] Add FFS assessment results section to PDF report
+- [x] Add In-Lieu-Of qualification section to PDF report
+- [x] Include remaining life calculations in report
+- [x] Include next inspection interval recommendations
+- [ ] Test PDF generation with FFS and In-Lieu-Of data
+
