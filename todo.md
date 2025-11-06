@@ -441,3 +441,27 @@
 - [ ] Add inspection history fields to database schema
 - [ ] Add safety factor input to remaining life calculation
 
+
+
+
+## 🔴 CRITICAL: INSPECTION FINDINGS NOT IMPLEMENTED
+- [x] Implement Inspection Findings backend (currently shows "planned for future")
+- [x] Build Inspection Findings UI component
+- [x] Add findings to professional reports
+
+## 🆕 FITNESS-FOR-SERVICE & IN-LIEU-OF FEATURES
+- [x] Design database schema for FFS assessments
+- [x] Implement FFS Level 1 screening criteria per API 579
+- [x] Add local thin area (LTA) assessment
+- [x] Add general metal loss assessment
+- [x] Implement In-Lieu-Of qualification assessment per API 510 Section 6.4
+- [x] Build FFS Assessment UI tab
+- [x] Build In-Lieu-Of Assessment UI tab
+- [x] Add tabs to inspection detail page
+- [ ] Implement In-Lieu-Of internal inspection workflow per API 510
+- [ ] Add external inspection effectiveness criteria
+- [ ] Add process monitoring requirements
+- [ ] Build FFS assessment UI
+- [ ] Build In-Lieu-Of qualification UI
+- [ ] Generate FFS assessment reports
+

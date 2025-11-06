@@ -14,6 +14,8 @@ import InspectionReportTab from "@/components/inspection/InspectionReportTab";
 import InspectionFindingsTab from "@/components/inspection/InspectionFindingsTab";
 import UnmatchedDataTab from "@/components/inspection/UnmatchedDataTab";
 import ProfessionalReportTab from "@/components/inspection/ProfessionalReportTab";
+import FfsAssessmentTab from "@/components/inspection/FfsAssessmentTab";
+import InLieuOfTab from "@/components/inspection/InLieuOfTab";
 
 export default function InspectionDetail() {
   const params = useParams();
@@ -92,7 +94,7 @@ export default function InspectionDetail() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-7 mb-8">
+          <TabsList className="grid w-full grid-cols-9 mb-8">
             <TabsTrigger value="vessel-data">
               <FileText className="h-4 w-4 mr-2" />
               Vessel Data
@@ -120,6 +122,14 @@ export default function InspectionDetail() {
             <TabsTrigger value="professional">
               <FileText className="h-4 w-4 mr-2" />
               Professional Report
+            </TabsTrigger>
+            <TabsTrigger value="ffs">
+              <Calculator className="h-4 w-4 mr-2" />
+              FFS
+            </TabsTrigger>
+            <TabsTrigger value="inlieu">
+              <Eye className="h-4 w-4 mr-2" />
+              In-Lieu-Of
             </TabsTrigger>
           </TabsList>
 
@@ -149,6 +159,14 @@ export default function InspectionDetail() {
 
           <TabsContent value="professional">
             <ProfessionalReportTab inspectionId={id} />
+          </TabsContent>
+
+          <TabsContent value="ffs">
+            <FfsAssessmentTab inspectionId={id} />
+          </TabsContent>
+
+          <TabsContent value="inlieu">
+            <InLieuOfTab inspectionId={id} />
           </TabsContent>
         </Tabs>
       </main>

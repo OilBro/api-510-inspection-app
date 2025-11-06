@@ -452,3 +452,68 @@ export const checklistItems = mysqlTable("checklistItems", {
 export type ChecklistItem = typeof checklistItems.$inferSelect;
 export type InsertChecklistItem = typeof checklistItems.$inferInsert;
 
+
+
+
+/**
+ * Fitness-for-Service (FFS) Assessments per API 579
+ */
+export const ffsAssessments = mysqlTable("ffsAssessments", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  inspectionId: varchar("inspectionId", { length: 64 }).notNull(),
+  
+  // Assessment type
+  assessmentLevel: mysqlEnum("assessmentLevel", ["level1", "level2", "level3"]).notNull(),
+  damageType: varchar("damageType", { length: 255 }), // LTA, general metal loss, pitting, etc.
+  
+  // Level 1 screening criteria
+  remainingThickness: decimal("remainingThickness", { precision: 10, scale: 4 }),
+  minimumRequired: decimal("minimumRequired", { precision: 10, scale: 4 }),
+  futureCorrosionAllowance: decimal("futureCorrosionAllowance", { precision: 10, scale: 4 }),
+  
+  // Assessment results
+  acceptable: boolean("acceptable").default(false),
+  remainingLife: decimal("remainingLife", { precision: 10, scale: 2 }),
+  nextInspectionDate: timestamp("nextInspectionDate"),
+  
+  // Documentation
+  assessmentNotes: text("assessmentNotes"),
+  recommendations: text("recommendations"),
+  
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+});
+
+export type FfsAssessment = typeof ffsAssessments.$inferSelect;
+export type InsertFfsAssessment = typeof ffsAssessments.$inferInsert;
+
+/**
+ * In-Lieu-Of Internal Inspection per API 510
+ */
+export const inLieuOfAssessments = mysqlTable("inLieuOfAssessments", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  inspectionId: varchar("inspectionId", { length: 64 }).notNull(),
+  
+  // Qualification criteria per API 510 Section 6.4
+  cleanService: boolean("cleanService").default(false),
+  noCorrosionHistory: boolean("noCorrosionHistory").default(false),
+  effectiveExternalInspection: boolean("effectiveExternalInspection").default(false),
+  processMonitoring: boolean("processMonitoring").default(false),
+  thicknessMonitoring: boolean("thicknessMonitoring").default(false),
+  
+  // Assessment results
+  qualified: boolean("qualified").default(false),
+  maxInterval: int("maxInterval"), // years
+  nextInternalDue: timestamp("nextInternalDue"),
+  
+  // Documentation
+  justification: text("justification"),
+  monitoringPlan: text("monitoringPlan"),
+  
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+});
+
+export type InLieuOfAssessment = typeof inLieuOfAssessments.$inferSelect;
+export type InsertInLieuOfAssessment = typeof inLieuOfAssessments.$inferInsert;
+
