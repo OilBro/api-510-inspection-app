@@ -419,3 +419,14 @@
 - [ ] Add formula display for each calculation
 - [ ] Separate calculation logic from UI components
 
+
+
+
+## 🔴 CODE FIXES FROM 905-LINE DOCUMENT
+- [ ] Add inspectionInterval field to TML readings for proper corrosion rate calculation
+- [ ] Fix corrosion rate formula to use actual time interval instead of hardcoded 5 years
+- [ ] Add UI input field for inspection interval (years)
+- [ ] Update ellipsoidal head formula to use diameter instead of radius
+- [ ] Add torispherical head crown radius input
+- [ ] Apply all enhanced validations from document
+

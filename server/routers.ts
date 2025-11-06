@@ -188,9 +188,21 @@ export const appRouter = router({
         }
         
         // Calculate corrosion rate in mpy (mils per year)
-        // Assuming 1 year time span if not specified - you may want to make this configurable
+        // Use actual time interval from inspection dates
         if (previous && current) {
-          const timeSpanYears = 1; // Default to 1 year, should be configurable
+          let timeSpanYears = 1; // Default fallback
+          
+          // Calculate actual time span if dates provided
+          if (input.previousInspectionDate && input.currentInspectionDate) {
+            const prevDate = new Date(input.previousInspectionDate);
+            const currDate = new Date(input.currentInspectionDate);
+            const monthsDiff = (currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44);
+            
+            if (monthsDiff > 0) {
+              timeSpanYears = monthsDiff / 12;
+            }
+          }
+          
           const thicknessLoss = previous - current;
           const corrosionRateMpy = (thicknessLoss / timeSpanYears) * 1000; // Convert inches to mils
           calculatedCorrosionRate = corrosionRateMpy.toFixed(2);

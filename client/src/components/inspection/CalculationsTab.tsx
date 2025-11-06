@@ -282,9 +282,19 @@ export default function CalculationsTab({ inspectionId }: CalculationsTabProps) 
         t = (P * R) / (2 * S * E - 0.2 * P) + CA;
         break;
       case "ellipsoidal":
-        // For 2:1 ellipsoidal head
-        // t = (P * D) / (2 * S * E - 0.2 * P) + CA, where D = 2R
-        t = (P * R) / (S * E - 0.1 * P) + CA;
+        // For 2:1 ellipsoidal head per ASME VIII-1 UG-32(d)
+        // t = (P × D) / (2 × S × E - 0.2 × P) + CA
+        // Where D = inside diameter (not radius)
+        const D_ellip = R * 2; // Convert radius to diameter
+        
+        // Check denominator validity
+        const denom_ellip = 2 * S * E - 0.2 * P;
+        if (denom_ellip <= 0) {
+          toast.error("🛑 INVALID: Pressure too high for ellipsoidal head with given S and E");
+          return;
+        }
+        
+        t = (P * D_ellip) / denom_ellip + CA;
         break;
       case "torispherical":
         // For torispherical head (ASME F&D)
