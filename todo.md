@@ -503,3 +503,169 @@
 - [x] Fix FFS and In-Lieu-Of sections not printing (data exists but not showing)
 - [x] Review all section page break logic to prevent unnecessary blank pages
 
+
+
+
+## 🐛 PROFESSIONAL REPORT DATA PERSISTENCE ISSUES
+- [ ] Audit all Professional Report sections for save functionality
+- [ ] Identify which sections lose data after page refresh or navigation
+- [ ] Fix Report Info section (basic metadata) - verify saves persist
+- [ ] Fix Component Calculations section - verify saves persist
+- [ ] Fix Findings section - verify saves persist
+- [ ] Fix Recommendations section - verify saves persist
+- [ ] Fix Photos section - verify saves persist
+- [ ] Fix Checklist section - verify saves persist
+- [ ] Fix FFS Assessment section - verify saves persist
+- [ ] Fix In-Lieu-Of Qualification section - verify saves persist
+- [ ] Fix Executive Summary section - verify saves persist
+- [ ] Fix Thickness Readings section - verify saves persist
+- [ ] Ensure all mutations properly invalidate cache and refetch data
+- [ ] Add loading/success indicators for all save operations
+
+
+
+
+## 🔬 ASME CODE FORMULA VERIFICATION PLAN
+
+### Phase 1: Document Current Formulas
+- [ ] Extract all formulas from componentCalculations.ts
+- [ ] Document shell internal pressure formula
+- [ ] Document shell external pressure formula
+- [ ] Document head formulas (hemispherical, ellipsoidal, torispherical, conical)
+- [ ] Document nozzle formulas
+- [ ] Document MAWP calculation formula
+- [ ] Document remaining life formula
+- [ ] Document corrosion rate formula
+- [ ] Create formula reference document with line numbers
+
+### Phase 2: ASME Code Cross-Reference
+- [ ] Reference ASME Section VIII Division 1 for shell calculations
+- [ ] Reference UG-27 for internal pressure thickness
+- [ ] Reference UG-28 through UG-33 for external pressure
+- [ ] Reference UG-32 for formed heads
+- [ ] Reference UG-45 for nozzle reinforcement
+- [ ] Reference API 510 for remaining life calculations
+- [ ] Document code section for each formula
+- [ ] Note any deviations or simplifications
+
+### Phase 3: Create Test Cases
+- [ ] Use Report 54-11-004 as primary test case
+- [ ] Create shell calculation test with known results
+- [ ] Create head calculation test with known results
+- [ ] Create nozzle calculation test with known results
+- [ ] Create MAWP test with known results
+- [ ] Create remaining life test with known results
+- [ ] Document expected vs actual results
+- [ ] Calculate tolerance for rounding differences
+
+### Phase 4: Formula Verification
+- [ ] Verify shell internal pressure: t = (P×R)/(S×E - 0.6×P) + CA
+- [ ] Verify shell external pressure iteration method
+- [ ] Verify hemispherical head: t = (P×L×W)/(2×S×E) + CA
+- [ ] Verify ellipsoidal head: t = (P×D)/(2×S×E - 0.2×P) + CA
+- [ ] Verify torispherical head: t = (P×L×M)/(2×S×E - 0.2×P) + CA
+- [ ] Verify conical head formulas
+- [ ] Verify nozzle minimum thickness formulas
+- [ ] Verify MAWP: MAWP = (S×E×t)/(R + 0.6×t)
+- [ ] Verify remaining life: RL = (tact - treq) / CR
+
+### Phase 5: Fix Discrepancies
+- [ ] Update incorrect formulas in componentCalculations.ts
+- [ ] Add missing variables or factors
+- [ ] Implement proper unit conversions
+- [ ] Add validation for input ranges
+- [ ] Update tests to reflect corrections
+- [ ] Re-run all test cases
+- [ ] Document all changes made
+
+### Phase 6: Documentation
+- [ ] Create FORMULA_VERIFICATION.md document
+- [ ] List all formulas with ASME code references
+- [ ] Document test results and tolerances
+- [ ] Note any assumptions or limitations
+- [ ] Add inline code comments with formula sources
+- [ ] Create user guide for calculation inputs
+- [ ] Add validation rules documentation
+
+
+
+
+## 🗺️ IMPLEMENTATION ROADMAP - MISSING FEATURES
+
+### PHASE 1: CRITICAL FIXES & QUICK WINS (Week 1) - 16-24 hours
+- [ ] Fix torispherical head formula - add knuckle radius and calculate M = 0.25 × [3 + √(L/r)]
+- [ ] Fix hemispherical head formula - use radius directly instead of diameter with factor
+- [ ] Implement static head pressure calculation (SH = h × SG × 0.433)
+- [ ] Add liquid height and specific gravity fields to schema
+- [ ] Update UI to collect liquid height for vertical vessels
+- [ ] Add static head to PDF report calculations section
+- [ ] Create test cases for all Phase 1 fixes
+- [ ] Verify all existing tests still pass
+
+### PHASE 2: NOZZLE EVALUATION (Week 2-3) - 24-32 hours
+- [ ] Create pipe schedule database (NPS 1/2" through 48", all schedules)
+- [ ] Implement nozzle minimum thickness per ASME UG-45
+- [ ] Add nozzle schema table (nozzleId, size, schedule, location, actualThickness)
+- [ ] Create "Nozzle Evaluation" tab in Professional Report
+- [ ] Build nozzle list table with add/edit/delete functionality
+- [ ] Implement auto-calculation of minimum required thickness
+- [ ] Add acceptable/not acceptable status with color coding
+- [ ] Create nozzle Excel template for import/export
+- [ ] Add "Nozzle Evaluation" section to PDF report
+- [ ] Test nozzle calculations against ASME examples
+
+### PHASE 3: MATERIAL DATABASE EXPANSION (Week 4) - 20-28 hours
+- [ ] Add SA-106 Grade B (pipe material)
+- [ ] Add SA-105 (forging material for nozzles/flanges)
+- [ ] Add SA-240 Type 304/316 (stainless steel)
+- [ ] Add SA-387 Grade 11/22 (chrome-moly)
+- [ ] Add SA-182 (forged fittings)
+- [ ] Add SA-333 (low-temp carbon steel)
+- [ ] Add SA-203 (nickel alloy steel)
+- [ ] Add exotic alloys (Inconel, Hastelloy, Monel)
+- [ ] Implement temperature interpolation algorithm
+- [ ] Enhance material selector UI with search and filter
+- [ ] Add custom material entry capability
+- [ ] Test stress values against ASME Section II Part D
+
+### PHASE 4: EXTERNAL PRESSURE CALCULATIONS (Week 5-7) - 50-70 hours
+- [ ] Digitize X-Chart data (Figure G, CS-1, CS-2, HA-1, HA-2, HA-3)
+- [ ] Create X-Chart database tables
+- [ ] Implement chart lookup and interpolation functions
+- [ ] Calculate L/Do and Do/t ratios
+- [ ] Implement Factor A determination from geometry chart
+- [ ] Implement Factor B/E determination from material chart
+- [ ] Build iteration engine (Pa = 4B / (3 × Do/t))
+- [ ] Add convergence checking (max 20 iterations)
+- [ ] Add "External Pressure" toggle to component form UI
+- [ ] Show iteration progress and intermediate values
+- [ ] Add "View X-Chart" button for graphical reference
+- [ ] Create test cases for vacuum vessels
+- [ ] Validate against ASME handbook examples
+
+### PHASE 5: CONICAL HEADS & POLISH (Week 8) - 12-16 hours
+- [ ] Add half-apex angle field to schema
+- [ ] Implement conical head formula: t = (P × D) / (2 × cos(α) × (S × E - 0.6 × P)) + CA
+- [ ] Add angle validation (α ≤ 30°)
+- [ ] Update UI with angle input for conical heads
+- [ ] Add conical head to PDF report
+- [ ] Run comprehensive testing on all features
+- [ ] Validate all calculations against hand calculations
+- [ ] Update user documentation
+- [ ] Update API documentation
+- [ ] Conduct user acceptance testing
+
+### PHASE 6: FUTURE ENHANCEMENTS (Backlog - Not Scheduled)
+- [ ] Nozzle reinforcement calculations (UG-37 to UG-42) - 60-80 hours
+- [ ] Thickness trending and prediction - 20-30 hours
+- [ ] Batch calculation mode - 16-24 hours
+- [ ] API integration with ASME database - 40-60 hours
+
+### PRIORITY SUMMARY
+**Priority 1 (CRITICAL):** Static Head Pressure - used in 90%+ of vertical vessels
+**Priority 2 (HIGH):** Nozzle Evaluation - used in 100% of inspections
+**Priority 3 (MEDIUM):** External Pressure - used in 20-30% of inspections
+**Priority 4 (MEDIUM):** Material Database - improves accuracy for all calculations
+**Priority 5 (LOW):** Conical Heads - used in <5% of inspections
+**Priority 6 (LOW):** Nozzle Reinforcement - used in <10% of inspections
+

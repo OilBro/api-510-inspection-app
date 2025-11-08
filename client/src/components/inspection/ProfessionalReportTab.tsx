@@ -8,10 +8,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Loader2, Download, Plus, Trash2, Upload, FileText } from "lucide-react";
-import FindingsSection from "@/components/professionalReport/FindingsSection";
-import RecommendationsSection from "@/components/professionalReport/RecommendationsSection";
-import PhotosSection from "@/components/professionalReport/PhotosSection";
-import ChecklistSection from "@/components/professionalReport/ChecklistSection";
+import FindingsSection from "../professionalReport/FindingsSection";
+import RecommendationsSection from "../professionalReport/RecommendationsSection";
+import PhotosSection from "../professionalReport/PhotosSection";
+import ChecklistSection from "../professionalReport/ChecklistSection";
+import FfsAssessmentSection from "../professionalReport/FfsAssessmentSection";
+import InLieuOfSection from "../professionalReport/InLieuOfSection";
 import { ReportTemplateDialog, ReportSectionConfig } from "./ReportTemplateDialog";
 import {
   Dialog,
@@ -166,13 +168,15 @@ export default function ProfessionalReportTab({ inspectionId }: ProfessionalRepo
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="info">Report Info</TabsTrigger>
           <TabsTrigger value="calculations">Calculations</TabsTrigger>
           <TabsTrigger value="findings">Findings</TabsTrigger>
           <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
           <TabsTrigger value="photos">Photos</TabsTrigger>
           <TabsTrigger value="checklist">Checklist</TabsTrigger>
+          <TabsTrigger value="ffs">FFS Assessment</TabsTrigger>
+          <TabsTrigger value="inlieu">In-Lieu-Of</TabsTrigger>
         </TabsList>
 
         {/* Report Information Tab */}
@@ -398,6 +402,16 @@ export default function ProfessionalReportTab({ inspectionId }: ProfessionalRepo
         {/* Checklist Tab */}
         <TabsContent value="checklist">
           <ChecklistSection reportId={report.id} />
+        </TabsContent>
+
+        {/* FFS Assessment Tab */}
+        <TabsContent value="ffs">
+          <FfsAssessmentSection inspectionId={inspectionId} />
+        </TabsContent>
+
+        {/* In-Lieu-Of Tab */}
+        <TabsContent value="inlieu">
+          <InLieuOfSection inspectionId={inspectionId} />
         </TabsContent>
       </Tabs>
 

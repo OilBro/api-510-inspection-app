@@ -8,6 +8,8 @@ import {
   inspectionPhotos,
   appendixDocuments,
   checklistItems,
+  ffsAssessments,
+  inLieuOfAssessments,
   InsertProfessionalReport,
   InsertComponentCalculation,
   InsertInspectionFinding,
@@ -339,5 +341,85 @@ export async function deleteRecommendation(recommendationId: string) {
   await db
     .delete(recommendations)
     .where(eq(recommendations.id, recommendationId));
+}
+
+
+
+// ============================================================================
+// FFS Assessment CRUD
+// ============================================================================
+
+export async function createFfsAssessment(data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(ffsAssessments).values(data);
+  return data.id;
+}
+
+export async function getFfsAssessmentsByInspection(inspectionId: string) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db
+    .select()
+    .from(ffsAssessments)
+    .where(eq(ffsAssessments.inspectionId, inspectionId));
+}
+
+export async function updateFfsAssessment(id: string, data: Partial<any>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db
+    .update(ffsAssessments)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(ffsAssessments.id, id));
+}
+
+export async function deleteFfsAssessment(id: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(ffsAssessments).where(eq(ffsAssessments.id, id));
+}
+
+// ============================================================================
+// In-Lieu-Of Assessment CRUD
+// ============================================================================
+
+export async function createInLieuOfAssessment(data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(inLieuOfAssessments).values(data);
+  return data.id;
+}
+
+export async function getInLieuOfAssessmentsByInspection(inspectionId: string) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db
+    .select()
+    .from(inLieuOfAssessments)
+    .where(eq(inLieuOfAssessments.inspectionId, inspectionId));
+}
+
+export async function updateInLieuOfAssessment(id: string, data: Partial<any>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db
+    .update(inLieuOfAssessments)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(inLieuOfAssessments.id, id));
+}
+
+export async function deleteInLieuOfAssessment(id: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(inLieuOfAssessments).where(eq(inLieuOfAssessments.id, id));
 }
 

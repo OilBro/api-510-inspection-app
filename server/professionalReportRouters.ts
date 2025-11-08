@@ -29,6 +29,14 @@ import {
   getChecklistItems,
   updateChecklistItem,
   initializeDefaultChecklist,
+  createFfsAssessment,
+  getFfsAssessmentsByInspection,
+  updateFfsAssessment,
+  deleteFfsAssessment,
+  createInLieuOfAssessment,
+  getInLieuOfAssessmentsByInspection,
+  updateInLieuOfAssessment,
+  deleteInLieuOfAssessment,
 } from "./professionalReportDb";
 import { generateProfessionalPDF } from "./professionalPdfGenerator";
 import { evaluateShell, evaluateHead, ShellCalculationInputs, HeadCalculationInputs } from "./professionalCalculations";
@@ -475,5 +483,123 @@ export const professionalReportRouter = router({
         pdf: base64,
       };
     }),
+  
+  // ============================================================================
+  // FFS Assessment
+  // ============================================================================
+  
+  ffsAssessment: router({
+    list: protectedProcedure
+      .input(z.object({ inspectionId: z.string() }))
+      .query(async ({ input }) => {
+        return await getFfsAssessmentsByInspection(input.inspectionId);
+      }),
+    
+    create: protectedProcedure
+      .input(z.object({
+        inspectionId: z.string(),
+        assessmentLevel: z.enum(["level1", "level2", "level3"]),
+        damageType: z.string().optional(),
+        remainingThickness: z.string().optional(),
+        minimumRequired: z.string().optional(),
+        futureCorrosionAllowance: z.string().optional(),
+        acceptable: z.boolean().optional(),
+        remainingLife: z.string().optional(),
+        nextInspectionDate: z.string().optional(),
+        assessmentNotes: z.string().optional(),
+        recommendations: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const id = nanoid();
+        await createFfsAssessment({ id, ...input });
+        return { id };
+      }),
+    
+    update: protectedProcedure
+      .input(z.object({
+        id: z.string(),
+        assessmentLevel: z.enum(["level1", "level2", "level3"]).optional(),
+        damageType: z.string().optional(),
+        remainingThickness: z.string().optional(),
+        minimumRequired: z.string().optional(),
+        futureCorrosionAllowance: z.string().optional(),
+        acceptable: z.boolean().optional(),
+        remainingLife: z.string().optional(),
+        nextInspectionDate: z.string().optional(),
+        assessmentNotes: z.string().optional(),
+        recommendations: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        await updateFfsAssessment(id, data);
+        return { success: true };
+      }),
+    
+    delete: protectedProcedure
+      .input(z.object({ id: z.string() }))
+      .mutation(async ({ input }) => {
+        await deleteFfsAssessment(input.id);
+        return { success: true };
+      }),
+  }),
+  
+  // ============================================================================
+  // In-Lieu-Of Assessment
+  // ============================================================================
+  
+  inLieuOfAssessment: router({
+    list: protectedProcedure
+      .input(z.object({ inspectionId: z.string() }))
+      .query(async ({ input }) => {
+        return await getInLieuOfAssessmentsByInspection(input.inspectionId);
+      }),
+    
+    create: protectedProcedure
+      .input(z.object({
+        inspectionId: z.string(),
+        cleanService: z.boolean().optional(),
+        noCorrosionHistory: z.boolean().optional(),
+        effectiveExternalInspection: z.boolean().optional(),
+        processMonitoring: z.boolean().optional(),
+        thicknessMonitoring: z.boolean().optional(),
+        qualified: z.boolean().optional(),
+        maxInterval: z.number().optional(),
+        nextInternalDue: z.string().optional(),
+        justification: z.string().optional(),
+        monitoringPlan: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const id = nanoid();
+        await createInLieuOfAssessment({ id, ...input });
+        return { id };
+      }),
+    
+    update: protectedProcedure
+      .input(z.object({
+        id: z.string(),
+        cleanService: z.boolean().optional(),
+        noCorrosionHistory: z.boolean().optional(),
+        effectiveExternalInspection: z.boolean().optional(),
+        processMonitoring: z.boolean().optional(),
+        thicknessMonitoring: z.boolean().optional(),
+        qualified: z.boolean().optional(),
+        maxInterval: z.number().optional(),
+        nextInternalDue: z.string().optional(),
+        justification: z.string().optional(),
+        monitoringPlan: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        await updateInLieuOfAssessment(id, data);
+        return { success: true };
+      }),
+    
+    delete: protectedProcedure
+      .input(z.object({ id: z.string() }))
+      .mutation(async ({ input }) => {
+        await deleteInLieuOfAssessment(input.id);
+        return { success: true };
+      }),
+  }),
 });
 
