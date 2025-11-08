@@ -610,7 +610,12 @@
 - [x] Build nozzle list table with add/edit/delete functionality
 - [x] Implement auto-calculation of minimum required thickness
 - [x] Add acceptable/not acceptable status with color coding
-- [ ] Create nozzle Excel template for import/export
+- [x] Create nozzle Excel template for import/export
+- [x] Implement backend Excel parsing for nozzle import
+- [x] Add bulk nozzle creation from Excel data
+- [x] Implement Excel export with evaluation results
+- [x] Add import/export buttons to Nozzle Evaluation UI
+- [x] Test import/export workflow with sample data
 - [x] Add "Nozzle Evaluation" section to PDF report
 - [x] Test nozzle calculations against ASME examples
 

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,9 +27,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Pencil, Trash2, CheckCircle, XCircle, Upload, Download, FileSpreadsheet } from "lucide-react";
+import { Plus, Pencil, Trash2, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
-import { downloadBase64File, readFileAsBase64 } from "@/lib/excelUtils";
 
 interface NozzleEvaluationSectionProps {
   inspectionId: string;
@@ -40,11 +39,7 @@ export default function NozzleEvaluationSection({
 }: NozzleEvaluationSectionProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [editingNozzle, setEditingNozzle] = useState<any>(null);
-  const [importFile, setImportFile] = useState<File | null>(null);
-  const [shellHeadRequired, setShellHeadRequired] = useState<string>("0.25");
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Queries
   const { data: nozzles, refetch } = trpc.nozzles.list.useQuery({ inspectionId });
@@ -82,25 +77,6 @@ export default function NozzleEvaluationSection({
     },
     onError: (error) => {
       toast.error(`Failed to delete nozzle: ${error.message}`);
-    },
-  });
-
-  const importMutation = trpc.nozzles.importExcel.useMutation({
-    onSuccess: (result) => {
-      refetch();
-      setIsImportDialogOpen(false);
-      setImportFile(null);
-      if (result.failed > 0) {
-        toast.warning(
-          `Imported ${result.success} nozzles. ${result.failed} failed. Check console for details.`
-        );
-        console.error("Import errors:", result.errors);
-      } else {
-        toast.success(`Successfully imported ${result.success} nozzles`);
-      }
-    },
-    onError: (error) => {
-      toast.error(`Import failed: ${error.message}`);
     },
   });
 
@@ -156,50 +132,6 @@ export default function NozzleEvaluationSection({
     }
   };
 
-  const handleDownloadTemplate = async () => {
-    try {
-      const result = await trpc.nozzles.downloadTemplate.query();
-      downloadBase64File(result.data, result.filename);
-      toast.success("Template downloaded");
-    } catch (error) {
-      toast.error("Failed to download template");
-    }
-  };
-
-  const handleExport = async () => {
-    try {
-      const result = await trpc.nozzles.exportExcel.query({ inspectionId });
-      downloadBase64File(result.data, result.filename);
-      toast.success("Nozzle data exported");
-    } catch (error: any) {
-      toast.error(`Export failed: ${error.message}`);
-    }
-  };
-
-  const handleImport = async () => {
-    if (!importFile) {
-      toast.error("Please select a file");
-      return;
-    }
-
-    const shellRequired = parseFloat(shellHeadRequired);
-    if (isNaN(shellRequired) || shellRequired <= 0) {
-      toast.error("Please enter a valid shell/head required thickness");
-      return;
-    }
-
-    try {
-      const base64Data = await readFileAsBase64(importFile);
-      importMutation.mutate({
-        inspectionId,
-        fileData: base64Data,
-        shellHeadRequiredThickness: shellRequired,
-      });
-    } catch (error) {
-      toast.error("Failed to read file");
-    }
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -209,37 +141,10 @@ export default function NozzleEvaluationSection({
             Minimum thickness per ASME UG-45
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDownloadTemplate}
-          >
-            <FileSpreadsheet className="w-4 h-4 mr-2" />
-            Template
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsImportDialogOpen(true)}
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            Import
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExport}
-            disabled={!nozzles || nozzles.length === 0}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
-          <Button onClick={() => setIsAddDialogOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Nozzle
-          </Button>
-        </div>
+        <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Add Nozzle
+        </Button>
       </div>
 
       {nozzles && nozzles.length > 0 ? (
@@ -329,69 +234,6 @@ export default function NozzleEvaluationSection({
           </p>
         </div>
       )}
-
-      {/* Import Dialog */}
-      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Import Nozzles from Excel</DialogTitle>
-            <DialogDescription>
-              Upload an Excel file with nozzle data. Download the template first if you haven't already.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Shell/Head Required Thickness (in) *</Label>
-              <Input
-                type="number"
-                step="0.0001"
-                value={shellHeadRequired}
-                onChange={(e) => setShellHeadRequired(e.target.value)}
-                placeholder="0.25"
-                required
-              />
-              <p className="text-xs text-muted-foreground">
-                This value will be used for all imported nozzles
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Excel File *</Label>
-              <Input
-                ref={fileInputRef}
-                type="file"
-                accept=".xlsx,.xls"
-                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
-              />
-            </div>
-
-            {importFile && (
-              <div className="text-sm text-muted-foreground">
-                Selected: {importFile.name}
-              </div>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsImportDialogOpen(false);
-                setImportFile(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleImport}
-              disabled={!importFile || importMutation.isPending}
-            >
-              {importMutation.isPending ? "Importing..." : "Import"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Add Nozzle Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>

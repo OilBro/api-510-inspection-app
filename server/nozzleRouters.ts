@@ -17,6 +17,7 @@ import {
   getAllSchedules,
 } from './nozzleDb.js';
 import { calculateNozzleWithSchedule } from './nozzleCalculations.js';
+import { parseNozzleExcel, generateNozzleExcel, generateNozzleTemplate, NozzleExcelRow, NozzleExportRow } from './nozzleExcel.js';
 
 export const nozzleRouter = router({
   /**
@@ -226,5 +227,143 @@ export const nozzleRouter = router({
   getSchedules: protectedProcedure.query(async () => {
     return await getAllSchedules();
   }),
+
+  /**
+   * Download blank Excel template for nozzle import
+   */
+  downloadTemplate: protectedProcedure.query(async () => {
+    const buffer = generateNozzleTemplate();
+    return {
+      data: buffer.toString('base64'),
+      filename: 'Nozzle_Import_Template.xlsx',
+    };
+  }),
+
+  /**
+   * Import nozzles from Excel file
+   */
+  importExcel: protectedProcedure
+    .input(
+      z.object({
+        inspectionId: z.string(),
+        fileData: z.string(), // Base64 encoded Excel file
+        shellHeadRequiredThickness: z.number(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      // Decode base64 to buffer
+      const buffer = Buffer.from(input.fileData, 'base64');
+      
+      // Parse Excel file
+      const excelRows = parseNozzleExcel(buffer);
+      
+      // Create nozzles from Excel data
+      const createdNozzles = [];
+      const errors = [];
+      
+      for (let i = 0; i < excelRows.length; i++) {
+        const row = excelRows[i];
+        
+        try {
+          // Get pipe schedule data
+          const pipeScheduleData = await getPipeSchedule(row.size, row.schedule);
+          
+          if (!pipeScheduleData) {
+            errors.push(`Row ${i + 2}: Pipe schedule not found for ${row.size}" ${row.schedule}`);
+            continue;
+          }
+          
+          // Calculate minimum required thickness
+          const calculation = calculateNozzleWithSchedule({
+            nozzleNumber: row.nozzleNumber,
+            nominalSize: row.size,
+            schedule: row.schedule,
+            shellHeadRequiredThickness: input.shellHeadRequiredThickness,
+            actualThickness: row.actualThickness,
+            pipeScheduleData: {
+              outsideDiameter: parseFloat(pipeScheduleData.outsideDiameter),
+              wallThickness: parseFloat(pipeScheduleData.wallThickness),
+            },
+          });
+          
+          if (!calculation) {
+            errors.push(`Row ${i + 2}: Failed to calculate minimum thickness for ${row.nozzleNumber}`);
+            continue;
+          }
+          
+          // Create nozzle record
+          const nozzle = await createNozzle({
+            id: nanoid(),
+            inspectionId: input.inspectionId,
+            nozzleNumber: row.nozzleNumber,
+            nozzleDescription: row.notes,
+            location: row.location,
+            nominalSize: row.size,
+            schedule: row.schedule,
+            actualThickness: row.actualThickness.toString(),
+            pipeNominalThickness: calculation.pipeNominalThickness.toString(),
+            pipeMinusManufacturingTolerance: calculation.pipeMinusManufacturingTolerance.toString(),
+            shellHeadRequiredThickness: calculation.shellHeadRequiredThickness.toString(),
+            minimumRequired: calculation.minimumRequired.toString(),
+            acceptable: calculation.acceptable,
+          });
+          
+          createdNozzles.push(nozzle);
+        } catch (error) {
+          const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+          errors.push(`Row ${i + 2} (${row.nozzleNumber}): ${errorMsg}`);
+        }
+      }
+      
+      return {
+        success: createdNozzles.length,
+        failed: errors.length,
+        errors,
+        nozzles: createdNozzles,
+      };
+    }),
+
+  /**
+   * Export nozzles to Excel file
+   */
+  exportExcel: protectedProcedure
+    .input(z.object({ inspectionId: z.string() }))
+    .query(async ({ input }) => {
+      // Get all nozzles for the inspection
+      const nozzles = await getNozzlesByInspection(input.inspectionId);
+      
+      if (nozzles.length === 0) {
+        throw new Error('No nozzles found for this inspection');
+      }
+      
+      // Map to export format
+      const exportData: NozzleExportRow[] = nozzles.map(n => {
+        const actual = parseFloat(n.actualThickness || '0');
+        const minRequired = parseFloat(n.minimumRequired || '0');
+        const margin = actual - minRequired;
+        
+        return {
+          nozzleNumber: n.nozzleNumber,
+          size: n.nominalSize,
+          schedule: n.schedule,
+          location: n.location || '',
+          nominalThickness: parseFloat(n.pipeNominalThickness || '0'),
+          minusManufacturingTolerance: parseFloat(n.pipeMinusManufacturingTolerance || '0'),
+          actualThickness: actual,
+          minimumRequired: minRequired,
+          margin,
+          status: n.acceptable ? 'ACCEPTABLE' : 'NOT ACCEPTABLE',
+          notes: n.nozzleDescription || '',
+        };
+      });
+      
+      // Generate Excel file
+      const buffer = generateNozzleExcel(exportData);
+      
+      return {
+        data: buffer.toString('base64'),
+        filename: `Nozzle_Evaluation_${input.inspectionId}.xlsx`,
+      };
+    }),
 });
 
