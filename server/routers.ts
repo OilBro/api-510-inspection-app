@@ -10,6 +10,7 @@ import { storagePut } from "./storage";
 import { fieldMappingRouter, unmatchedDataRouter } from "./fieldMappingRouters";
 import { professionalReportRouter } from "./professionalReportRouters";
 import { nozzleRouter } from "./nozzleRouters";
+import { reportComparisonRouter } from "./routers/reportComparisonRouter";
 import * as fieldMappingDb from "./fieldMappingDb";
 import * as professionalReportDb from "./professionalReportDb";
 
@@ -838,6 +839,9 @@ export const appRouter = router({
   
   // Nozzle evaluations
   nozzles: nozzleRouter,
+  
+  // Report comparison
+  reportComparison: reportComparisonRouter,
 });
 
 export type AppRouter = typeof appRouter;

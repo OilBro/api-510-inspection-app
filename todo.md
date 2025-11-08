@@ -758,3 +758,43 @@
 - [x] Test all sections integrate properly with PDF generation
 - [x] Ensure all report sections appear in generated PDFs
 
+
+
+
+## 🔄 REPORT COMPARISON TOOL
+- [x] Design comparison data structure for multi-report analysis
+- [x] Create backend comparison router with trend calculations
+- [x] Implement thickness trend analysis (corrosion rate over time)
+- [x] Calculate component degradation patterns
+- [x] Identify new findings between reports
+- [ ] Build comparison page UI with side-by-side layout
+- [ ] Add report selector (select 2+ reports to compare)
+- [ ] Create thickness readings comparison table with delta columns
+- [ ] Add visual indicators for thickness changes (red=worse, green=stable)
+- [ ] Implement findings comparison with "new/resolved" badges
+- [ ] Add component calculations comparison
+- [ ] Create trend charts for thickness over time
+- [ ] Add degradation rate visualization
+- [ ] Test comparison with historical inspection data
+
+
+
+
+## 📊 REPORT COMPARISON TOOL (NEW FEATURE)
+- [x] Created backend comparison router with trend calculations
+- [x] Implemented thickness trend analysis across multiple inspections
+- [x] Implemented findings comparison (new, resolved, recurring)
+- [x] Implemented degradation rate calculations with acceleration factors
+- [x] Created ReportComparison page component with UI
+- [x] Added report selection interface (2-5 inspections)
+- [x] Added thickness trends table with status indicators
+- [x] Added findings comparison cards (new/resolved/recurring)
+- [x] Added degradation analysis table
+- [x] Integrated chart.js for visualization
+- [x] Added route to App.tsx (/comparison)
+- [x] Added Report Comparison card to Home dashboard
+- [ ] Test with real inspection data
+- [ ] Add thickness trend line charts
+- [ ] Add export comparison results to PDF
+- [ ] Add email comparison report functionality
+

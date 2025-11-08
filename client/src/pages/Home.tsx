@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { APP_LOGO, APP_TITLE, getLoginUrl } from "@/const";
 import { Link, useLocation } from "wouter";
-import { Settings, FileText, Upload, Calculator, BarChart3 } from "lucide-react";
+import { Settings, FileText, Upload, Calculator, BarChart3, GitCompare } from "lucide-react";
 
 export default function Home() {
   const { user, loading, isAuthenticated } = useAuth();
@@ -128,7 +128,18 @@ export default function Home() {
                 Interactive worksheet with live calculations for shell and head evaluations
               </CardDescription>
             </CardHeader>
-          </Card>       </div>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setLocation("/comparison")}>
+            <CardHeader>
+              <GitCompare className="h-12 w-12 text-orange-600 mb-4" />
+              <CardTitle>Report Comparison</CardTitle>
+              <CardDescription>
+                Compare multiple inspection reports to identify thickness trends and degradation patterns
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>

@@ -10,6 +10,7 @@ import InspectionList from "./pages/InspectionList";
 import InspectionDetail from "./pages/InspectionDetail";
 import NewInspection from "./pages/NewInspection";
 import ImportData from "./pages/ImportData";
+import ReportComparison from "./pages/ReportComparison";
 
 function Router() {
   return (
@@ -20,6 +21,7 @@ function Router() {
       <Route path={"/inspections/new"} component={NewInspection} />
       <Route path={"/inspections/:id"} component={InspectionDetail} />
       <Route path={"/import"} component={ImportData} />
+      <Route path={"/comparison"} component={ReportComparison} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
