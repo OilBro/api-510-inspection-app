@@ -708,8 +708,7 @@ function ComponentCalculationForm({
   const [formData, setFormData] = useState<any>({
     componentName: "",
     componentType,
-    materialCode: "",
-    materialName: "",
+    materialSpec: "",
     designTemp: "",
     designMAWP: "",
     staticHead: "0",
@@ -725,6 +724,8 @@ function ComponentCalculationForm({
     actualThickness: "",
     timeSpan: "",
     nextInspectionYears: "5",
+    externalPressure: "",
+    unsupportedLength: "",
   });
 
   const handleChange = (field: string, value: string) => {
@@ -769,13 +770,24 @@ function ComponentCalculationForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="materialCode">Material Code</Label>
-          <Input
-            id="materialCode"
-            value={formData.materialCode}
-            onChange={(e) => handleChange("materialCode", e.target.value)}
-            placeholder="CS-A455-A"
-          />
+          <Label htmlFor="materialSpec">Material Specification *</Label>
+          <Select
+            value={formData.materialSpec || ""}
+            onValueChange={(value) => handleChange("materialSpec", value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select material..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="SA-516-70">SA-516 Grade 70 (Carbon Steel)</SelectItem>
+              <SelectItem value="SA-106-B">SA-106 Grade B (Pipe)</SelectItem>
+              <SelectItem value="SA-105">SA-105 (Forgings)</SelectItem>
+              <SelectItem value="SA-240-304">SA-240 Type 304 (Stainless)</SelectItem>
+              <SelectItem value="SA-240-316">SA-240 Type 316 (Stainless)</SelectItem>
+              <SelectItem value="SA-387-11-2">SA-387 Grade 11 Class 2 (Chrome-Moly)</SelectItem>
+              <SelectItem value="SA-387-22-2">SA-387 Grade 22 Class 2 (Chrome-Moly)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -953,6 +965,42 @@ function ComponentCalculationForm({
           />
         </div>
       </div>
+
+      {/* External Pressure Section (Shell Only) */}
+      {componentType === "shell" && (
+        <div className="border-t pt-4">
+          <div className="flex items-center space-x-2 mb-4">
+            <input
+              type="checkbox"
+              id="externalPressure"
+              checked={formData.externalPressure || false}
+              onChange={(e) => handleChange("externalPressure", e.target.checked ? "true" : "")}
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            <Label htmlFor="externalPressure" className="font-semibold">
+              External Pressure / Vacuum Service
+            </Label>
+          </div>
+          {formData.externalPressure && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="unsupportedLength">Unsupported Length L (in) *</Label>
+                <Input
+                  id="unsupportedLength"
+                  value={formData.unsupportedLength || ""}
+                  onChange={(e) => handleChange("unsupportedLength", e.target.value)}
+                  placeholder="120 (distance between stiffeners)"
+                  required={formData.externalPressure}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm text-muted-foreground">Calculation Method</Label>
+                <p className="text-sm">ASME UG-28 with X-Chart CS-1</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <Button type="submit" className="w-full">
         Add Component Calculation
