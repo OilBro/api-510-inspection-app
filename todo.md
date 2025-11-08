@@ -494,3 +494,12 @@
 - [ ] Save user template preferences to database
 - [x] Test all template combinations
 
+
+
+
+## 🐛 PDF BLANK PAGE ISSUES
+- [x] Fix blank pages with just headers in thickness readings section
+- [x] Ensure table content follows header immediately without page break
+- [x] Fix FFS and In-Lieu-Of sections not printing (data exists but not showing)
+- [x] Review all section page break logic to prevent unnecessary blank pages
+

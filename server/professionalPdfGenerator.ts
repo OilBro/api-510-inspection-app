@@ -155,19 +155,22 @@ async function addTable(doc: PDFKit.PDFDocument, headers: string[], rows: string
   
   // Split rows into chunks if needed
   let rowIndex = 0;
+  let isFirstChunk = true;
+  
   while (rowIndex < rows.length) {
     const remainingRows = rows.length - rowIndex;
     const rowsThisPage = Math.min(remainingRows, MAX_ROWS_PER_PAGE);
     
-    // Check if we need a page break
+    // Check if we need a page break (only if not the first chunk or insufficient space)
     const neededSpace = HEADER_HEIGHT + (rowsThisPage * ROW_HEIGHT) + 20;
-    if (doc.y + neededSpace > PAGE_HEIGHT - MARGIN) {
+    if (!isFirstChunk && doc.y + neededSpace > PAGE_HEIGHT - MARGIN) {
       doc.addPage();
       doc.y = MARGIN + 60; // Start below header space
     }
     
     // Draw header directly at current position (no extra spacing)
     let currentY = drawTableHeader(doc.y);
+    isFirstChunk = false;
     const tableStartY = currentY - HEADER_HEIGHT;
     
     // Draw rows for this page
@@ -784,10 +787,11 @@ async function generateThicknessReadings(doc: PDFKit.PDFDocument, readings: any[
     return;
   }
   
-  // Only add page if we have data - table function will handle pagination
+  // Add page with header and title - table will start immediately after
   doc.addPage();
   await addHeader(doc, 'THICKNESS MEASUREMENTS', 8, logoBuffer);
   addSectionTitle(doc, '6.0 ULTRASONIC THICKNESS MEASUREMENTS');
+  doc.moveDown(0.5); // Small spacing before table
   
   // First TML reading structure verified
   
