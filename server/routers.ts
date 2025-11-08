@@ -55,6 +55,7 @@ export const appRouter = router({
         vesselType: z.string().optional(),
         insideDiameter: z.string().optional(),
         overallLength: z.string().optional(),
+        inspectionDate: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const inspection = {
@@ -83,6 +84,7 @@ export const appRouter = router({
         insideDiameter: z.string().optional(),
         overallLength: z.string().optional(),
         status: z.enum(["draft", "in_progress", "completed", "archived"]).optional(),
+        inspectionDate: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
         const { id, ...data } = input;

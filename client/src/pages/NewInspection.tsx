@@ -26,6 +26,7 @@ export default function NewInspection() {
     vesselType: "",
     insideDiameter: "",
     overallLength: "",
+    inspectionDate: "",
   });
 
   const handleChange = (field: string, value: string) => {
@@ -53,6 +54,7 @@ export default function NewInspection() {
         vesselType: formData.vesselType || undefined,
         insideDiameter: formData.insideDiameter || undefined,
         overallLength: formData.overallLength || undefined,
+        inspectionDate: formData.inspectionDate || undefined,
       });
 
       toast.success("Inspection created successfully");
@@ -137,6 +139,16 @@ export default function NewInspection() {
                     placeholder="e.g., 1995"
                     value={formData.yearBuilt}
                     onChange={(e) => handleChange("yearBuilt", e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="inspectionDate">Inspection Date</Label>
+                  <Input
+                    id="inspectionDate"
+                    type="date"
+                    value={formData.inspectionDate}
+                    onChange={(e) => handleChange("inspectionDate", e.target.value)}
                   />
                 </div>
               </div>

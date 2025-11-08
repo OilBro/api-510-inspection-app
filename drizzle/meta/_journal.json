@@ -78,6 +78,13 @@
       "when": 1762579260906,
       "tag": "0010_regular_maximus",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1762611587338,
+      "tag": "0011_simple_edwin_jarvis",
+      "breakpoints": true
     }
   ]
 }

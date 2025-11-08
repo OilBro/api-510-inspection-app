@@ -935,3 +935,31 @@
 - [x] Fix ORDER BY syntax error in inspections.list query (missing column name)
 - [x] Test Report Comparison page loads without errors
 
+
+
+
+## 🎯 NEW FEATURES - INSPECTION DATE & COMPARISON ENHANCEMENTS
+
+### 1. Inspection Date Field
+- [x] Add inspectionDate field to inspections table schema
+- [x] Run database migration (pnpm db:push)
+- [x] Update inspection create/update forms to include inspection date picker
+- [x] Update Report Comparison sorting to use inspectionDate instead of updatedAt
+- [ ] Add inspectionDate to inspection list display (future enhancement)
+
+### 2. Status Filters on Report Comparison
+- [x] Add filter buttons (All/Completed/In Progress/Draft) to comparison page
+- [x] Update backend query to support status filtering
+- [x] Implement filter state management in UI
+- [x] Show active filter with visual indicator
+- [ ] Persist filter selection in URL params (future enhancement)
+
+### 3. PDF Export for Comparison Analysis
+- [ ] Create comparison analysis PDF template (backend TODO)
+- [ ] Include thickness trend charts in PDF (backend TODO)
+- [ ] Add findings comparison table to PDF (backend TODO)
+- [ ] Include degradation analysis section (backend TODO)
+- [x] Add "Export Analysis" button to comparison results
+- [ ] Generate PDF with all charts and data (backend TODO)
+- [ ] Auto-download PDF when ready (backend TODO)
+

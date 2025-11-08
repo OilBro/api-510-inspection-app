@@ -18,16 +18,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { trpc } from "@/lib/trpc";
-import { Loader2, TrendingDown, TrendingUp, Minus, AlertTriangle, CheckCircle2, ArrowRight, ArrowLeft } from "lucide-react";
+import { Loader2, TrendingDown, TrendingUp, Minus, AlertTriangle, CheckCircle2, ArrowRight, ArrowLeft, FileDown } from "lucide-react";
+import { toast } from "sonner";
 import { Link } from "wouter";
 import ThicknessTrendChart from "@/components/ThicknessTrendChart";
 
 export default function ReportComparison() {
   const [selectedInspections, setSelectedInspections] = useState<string[]>([]);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   const { data: availableInspections, isLoading: loadingInspections } =
     trpc.reportComparison.getAvailableInspections.useQuery({
       limit: 20,
+      status: statusFilter === "all" ? undefined : statusFilter,
     });
 
   const { data: comparisonData, isLoading: loadingComparison } =
@@ -94,12 +97,54 @@ export default function ReportComparison() {
         </p>
       </div>
 
+      {/* Status Filters */}
+      <Card className="mb-4">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-medium text-gray-700 mr-2">Filter by Status:</span>
+            <Button
+              variant={statusFilter === "all" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStatusFilter("all")}
+            >
+              All
+            </Button>
+            <Button
+              variant={statusFilter === "completed" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStatusFilter("completed")}
+            >
+              <CheckCircle2 className="h-4 w-4 mr-1" />
+              Completed
+            </Button>
+            <Button
+              variant={statusFilter === "in_progress" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStatusFilter("in_progress")}
+            >
+              <Loader2 className="h-4 w-4 mr-1" />
+              In Progress
+            </Button>
+            <Button
+              variant={statusFilter === "draft" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStatusFilter("draft")}
+            >
+              Draft
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Inspection Selector */}
       <Card className="mb-8">
         <CardHeader>
           <CardTitle>Select Inspections to Compare</CardTitle>
           <CardDescription>
             Choose 2-5 inspection reports to analyze (selected: {selectedInspections.length}/5)
+            {statusFilter !== "all" && (
+              <span className="ml-2 text-blue-600">• Filtered by: {statusFilter.replace("_", " ")}</span>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -150,6 +195,20 @@ export default function ReportComparison() {
             </div>
           ) : comparisonData ? (
             <>
+              {/* Export Button */}
+              <div className="flex justify-end mb-6">
+                <Button
+                  onClick={() => {
+                    toast.info("PDF export feature coming soon!");
+                    // TODO: Implement PDF export
+                  }}
+                  className="gap-2"
+                >
+                  <FileDown className="h-4 w-4" />
+                  Export Analysis to PDF
+                </Button>
+              </div>
+
               {/* Thickness Trend Charts */}
               {comparisonData.chartData && comparisonData.chartData.length > 0 && (
                 <div className="mb-8">

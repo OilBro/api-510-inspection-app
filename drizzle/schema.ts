@@ -43,6 +43,9 @@ export const inspections = mysqlTable("inspections", {
   // Status
   status: mysqlEnum("status", ["draft", "in_progress", "completed", "archived"]).default("draft").notNull(),
   
+  // Inspection date - when the physical inspection occurred
+  inspectionDate: timestamp("inspectionDate"),
+  
   // Metadata
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),

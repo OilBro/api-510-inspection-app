@@ -18,17 +18,24 @@ export const reportComparisonRouter = router({
     .input(
       z.object({
         limit: z.number().optional().default(20),
+        status: z.string().optional(),
       })
     )
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
+      // Build where conditions
+      const conditions = [eq(inspections.userId, ctx.user.id)];
+      if (input.status) {
+        conditions.push(eq(inspections.status, input.status as any));
+      }
+
       const results = await db
         .select()
         .from(inspections)
-        .where(eq(inspections.userId, ctx.user.id))
-        .orderBy(desc(inspections.updatedAt))
+        .where(and(...conditions))
+        .orderBy(desc(inspections.inspectionDate))
         .limit(input.limit);
 
       return results;
