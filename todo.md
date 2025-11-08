@@ -679,3 +679,20 @@
 - [x] Ensure entire row stays together on same page
 - [x] Test with large datasets (100+ thickness readings)
 
+
+
+
+## 🚨 PHASE 1 CRITICAL FORMULA FIXES (IN PROGRESS)
+- [x] Fix torispherical head formula - calculate M-factor based on L/r ratio instead of fixed 1.77
+- [x] Add knuckle radius parameter to torispherical head inputs
+- [x] Implement M = (1/4) × [3 + √(L/r)] per ASME UG-32(d)
+- [x] Fix hemispherical head formula - use radius directly instead of diameter with factor
+- [x] Implement static head pressure calculation for liquid-filled vessels
+- [x] Add specific gravity input field for liquid service
+- [x] Add liquid level/height parameter for static head
+- [x] Calculate P_static = (SG × h × 0.433) psi
+- [x] Add static head to design pressure in calculations
+- [ ] Update PDF report to show static head contribution
+- [x] Create test cases for corrected formulas
+- [x] Verify against ASME code examples
+

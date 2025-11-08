@@ -21,6 +21,12 @@ interface ComponentData {
   // For heads
   componentType: "shell" | "head";
   headType?: "hemispherical" | "ellipsoidal" | "torispherical";
+  knuckleRadius?: number; // r (inches) - for torispherical heads
+  
+  // Static head (for liquid-filled vessels)
+  liquidService?: boolean; // Is vessel in liquid service?
+  specificGravity?: number; // SG (dimensionless, water = 1.0)
+  liquidHeight?: number; // h (feet) - height of liquid above component
   
   // Corrosion data
   corrosionRate?: number; // mpy (mils per year)
@@ -36,6 +42,10 @@ interface CalculationResults {
   designTemperature: number;
   material: string;
   allowableStress: number;
+  
+  // Static head (if applicable)
+  staticHeadPressure?: number; // psi
+  totalDesignPressure?: number; // Design + Static Head (psi)
   
   // Thickness calculations
   minimumRequiredThickness: number; // tmin (inches)
@@ -53,6 +63,21 @@ interface CalculationResults {
   // Status
   status: "acceptable" | "monitoring" | "critical";
   statusReason: string;
+}
+
+/**
+ * Calculate static head pressure for liquid-filled vessels
+ * Formula: P_static = (SG × h × 0.433 psi/ft) where:
+ * - SG = specific gravity (dimensionless, water = 1.0)
+ * - h = liquid height above component (feet)
+ * - 0.433 = conversion factor (psi per foot of water)
+ */
+function calculateStaticHeadPressure(
+  specificGravity: number,
+  liquidHeight: number
+): number {
+  // P_static = SG × h × 0.433 psi/ft
+  return specificGravity * liquidHeight * 0.433;
 }
 
 /**
@@ -107,31 +132,60 @@ function calculateShellMinThickness(
  * Calculate minimum required thickness for head
  * Per ASME Section VIII Div 1, UG-32
  */
-function calculateHeadMinThickness(
+export function calculateHeadMinThickness(
   pressure: number,
   radius: number,
   allowableStress: number,
   jointEfficiency: number,
   corrosionAllowance: number,
-  headType: string = "ellipsoidal"
+  headType: string = "ellipsoidal",
+  knuckleRadius?: number // Required for torispherical heads
 ): number {
-  let factor = 1.0;
+  let L: number; // Crown radius or characteristic dimension
+  let factor: number;
   
   switch (headType) {
     case "hemispherical":
-      factor = 0.5;
+      // ASME UG-32(d): t = (P × L) / (2 × S × E - 0.2 × P)
+      // For hemispherical, L = R (inside crown radius)
+      L = radius;
+      factor = 1.0;
       break;
+      
     case "ellipsoidal":
-      factor = 1.0; // 2:1 ellipsoidal
+      // ASME UG-32(e): t = (P × D) / (2 × S × E - 0.2 × P)
+      // For 2:1 ellipsoidal, L = D (inside diameter)
+      L = radius * 2;
+      factor = 1.0;
       break;
+      
     case "torispherical":
-      factor = 1.77; // ASME flanged and dished
+      // ASME UG-32(f): t = (P × L × M) / (2 × S × E - 0.2 × P)
+      // where M = (1/4) × [3 + √(L/r)]
+      // L = inside crown radius (typically same as shell radius)
+      // r = inside knuckle radius
+      L = radius;
+      
+      if (!knuckleRadius || knuckleRadius <= 0) {
+        // Default to ASME flanged and dished head proportions
+        // For standard F&D: r = 0.06D, L = D
+        // This gives M ≈ 1.77 for typical proportions
+        knuckleRadius = radius * 2 * 0.06; // 6% of diameter
+      }
+      
+      // Calculate M factor per ASME UG-32(f)
+      const M = 0.25 * (3 + Math.sqrt(L / knuckleRadius));
+      factor = M;
       break;
+      
+    default:
+      // Default to ellipsoidal
+      L = radius * 2;
+      factor = 1.0;
   }
   
-  // t = (P × L × factor) / (2 × S × E - 0.2 × P) + CA
-  // For ellipsoidal: L = D (diameter)
-  const t = (pressure * radius * 2 * factor) / (2 * allowableStress * jointEfficiency - 0.2 * pressure);
+  // ASME formula: t = (P × L × factor) / (2 × S × E - 0.2 × P) + CA
+  const t = (pressure * L * factor) / (2 * allowableStress * jointEfficiency - 0.2 * pressure);
   return t + corrosionAllowance;
 }
 
@@ -159,25 +213,48 @@ function calculateHeadMAWP(
   allowableStress: number,
   jointEfficiency: number,
   corrosionAllowance: number,
-  headType: string = "ellipsoidal"
+  headType: string = "ellipsoidal",
+  knuckleRadius?: number // Required for torispherical heads
 ): number {
   const t = thickness - corrosionAllowance;
-  let factor = 1.0;
+  let L: number; // Crown radius or characteristic dimension
+  let factor: number;
   
   switch (headType) {
     case "hemispherical":
-      factor = 0.5;
-      break;
-    case "ellipsoidal":
+      // For hemispherical, L = R (inside crown radius)
+      L = radius;
       factor = 1.0;
       break;
-    case "torispherical":
-      factor = 1.77;
+      
+    case "ellipsoidal":
+      // For 2:1 ellipsoidal, L = D (inside diameter)
+      L = radius * 2;
+      factor = 1.0;
       break;
+      
+    case "torispherical":
+      // L = inside crown radius
+      L = radius;
+      
+      if (!knuckleRadius || knuckleRadius <= 0) {
+        // Default to ASME flanged and dished head proportions
+        knuckleRadius = radius * 2 * 0.06; // 6% of diameter
+      }
+      
+      // Calculate M factor per ASME UG-32(f)
+      const M = 0.25 * (3 + Math.sqrt(L / knuckleRadius));
+      factor = M;
+      break;
+      
+    default:
+      // Default to ellipsoidal
+      L = radius * 2;
+      factor = 1.0;
   }
   
   // MAWP = (2 × S × E × t) / (L × factor + 0.2 × t)
-  return (2 * allowableStress * jointEfficiency * t) / (radius * 2 * factor + 0.2 * t);
+  return (2 * allowableStress * jointEfficiency * t) / (L * factor + 0.2 * t);
 }
 
 /**
@@ -219,13 +296,28 @@ export function calculateComponent(data: ComponentData): CalculationResults {
   const radius = data.insideDiameter / 2;
   const allowableStress = getAllowableStress(data.materialSpec, data.designTemperature);
   
+  // Calculate static head pressure if applicable
+  let staticHeadPressure = 0;
+  let totalDesignPressure = data.designPressure;
+  
+  if (data.liquidService && data.specificGravity && data.liquidHeight) {
+    staticHeadPressure = calculateStaticHeadPressure(
+      data.specificGravity,
+      data.liquidHeight
+    );
+    totalDesignPressure = data.designPressure + staticHeadPressure;
+  }
+  
+  // Use total design pressure (including static head) for calculations
+  const effectivePressure = totalDesignPressure;
+  
   // Calculate minimum required thickness
   let minThickness: number;
   let mawp: number;
   
   if (data.componentType === "shell") {
     minThickness = calculateShellMinThickness(
-      data.designPressure,
+      effectivePressure,
       radius,
       allowableStress,
       data.jointEfficiency,
@@ -240,12 +332,13 @@ export function calculateComponent(data: ComponentData): CalculationResults {
     );
   } else {
     minThickness = calculateHeadMinThickness(
-      data.designPressure,
+      effectivePressure,
       radius,
       allowableStress,
       data.jointEfficiency,
       data.corrosionAllowance,
-      data.headType
+      data.headType,
+      data.knuckleRadius
     );
     mawp = calculateHeadMAWP(
       data.actualThickness,
@@ -253,7 +346,8 @@ export function calculateComponent(data: ComponentData): CalculationResults {
       allowableStress,
       data.jointEfficiency,
       data.corrosionAllowance,
-      data.headType
+      data.headType,
+      data.knuckleRadius
     );
   }
   
@@ -286,6 +380,8 @@ export function calculateComponent(data: ComponentData): CalculationResults {
     designTemperature: data.designTemperature,
     material: data.materialSpec,
     allowableStress,
+    staticHeadPressure: staticHeadPressure > 0 ? staticHeadPressure : undefined,
+    totalDesignPressure: staticHeadPressure > 0 ? totalDesignPressure : undefined,
     minimumRequiredThickness: minThickness,
     actualThickness: data.actualThickness,
     corrosionAllowance: data.corrosionAllowance,
