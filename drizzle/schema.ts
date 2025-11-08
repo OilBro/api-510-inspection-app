@@ -517,3 +517,65 @@ export const inLieuOfAssessments = mysqlTable("inLieuOfAssessments", {
 export type InLieuOfAssessment = typeof inLieuOfAssessments.$inferSelect;
 export type InsertInLieuOfAssessment = typeof inLieuOfAssessments.$inferInsert;
 
+
+
+/**
+ * Pipe Schedule Database - ASME B36.10M standard pipe dimensions
+ * Used for nozzle minimum thickness calculations per ASME UG-45
+ */
+export const pipeSchedules = mysqlTable("pipeSchedules", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  
+  // Pipe identification
+  nominalSize: varchar("nominalSize", { length: 20 }).notNull(), // e.g., "1/2", "1", "2", "6", "24"
+  schedule: varchar("schedule", { length: 20 }).notNull(), // e.g., "10", "STD", "40", "XS", "80", "XXS"
+  
+  // Dimensions (inches)
+  outsideDiameter: decimal("outsideDiameter", { precision: 10, scale: 4 }).notNull(),
+  wallThickness: decimal("wallThickness", { precision: 10, scale: 4 }).notNull(),
+  insideDiameter: decimal("insideDiameter", { precision: 10, scale: 4 }).notNull(),
+  
+  // Metadata
+  createdAt: timestamp("createdAt").defaultNow(),
+});
+
+export type PipeSchedule = typeof pipeSchedules.$inferSelect;
+export type InsertPipeSchedule = typeof pipeSchedules.$inferInsert;
+
+/**
+ * Nozzle Evaluations - per ASME UG-45
+ * Tracks all nozzles on a vessel with minimum thickness requirements
+ */
+export const nozzleEvaluations = mysqlTable("nozzleEvaluations", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  inspectionId: varchar("inspectionId", { length: 64 }).notNull(),
+  
+  // Nozzle identification
+  nozzleNumber: varchar("nozzleNumber", { length: 50 }).notNull(), // e.g., "N1", "N2", "MW-1"
+  nozzleDescription: text("nozzleDescription"), // e.g., "Inlet", "Outlet", "Manway", "Drain"
+  location: varchar("location", { length: 100 }), // e.g., "Shell", "Top Head", "Bottom Head"
+  
+  // Pipe specifications
+  nominalSize: varchar("nominalSize", { length: 20 }).notNull(),
+  schedule: varchar("schedule", { length: 20 }),
+  
+  // Actual measurements (inches)
+  actualThickness: decimal("actualThickness", { precision: 10, scale: 4 }),
+  
+  // Calculated values (inches)
+  pipeNominalThickness: decimal("pipeNominalThickness", { precision: 10, scale: 4 }),
+  pipeMinusManufacturingTolerance: decimal("pipeMinusManufacturingTolerance", { precision: 10, scale: 4 }),
+  shellHeadRequiredThickness: decimal("shellHeadRequiredThickness", { precision: 10, scale: 4 }),
+  minimumRequired: decimal("minimumRequired", { precision: 10, scale: 4 }),
+  
+  // Assessment
+  acceptable: boolean("acceptable").default(true),
+  notes: text("notes"),
+  
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+});
+
+export type NozzleEvaluation = typeof nozzleEvaluations.$inferSelect;
+export type InsertNozzleEvaluation = typeof nozzleEvaluations.$inferInsert;
+

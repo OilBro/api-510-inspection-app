@@ -461,6 +461,11 @@ export async function generateProfessionalPDF(data: ProfessionalReportData): Pro
     console.log('[PDF DEBUG] Page count after TML:', doc.bufferedPageRange().count);
   }
   
+  // Nozzle evaluation section
+  console.log('[PDF DEBUG] Generating nozzle evaluation...');
+  await generateNozzleEvaluation(doc, inspectionId, logoBuffer);
+  console.log('[PDF DEBUG] Page count after nozzles:', doc.bufferedPageRange().count);
+  
   if (config.checklist !== false) {
     console.log('[PDF DEBUG] Generating checklist...');
     await generateChecklist(doc, checklist, logoBuffer);
@@ -800,13 +805,100 @@ async function generateRecommendationsSection(doc: PDFKit.PDFDocument, recommend
   });
 }
 
+async function generateNozzleEvaluation(doc: PDFKit.PDFDocument, inspectionId: string, logoBuffer?: Buffer) {
+  // Import nozzle database functions
+  const { getNozzlesByInspection } = await import('./nozzleDb.js');
+  
+  const nozzles = await getNozzlesByInspection(inspectionId);
+  
+  doc.addPage();
+  await addHeader(doc, 'NOZZLE EVALUATION', 7, logoBuffer);
+  addSectionTitle(doc, '7.0 NOZZLE MINIMUM THICKNESS EVALUATION (ASME UG-45)');
+  
+  if (!nozzles || nozzles.length === 0) {
+    addText(doc, 'No nozzle evaluations recorded.');
+    return;
+  }
+  
+  addText(doc, `This section presents the minimum thickness evaluation for all nozzles and connections per ASME Section VIII Division 1, UG-45. The minimum required thickness is determined as the greater of:`);
+  addText(doc, '');
+  addText(doc, '• Pipe nominal thickness minus manufacturing tolerance (12.5%)');
+  addText(doc, '• Shell or head required thickness at the nozzle location');
+  addText(doc, '');
+  
+  // Group nozzles by acceptable status
+  const acceptableNozzles = nozzles.filter(n => n.acceptable);
+  const unacceptableNozzles = nozzles.filter(n => !n.acceptable);
+  
+  // Summary
+  addText(doc, `Total nozzles evaluated: ${nozzles.length}`);
+  addText(doc, `Acceptable: ${acceptableNozzles.length}`);
+  addText(doc, `Not Acceptable: ${unacceptableNozzles.length}`);
+  addText(doc, '');
+  
+  // Nozzle evaluation table
+  const headers = [
+    'Nozzle #',
+    'Size',
+    'Sched',
+    'Location',
+    'Pipe Nom\n(in)',
+    'Pipe-Tol\n(in)',
+    'Shell Req\n(in)',
+    'Min Req\n(in)',
+    'Actual\n(in)',
+    'Status'
+  ];
+  
+  const columnWidths = [50, 40, 45, 70, 55, 55, 55, 55, 55, 70];
+  
+  const rows = nozzles.map(nozzle => [
+    nozzle.nozzleNumber,
+    `${nozzle.nominalSize}"`,
+    nozzle.schedule,
+    nozzle.location || '-',
+    nozzle.pipeNominalThickness ? parseFloat(nozzle.pipeNominalThickness).toFixed(4) : '-',
+    nozzle.pipeMinusManufacturingTolerance ? parseFloat(nozzle.pipeMinusManufacturingTolerance).toFixed(4) : '-',
+    nozzle.shellHeadRequiredThickness ? parseFloat(nozzle.shellHeadRequiredThickness).toFixed(4) : '-',
+    nozzle.minimumRequired ? parseFloat(nozzle.minimumRequired).toFixed(4) : '-',
+    nozzle.actualThickness ? parseFloat(nozzle.actualThickness).toFixed(4) : '-',
+    nozzle.acceptable ? 'OK' : 'NOT OK'
+  ]);
+  
+  addTable(doc, headers, rows, columnWidths);
+  
+  // Notes section
+  if (unacceptableNozzles.length > 0) {
+    addText(doc, '');
+    addText(doc, 'NOZZLES REQUIRING ATTENTION:', true);
+    addText(doc, '');
+    
+    unacceptableNozzles.forEach(nozzle => {
+      const actual = nozzle.actualThickness ? parseFloat(nozzle.actualThickness) : 0;
+      const minReq = nozzle.minimumRequired ? parseFloat(nozzle.minimumRequired) : 0;
+      const deficiency = minReq - actual;
+      
+      addText(doc, `• ${nozzle.nozzleNumber} (${nozzle.nominalSize}" ${nozzle.schedule}): Actual thickness ${actual.toFixed(4)}" is ${deficiency.toFixed(4)}" below minimum required ${minReq.toFixed(4)}". Recommend repair, replacement, or engineering assessment.`);
+    });
+  }
+  
+  // Methodology note
+  addText(doc, '');
+  addText(doc, 'METHODOLOGY:', true);
+  addText(doc, 'Minimum required thickness per ASME Section VIII Division 1, UG-45:');
+  addText(doc, '• Pipe nominal thickness from ASME B36.10M');
+  addText(doc, '• Manufacturing tolerance: 12.5% per ASME B36.10M');
+  addText(doc, '• Shell/head required thickness from UG-27 or UG-32 calculations');
+  addText(doc, '• Governing thickness: Maximum of (Pipe - Tolerance) or Shell Required');
+}
+
 async function generateThicknessReadings(doc: PDFKit.PDFDocument, readings: any[], logoBuffer?: Buffer) {
     // TML Readings count: ${readings?.length || 0}
   
   if (!readings || readings.length === 0) {
     doc.addPage();
     await addHeader(doc, 'THICKNESS MEASUREMENTS', 8, logoBuffer);
-    addSectionTitle(doc, '6.0 ULTRASONIC THICKNESS MEASUREMENTS');
+    addSectionTitle(doc, '8.0 ULTRASONIC THICKNESS MEASUREMENTS');
     addText(doc, 'No thickness readings recorded.');
     return;
   }
@@ -841,7 +933,7 @@ async function generateChecklist(doc: PDFKit.PDFDocument, items: any[], logoBuff
   doc.addPage();
   await addHeader(doc, 'INSPECTION CHECKLIST', 9, logoBuffer);
   
-  addSectionTitle(doc, '7.0 API 510 INSPECTION CHECKLIST');
+  addSectionTitle(doc, '9.0 API 510 INSPECTION CHECKLIST');
   
   if (!items || items.length === 0) {
     addText(doc, 'Checklist not completed.');
@@ -862,9 +954,8 @@ async function generateChecklist(doc: PDFKit.PDFDocument, items: any[], logoBuff
 
 async function generatePhotos(doc: PDFKit.PDFDocument, photos: any[], logoBuffer?: Buffer) {
   doc.addPage();
-  await addHeader(doc, 'PHOTOGRAPHS', 10, logoBuffer);
-  
-  addSectionTitle(doc, '8.0 INSPECTION PHOTOGRAPHS');
+  await addHeader(doc, 'PHOTOGRAPHS', 6, logoBuffer);
+  addSectionTitle(doc, '6.0 INSPECTION PHOTOGRAPHS');
   
   if (!photos || photos.length === 0) {
     addText(doc, 'No photographs attached.');
@@ -940,9 +1031,8 @@ async function generateFfsAssessment(doc: PDFKit.PDFDocument, inspectionId: stri
   }
   
   doc.addPage();
-  await addHeader(doc, 'FITNESS-FOR-SERVICE ASSESSMENT', 11, logoBuffer);
-  
-  addSectionTitle(doc, '9.0 FITNESS-FOR-SERVICE ASSESSMENT (API 579)');
+  await addHeader(doc, 'FFS ASSESSMENT', 10, logoBuffer);
+  addSectionTitle(doc, '10.0 FITNESS-FOR-SERVICE ASSESSMENT (API 579)');
   
   addText(doc, 'Fitness-For-Service (FFS) assessment performed per API 579-1/ASME FFS-1 to evaluate the structural integrity of components with identified flaws or damage.');
   doc.moveDown();
@@ -997,9 +1087,8 @@ async function generateInLieuOfQualification(doc: PDFKit.PDFDocument, inspection
   }
   
   doc.addPage();
-  await addHeader(doc, 'IN-LIEU-OF INTERNAL INSPECTION', 12, logoBuffer);
-  
-  addSectionTitle(doc, '10.0 IN-LIEU-OF INTERNAL INSPECTION QUALIFICATION (API 510 Section 6.4)');
+  await addHeader(doc, 'IN-LIEU-OF QUALIFICATION', 11, logoBuffer);
+  addSectionTitle(doc, '11.0 IN-LIEU-OF INTERNAL INSPECTION QUALIFICATION (API 510 Section 6.4)');
   
   addText(doc, 'Assessment performed to determine if external inspection combined with thickness measurements can be used in lieu of internal inspection per API 510 Section 6.4.');
   doc.moveDown();

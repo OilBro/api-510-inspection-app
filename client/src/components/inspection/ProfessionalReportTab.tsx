@@ -14,6 +14,7 @@ import PhotosSection from "../professionalReport/PhotosSection";
 import ChecklistSection from "../professionalReport/ChecklistSection";
 import FfsAssessmentSection from "../professionalReport/FfsAssessmentSection";
 import InLieuOfSection from "../professionalReport/InLieuOfSection";
+import NozzleEvaluationSection from "../professionalReport/NozzleEvaluationSection";
 import { ReportTemplateDialog, ReportSectionConfig } from "./ReportTemplateDialog";
 import {
   Dialog,
@@ -168,9 +169,10 @@ export default function ProfessionalReportTab({ inspectionId }: ProfessionalRepo
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-8">
+        <TabsList className="grid w-full grid-cols-9">
           <TabsTrigger value="info">Report Info</TabsTrigger>
           <TabsTrigger value="calculations">Calculations</TabsTrigger>
+          <TabsTrigger value="nozzles">Nozzles</TabsTrigger>
           <TabsTrigger value="findings">Findings</TabsTrigger>
           <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
           <TabsTrigger value="photos">Photos</TabsTrigger>
@@ -382,6 +384,11 @@ export default function ProfessionalReportTab({ inspectionId }: ProfessionalRepo
         {/* Calculations Tab */}
         <TabsContent value="calculations">
           <ComponentCalculationsSection reportId={report.id} />
+        </TabsContent>
+
+        {/* Nozzle Evaluation Tab */}
+        <TabsContent value="nozzles">
+          <NozzleEvaluationSection inspectionId={inspection.id} />
         </TabsContent>
 
         {/* Findings Tab */}

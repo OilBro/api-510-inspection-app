@@ -602,17 +602,17 @@
 - [ ] Create test cases for all Phase 1 fixes
 - [ ] Verify all existing tests still pass
 
-### PHASE 2: NOZZLE EVALUATION (Week 2-3) - 24-32 hours
-- [ ] Create pipe schedule database (NPS 1/2" through 48", all schedules)
-- [ ] Implement nozzle minimum thickness per ASME UG-45
-- [ ] Add nozzle schema table (nozzleId, size, schedule, location, actualThickness)
-- [ ] Create "Nozzle Evaluation" tab in Professional Report
-- [ ] Build nozzle list table with add/edit/delete functionality
-- [ ] Implement auto-calculation of minimum required thickness
-- [ ] Add acceptable/not acceptable status with color coding
+### PHASE 2: NOZZLE EVALUATION (Week 2-3) - 24-32 hours - IN PROGRESS
+- [x] Create pipe schedule database (NPS 1/2" through 48", all schedules)
+- [x] Implement nozzle minimum thickness per ASME UG-45
+- [x] Add nozzle schema table (nozzleId, size, schedule, location, actualThickness)
+- [x] Create "Nozzle Evaluation" tab in Professional Report
+- [x] Build nozzle list table with add/edit/delete functionality
+- [x] Implement auto-calculation of minimum required thickness
+- [x] Add acceptable/not acceptable status with color coding
 - [ ] Create nozzle Excel template for import/export
-- [ ] Add "Nozzle Evaluation" section to PDF report
-- [ ] Test nozzle calculations against ASME examples
+- [x] Add "Nozzle Evaluation" section to PDF report
+- [x] Test nozzle calculations against ASME examples
 
 ### PHASE 3: MATERIAL DATABASE EXPANSION (Week 4) - 20-28 hours
 - [ ] Add SA-106 Grade B (pipe material)

@@ -71,6 +71,13 @@
       "when": 1762393619370,
       "tag": "0009_faulty_supreme_intelligence",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1762579260906,
+      "tag": "0010_regular_maximus",
+      "breakpoints": true
     }
   ]
 }

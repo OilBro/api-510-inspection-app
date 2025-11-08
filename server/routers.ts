@@ -9,6 +9,7 @@ import { parseExcelFile, parsePDFFile } from "./fileParser";
 import { storagePut } from "./storage";
 import { fieldMappingRouter, unmatchedDataRouter } from "./fieldMappingRouters";
 import { professionalReportRouter } from "./professionalReportRouters";
+import { nozzleRouter } from "./nozzleRouters";
 import * as fieldMappingDb from "./fieldMappingDb";
 import * as professionalReportDb from "./professionalReportDb";
 
@@ -834,6 +835,9 @@ export const appRouter = router({
   
   // Professional report generation
   professionalReport: professionalReportRouter,
+  
+  // Nozzle evaluations
+  nozzles: nozzleRouter,
 });
 
 export type AppRouter = typeof appRouter;
