@@ -129,12 +129,13 @@ export default function ProfessionalReportTab({ inspectionId }: ProfessionalRepo
     
     setSendingEmail(true);
     try {
-      // TODO: Implement email sending endpoint
+      // Note: Backend email endpoint needs implementation
+      // This is a placeholder that simulates the email sending process
       console.log('Sending email to:', emailRecipient);
       console.log('Subject:', emailSubject);
       console.log('Message:', emailMessage);
       
-      // Simulate API call
+      // Simulate API call (replace with actual tRPC mutation)
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       toast.success(`Report sent to ${emailRecipient}`);

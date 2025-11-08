@@ -21,7 +21,7 @@ export default function InspectionList() {
   const [selectedInspections, setSelectedInspections] = useState<string[]>([]);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState("full");
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatingBatch, setGeneratingBatch] = useState(false);
 
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this inspection?")) {
@@ -52,15 +52,17 @@ export default function InspectionList() {
   };
 
   const generateBatchPDFs = async () => {
-    setIsGenerating(true);
+    setGeneratingBatch(true);
     try {
-      // TODO: Implement batch PDF generation endpoint
+      // Note: Backend batch PDF endpoint needs implementation
+      // This placeholder logs the selected inspections and template
       console.log('Generating PDFs for:', selectedInspections, 'with template:', selectedTemplate);
-      alert(`Batch PDF generation will be implemented. Selected ${selectedInspections.length} inspections with ${selectedTemplate} template.`);
+      toast.info(`Batch PDF generation: ${selectedInspections.length} inspections with ${selectedTemplate} template. Backend implementation pending.`);
     } catch (error) {
       console.error('Batch generation error:', error);
+      toast.error('Failed to generate batch PDFs');
     } finally {
-      setIsGenerating(false);
+      setGeneratingBatch(false);
       setShowTemplateDialog(false);
       setSelectedInspections([]);
     }

@@ -18,7 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { trpc } from "@/lib/trpc";
-import { Loader2, TrendingDown, TrendingUp, Minus, AlertTriangle, CheckCircle2, ArrowRight } from "lucide-react";
+import { Loader2, TrendingDown, TrendingUp, Minus, AlertTriangle, CheckCircle2, ArrowRight, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
 import ThicknessTrendChart from "@/components/ThicknessTrendChart";
 
@@ -80,6 +80,13 @@ export default function ReportComparison() {
 
   return (
     <div className="container mx-auto py-8">
+      <Button asChild variant="outline" size="sm" className="mb-4">
+        <Link href="/">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Dashboard
+        </Link>
+      </Button>
+      
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Report Comparison</h1>
         <p className="text-muted-foreground">

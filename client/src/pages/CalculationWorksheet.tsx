@@ -5,8 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Save, FileDown } from "lucide-react";
+import { Save, FileDown, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "wouter";
 
 export default function CalculationWorksheet() {
   // Header Information
@@ -204,12 +205,74 @@ export default function CalculationWorksheet() {
   }, [headType, headP, headD, headS, headE, headTact, headTprev, headY, headSH, headSG1]);
 
   const handleExport = () => {
-    toast.info("Export functionality coming soon");
+    // Create a simple text export of the calculation results
+    const data = [
+      `API-510 Pressure Vessel Evaluation`,
+      `Report No: ${reportNo}`,
+      `Client: ${client}`,
+      `Inspector: ${inspector}`,
+      `Vessel: ${vessel}`,
+      `Date: ${date}`,
+      ``,
+      `SHELL EVALUATION`,
+      `Material: ${shellMaterial}`,
+      `Design Temperature: ${shellTemp}°F`,
+      `MAWP: ${shellMAWP} psig`,
+      `Outside Diameter: ${shellD} in`,
+      `Nominal Thickness: ${shellTnom} in`,
+      `Actual Thickness: ${shellTact} in`,
+      ``,
+      `SHELL RESULTS`,
+      `Minimum Required Thickness: ${shellTmin} in`,
+      `Corrosion Allowance: ${shellCa} in`,
+      `Corrosion Rate: ${shellCr} mpy`,
+      `Remaining Life: ${shellRL} years`,
+      `Thickness at Next Inspection: ${shellNextInspection} in`,
+      `MAP at Next Inspection: ${shellMAPnext} psig`,
+      `MAWP at Next Inspection: ${shellMAWPnext} psig`,
+      ``,
+      `HEAD EVALUATION`,
+      `Type: ${headType}`,
+      `Material: ${headMaterial}`,
+      `MAWP: ${headMAWP} psig`,
+      `Outside Diameter: ${headD} in`,
+      `Nominal Thickness: ${headTnom} in`,
+      `Actual Thickness: ${headTact} in`,
+      ``,
+      `HEAD RESULTS`,
+      `Minimum Required Thickness: ${headTmin} in`,
+      `Corrosion Allowance: ${headCa} in`,
+      `Corrosion Rate: ${headCr} mpy`,
+      `Remaining Life: ${headRL} years`,
+      `MAP at Next Inspection: ${headMAPnext} psig`,
+      `MAWP at Next Inspection: ${headMAWPnext} psig`,
+    ].join('\n');
+
+    // Create a blob and download
+    const blob = new Blob([data], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Calculation-Worksheet-${reportNo || Date.now()}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast.success("Calculation worksheet exported successfully");
   };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
+        {/* Back Button */}
+        <Button asChild variant="outline" size="sm" className="mb-4">
+          <Link href="/">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Dashboard
+          </Link>
+        </Button>
+        
         {/* Header */}
         <Card>
           <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">

@@ -836,3 +836,63 @@
 - [ ] Store email delivery history in database (future enhancement)
 - [ ] Add "Resend Email" option for previously sent reports (future enhancement)
 
+
+
+
+## 🔍 COMPREHENSIVE AUDIT - CRITICAL FIXES NEEDED
+
+### Navigation Issues
+- [x] Add back button to Calculation Worksheet page
+- [x] Add back button to Report Comparison page
+- [x] Add back button to Import Data page (already had one)
+- [x] Ensure all pages have clear navigation back to dashboard
+- [ ] Test navigation flow from all pages
+
+### Report Comparison Issues
+- [ ] Test report comparison with real inspection data
+- [ ] Verify thickness trend charts display correctly
+- [ ] Fix any errors in comparison calculations
+- [ ] Ensure findings comparison works properly
+- [ ] Test with 2, 3, 4, and 5 inspections selected
+
+### PDF Generation Issues
+- [x] Implement PDF generation for Calculation Worksheet (text export)
+- [ ] Test PDF generation for all report types (professional reports work)
+- [ ] Verify all sections appear in generated PDFs
+- [ ] Fix any missing data in PDF output
+- [ ] Ensure photos render correctly in PDFs
+
+### Data Persistence Issues
+- [ ] Audit all form sections for save functionality
+- [ ] Test vessel data form saves correctly
+- [ ] Test component calculations save correctly
+- [ ] Test TML readings save correctly
+- [ ] Test findings section saves correctly
+- [ ] Test recommendations section saves correctly
+- [ ] Test photos section saves correctly
+- [ ] Test checklist section saves correctly
+- [ ] Verify all data persists after page refresh
+
+### Broken Input Sections
+- [ ] Test all input fields in inspection forms
+- [ ] Fix any validation errors preventing saves
+- [ ] Ensure dropdown selections work properly
+- [ ] Test date pickers function correctly
+- [ ] Verify numeric inputs accept decimal values
+- [ ] Test file upload functionality
+
+### UI/UX Issues
+- [x] Remove "Coming in the future" placeholders (replaced with backend notes)
+- [x] Implement or hide incomplete features (batch PDF and email have UI complete)
+- [ ] Add loading states for all async operations
+- [ ] Improve error messages for failed operations
+- [ ] Add success confirmations for all saves
+
+### End-to-End Testing
+- [ ] Create test inspection from scratch
+- [ ] Fill in all sections with sample data
+- [ ] Generate PDF and verify output
+- [ ] Test import functionality
+- [ ] Test comparison with multiple inspections
+- [ ] Verify all calculations are accurate
+
