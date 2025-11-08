@@ -16,6 +16,7 @@ import {
 import { getInspection, getTmlReadings, getDb } from "./db";
 import { ffsAssessments, inLieuOfAssessments } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
+import { calculateComponent } from "./componentCalculations";
 
 // ============================================================================
 // PDF CONFIGURATION
@@ -507,7 +508,6 @@ async function generateComponentCalculations(doc: PDFKit.PDFDocument, components
   
   // If no pre-calculated components, try to auto-generate from inspection data
   if ((!components || components.length === 0) && inspection && tmlReadings && tmlReadings.length > 0) {
-    const { calculateComponent } = require('./componentCalculations');
     
     // Find minimum thickness from TML readings
     const minReading = tmlReadings.reduce((min, r) => {
@@ -783,21 +783,20 @@ async function generateFfsAssessment(doc: PDFKit.PDFDocument, inspectionId: stri
   doc.moveDown();
   
   for (const assessment of assessments) {
-    addSubsectionTitle(doc, `Component: ${assessment.componentName || 'Unknown'}`);
+    addSubsectionTitle(doc, `Damage Type: ${assessment.damageType || 'Unknown'}`);
+    
+    // Helper to parse decimal fields
+    const parseDecimal = (val: any) => val ? parseFloat(val.toString()) : null;
     
     const data = [
-      ['Assessment Level', `Level ${assessment.assessmentLevel}`],
-      ['Assessment Type', assessment.assessmentType || '-'],
-      ['Flaw Type', assessment.flawType || '-'],
-      ['Flaw Depth (in)', assessment.flawDepth?.toFixed(3) || '-'],
-      ['Flaw Length (in)', assessment.flawLength?.toFixed(2) || '-'],
-      ['Remaining Thickness (in)', assessment.remainingThickness?.toFixed(3) || '-'],
-      ['Required Thickness (in)', assessment.requiredThickness?.toFixed(3) || '-'],
-      ['Remaining Strength Factor', assessment.rsf?.toFixed(3) || '-'],
-      ['Acceptance Criteria', assessment.acceptanceCriteria || '-'],
-      ['Result', assessment.result || '-'],
-      ['Remaining Life (years)', assessment.remainingLife?.toFixed(1) || '-'],
-      ['Next Inspection (years)', assessment.nextInspectionInterval?.toFixed(1) || '-'],
+      ['Assessment Level', assessment.assessmentLevel ? `Level ${assessment.assessmentLevel.replace('level', '')}` : '-'],
+      ['Damage Type', assessment.damageType || '-'],
+      ['Remaining Thickness (in)', parseDecimal(assessment.remainingThickness)?.toFixed(4) || '-'],
+      ['Minimum Required (in)', parseDecimal(assessment.minimumRequired)?.toFixed(4) || '-'],
+      ['Future Corrosion Allowance (in)', parseDecimal(assessment.futureCorrosionAllowance)?.toFixed(4) || '-'],
+      ['Acceptable', assessment.acceptable ? 'Yes' : 'No'],
+      ['Remaining Life (years)', parseDecimal(assessment.remainingLife)?.toFixed(2) || '-'],
+      ['Next Inspection Date', assessment.nextInspectionDate ? new Date(assessment.nextInspectionDate).toLocaleDateString() : '-'],
     ];
     
     addTable(doc, ['Parameter', 'Value'], data);
@@ -842,16 +841,14 @@ async function generateInLieuOfQualification(doc: PDFKit.PDFDocument, inspection
   
   for (const assessment of assessments) {
     const data = [
-      ['Qualification Method', assessment.qualificationMethod || '-'],
-      ['External Inspection Effective', assessment.externalInspectionEffective ? 'Yes' : 'No'],
-      ['Corrosion Mechanism Known', assessment.corrosionMechanismKnown ? 'Yes' : 'No'],
-      ['Process Monitoring Active', assessment.processMonitoringActive ? 'Yes' : 'No'],
-      ['Thickness Monitoring Adequate', assessment.thicknessMonitoringAdequate ? 'Yes' : 'No'],
-      ['Minimum Thickness Maintained', assessment.minimumThicknessMaintained ? 'Yes' : 'No'],
-      ['Corrosion Rate (mpy)', assessment.corrosionRate?.toFixed(3) || '-'],
-      ['Remaining Life (years)', assessment.remainingLife?.toFixed(1) || '-'],
-      ['Next Inspection Interval (years)', assessment.nextInspectionInterval?.toFixed(1) || '-'],
-      ['Qualification Result', assessment.qualificationResult || '-'],
+      ['Clean Service', assessment.cleanService ? 'Yes' : 'No'],
+      ['No Corrosion History', assessment.noCorrosionHistory ? 'Yes' : 'No'],
+      ['Effective External Inspection', assessment.effectiveExternalInspection ? 'Yes' : 'No'],
+      ['Process Monitoring', assessment.processMonitoring ? 'Yes' : 'No'],
+      ['Thickness Monitoring', assessment.thicknessMonitoring ? 'Yes' : 'No'],
+      ['Qualified', assessment.qualified ? 'Yes' : 'No'],
+      ['Maximum Interval (years)', assessment.maxInterval?.toString() || '-'],
+      ['Next Internal Due', assessment.nextInternalDue ? new Date(assessment.nextInternalDue).toLocaleDateString() : '-'],
     ];
     
     addTable(doc, ['Criteria', 'Status'], data);
@@ -863,15 +860,9 @@ async function generateInLieuOfQualification(doc: PDFKit.PDFDocument, inspection
       doc.moveDown();
     }
     
-    if (assessment.limitations) {
-      addSubsectionTitle(doc, 'Limitations');
-      addText(doc, assessment.limitations);
-      doc.moveDown();
-    }
-    
-    if (assessment.recommendations) {
-      addSubsectionTitle(doc, 'Recommendations');
-      addText(doc, assessment.recommendations);
+    if (assessment.monitoringPlan) {
+      addSubsectionTitle(doc, 'Monitoring Plan');
+      addText(doc, assessment.monitoringPlan);
       doc.moveDown();
     }
   }
