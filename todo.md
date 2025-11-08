@@ -669,3 +669,13 @@
 **Priority 5 (LOW):** Conical Heads - used in <5% of inspections
 **Priority 6 (LOW):** Nozzle Reinforcement - used in <10% of inspections
 
+
+
+
+## 🐛 THICKNESS TABLE PAGINATION BUG (CRITICAL)
+- [x] Fix thickness measurements table - each row splitting across multiple pages
+- [x] Table rows should flow continuously, not one cell per page
+- [x] Review addTable function row-by-row rendering logic
+- [x] Ensure entire row stays together on same page
+- [x] Test with large datasets (100+ thickness readings)
+

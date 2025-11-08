@@ -1,0 +1,15 @@
+{
+  "query": "SELECT id, inspectionId, reportNumber FROM professionalReports WHERE reportNumber = 'RPT-1762398384759' LIMIT 1",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2vRv1t5JdAedAFZ.root --database a9VZy6gKAZLkLFJ3hyN5wH --execute SELECT id, inspectionId, reportNumber FROM professionalReports WHERE reportNumber = 'RPT-1762398384759' LIMIT 1",
+  "rows": [
+    {
+      "id": "nb4TB-Sy0LAD_E4UJUQMS",
+      "inspectionId": "zmdfmVDWZ-gkDzCsCK52K",
+      "reportNumber": "RPT-1762398384759"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tinspectionId\treportNumber\nnb4TB-Sy0LAD_E4UJUQMS\tzmdfmVDWZ-gkDzCsCK52K\tRPT-1762398384759\n",
+  "stderr": "",
+  "execution_time_ms": 983
+}

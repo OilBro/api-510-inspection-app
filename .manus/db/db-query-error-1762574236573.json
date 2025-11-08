@@ -1,0 +1,8 @@
+{
+  "query": "SELECT COUNT(*) as count FROM thicknessReadings WHERE inspectionId = (SELECT inspectionId FROM professionalReports WHERE reportNumber = 'RPT-1762398384759' LIMIT 1)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2vRv1t5JdAedAFZ.root --database a9VZy6gKAZLkLFJ3hyN5wH --execute SELECT COUNT(*) as count FROM thicknessReadings WHERE inspectionId = (SELECT inspectionId FROM professionalReports WHERE reportNumber = 'RPT-1762398384759' LIMIT 1)",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 1: Table 'a9vzy6gkazlklfj3hyn5wh.thicknessReadings' doesn't exist"
+  ]
+}

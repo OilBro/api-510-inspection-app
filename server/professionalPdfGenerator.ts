@@ -175,6 +175,12 @@ async function addTable(doc: PDFKit.PDFDocument, headers: string[], rows: string
     
     // Draw rows for this page
     doc.font('Helvetica').fontSize(9);
+    
+    // Save the current auto page break setting and disable it
+    const originalBufferPages = (doc as any).options?.bufferPages;
+    (doc as any).options = (doc as any).options || {};
+    (doc as any).options.bufferPages = true; // Disable automatic page breaks
+    
     for (let i = 0; i < rowsThisPage; i++) {
       const row = rows[rowIndex + i];
       const rowY = currentY + (i * ROW_HEIGHT);
@@ -186,11 +192,29 @@ async function addTable(doc: PDFKit.PDFDocument, headers: string[], rows: string
       
       doc.fillColor(COLORS.text);
       row.forEach((cell, colIndex) => {
-        doc.text(cell || '-', MARGIN + (colIndex * colWidth) + 5, rowY + 5, {
-          width: colWidth - 10,
-          align: 'left'
+        const cellText = String(cell || '-');
+        // Truncate text if it's too long to prevent overflow
+        const maxLength = Math.floor((colWidth - 10) / 5); // Approximate chars that fit
+        const displayText = cellText.length > maxLength ? cellText.substring(0, maxLength - 3) + '...' : cellText;
+        
+        // Use text without width parameter to prevent automatic page breaks
+        const x = MARGIN + (colIndex * colWidth) + 5;
+        const y = rowY + 5;
+        
+        // Manually clip text to cell width
+        doc.save();
+        doc.rect(MARGIN + (colIndex * colWidth), rowY, colWidth, ROW_HEIGHT).clip();
+        doc.text(displayText, x, y, {
+          lineBreak: false, // Prevent line breaks within cells
+          continued: false
         });
+        doc.restore();
       });
+    }
+    
+    // Restore original page break setting
+    if (originalBufferPages !== undefined) {
+      (doc as any).options.bufferPages = originalBufferPages;
     }
     
     // Draw border around this table section
