@@ -28,7 +28,7 @@ export const reportComparisonRouter = router({
         .select()
         .from(inspections)
         .where(eq(inspections.userId, ctx.user.id))
-        .orderBy(desc(inspections.inspectionDate))
+        .orderBy(desc(inspections.updatedAt))
         .limit(input.limit);
 
       return results;

@@ -927,3 +927,11 @@
 - [x] Show progress indicator during import (bulk processing state)
 - [x] Add "Quick Map" templates for common report formats (smart suggestions)
 
+
+
+
+## 🐛 CRITICAL SQL ERROR FIX
+
+- [x] Fix ORDER BY syntax error in inspections.list query (missing column name)
+- [x] Test Report Comparison page loads without errors
+
