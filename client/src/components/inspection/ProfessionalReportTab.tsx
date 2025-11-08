@@ -388,7 +388,7 @@ export default function ProfessionalReportTab({ inspectionId }: ProfessionalRepo
 
         {/* Nozzle Evaluation Tab */}
         <TabsContent value="nozzles">
-          <NozzleEvaluationSection inspectionId={inspection.id} />
+          <NozzleEvaluationSection inspectionId={inspectionId} />
         </TabsContent>
 
         {/* Findings Tab */}
