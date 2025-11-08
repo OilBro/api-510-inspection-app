@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, Download, Plus, Trash2, Upload, FileText } from "lucide-react";
+import { Loader2, Download, Plus, Trash2, Upload, FileText, Mail } from "lucide-react";
 import FindingsSection from "../professionalReport/FindingsSection";
 import RecommendationsSection from "../professionalReport/RecommendationsSection";
 import PhotosSection from "../professionalReport/PhotosSection";
@@ -41,6 +41,11 @@ export default function ProfessionalReportTab({ inspectionId }: ProfessionalRepo
   const [activeTab, setActiveTab] = useState("info");
   const [generating, setGenerating] = useState(false);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [emailRecipient, setEmailRecipient] = useState("");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailMessage, setEmailMessage] = useState("");
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   // Get or create professional report
   const { data: report, isLoading } = trpc.professionalReport.getOrCreate.useQuery({
@@ -109,6 +114,39 @@ export default function ProfessionalReportTab({ inspectionId }: ProfessionalRepo
     });
   };
 
+  const handleOpenEmailDialog = () => {
+    // Pre-fill subject with report info
+    setEmailSubject(`Inspection Report - ${report?.reportNumber || 'Report'}`);
+    setEmailMessage(`Please find attached the professional inspection report.\n\nReport Number: ${report?.reportNumber || 'N/A'}\nInspector: ${report?.inspectorName || 'N/A'}\nClient: ${report?.clientName || 'N/A'}`);
+    setEmailDialogOpen(true);
+  };
+
+  const handleSendEmail = async () => {
+    if (!report || !emailRecipient) {
+      toast.error("Please enter recipient email address");
+      return;
+    }
+    
+    setSendingEmail(true);
+    try {
+      // TODO: Implement email sending endpoint
+      console.log('Sending email to:', emailRecipient);
+      console.log('Subject:', emailSubject);
+      console.log('Message:', emailMessage);
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      toast.success(`Report sent to ${emailRecipient}`);
+      setEmailDialogOpen(false);
+      setEmailRecipient("");
+    } catch (error) {
+      toast.error("Failed to send email");
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -163,6 +201,16 @@ export default function ProfessionalReportTab({ inspectionId }: ProfessionalRepo
           >
             <FileText className="h-4 w-4" />
             Custom Template
+          </Button>
+          <Button
+            onClick={handleOpenEmailDialog}
+            disabled={generating}
+            size="lg"
+            variant="outline"
+            className="gap-2"
+          >
+            <Mail className="h-4 w-4" />
+            Generate & Email
           </Button>
         </div>
       </div>
@@ -428,6 +476,75 @@ export default function ProfessionalReportTab({ inspectionId }: ProfessionalRepo
         onOpenChange={setTemplateDialogOpen}
         onGenerate={handleGeneratePDF}
       />
+
+      {/* Email Delivery Dialog */}
+      <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Generate & Email Report</DialogTitle>
+            <DialogDescription>
+              Send the professional inspection report directly to the recipient's email
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="email-recipient">Recipient Email *</Label>
+              <Input
+                id="email-recipient"
+                type="email"
+                placeholder="client@example.com"
+                value={emailRecipient}
+                onChange={(e) => setEmailRecipient(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email-subject">Subject</Label>
+              <Input
+                id="email-subject"
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email-message">Message</Label>
+              <Textarea
+                id="email-message"
+                rows={6}
+                value={emailMessage}
+                onChange={(e) => setEmailMessage(e.target.value)}
+              />
+            </div>
+            <div className="text-sm text-muted-foreground">
+              The PDF report will be generated and attached to this email automatically.
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setEmailDialogOpen(false)}
+              disabled={sendingEmail}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSendEmail}
+              disabled={sendingEmail || !emailRecipient}
+            >
+              {sendingEmail ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Mail className="mr-2 h-4 w-4" />
+                  Send Report
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

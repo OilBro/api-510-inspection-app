@@ -20,27 +20,7 @@ import {
 import { trpc } from "@/lib/trpc";
 import { Loader2, TrendingDown, TrendingUp, Minus, AlertTriangle, CheckCircle2, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
-import { Line } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
+import ThicknessTrendChart from "@/components/ThicknessTrendChart";
 
 export default function ReportComparison() {
   const [selectedInspections, setSelectedInspections] = useState<string[]>([]);
@@ -163,6 +143,27 @@ export default function ReportComparison() {
             </div>
           ) : comparisonData ? (
             <>
+              {/* Thickness Trend Charts */}
+              {comparisonData.chartData && comparisonData.chartData.length > 0 && (
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold mb-4">Thickness Trend Visualization</h2>
+                  <p className="text-muted-foreground mb-6">
+                    Interactive charts showing thickness measurements over time for each component
+                  </p>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {comparisonData.chartData.map((chart: any, index: number) => (
+                      <ThicknessTrendChart
+                        key={index}
+                        component={chart.component}
+                        location={chart.location}
+                        labels={chart.labels}
+                        datasets={chart.datasets}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Thickness Trends */}
               <Card className="mb-8">
                 <CardHeader>

@@ -798,3 +798,41 @@
 - [ ] Add export comparison results to PDF
 - [ ] Add email comparison report functionality
 
+
+
+
+## 🆕 NEW FEATURE REQUESTS - PRIORITY
+
+### 1. Thickness Trend Charts (Report Comparison)
+- [x] Enhance backend to return chart-ready data structure (labels, datasets)
+- [x] Create ThicknessTrendChart component with Chart.js Line chart
+- [x] Add chart for each component showing thickness over time
+- [x] Include multiple inspection points on same chart
+- [x] Add legend showing inspection dates
+- [x] Color-code lines by status (green/yellow/orange/red)
+- [x] Add tooltips showing exact thickness values and dates
+- [x] Make charts responsive and mobile-friendly
+- [x] Integrate charts into Report Comparison page
+
+### 2. Batch PDF Generation
+- [x] Add checkbox selection to InspectionList component
+- [x] Add "Select All" / "Deselect All" buttons
+- [x] Add "Generate Reports" button (disabled when none selected)
+- [ ] Create batch PDF generation backend endpoint (placeholder implemented)
+- [x] Show template selection dialog before generation
+- [ ] Generate PDFs for all selected inspections with same template (TODO: backend)
+- [x] Show progress indicator during batch generation
+- [ ] Download all PDFs as ZIP file or individually (TODO: backend)
+- [x] Add success/error notifications for each report
+
+### 3. Email Delivery Integration
+- [x] Add "Generate & Email" button to Professional Report tab
+- [x] Create email dialog with recipient input field
+- [x] Add email subject and message customization
+- [ ] Backend endpoint to generate PDF and send via notification system (TODO: backend)
+- [ ] Use built-in notification API for email delivery (TODO: backend)
+- [ ] Add CC/BCC fields for multiple recipients (future enhancement)
+- [x] Show email sending progress and confirmation
+- [ ] Store email delivery history in database (future enhancement)
+- [ ] Add "Resend Email" option for previously sent reports (future enhancement)
+

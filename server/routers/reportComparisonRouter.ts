@@ -112,11 +112,15 @@ export const reportComparisonRouter = router({
         inspectionRecords
       );
 
+      // Prepare chart data for thickness trends
+      const chartData = prepareChartData(tmlData, inspectionRecords);
+
       return {
         inspections: inspectionRecords,
         thicknessTrends,
         findingsComparison,
         degradationRates,
+        chartData,
       };
     }),
 });
@@ -340,5 +344,94 @@ function similarDescription(desc1: string, desc2: string): boolean {
 
   // Check if one contains the other or they share significant overlap
   return n1.includes(n2.substring(0, 30)) || n2.includes(n1.substring(0, 30));
+}
+
+
+
+/**
+ * Prepare chart-ready data structure for thickness trends
+ */
+function prepareChartData(tmlData: any[], inspectionRecords: any[]) {
+  const charts: any[] = [];
+
+  // Group TML readings by component/location
+  const groupedByComponent = new Map<string, any[]>();
+
+  tmlData.forEach((reading) => {
+    const key = `${reading.component}-${reading.tmlId}`;
+    if (!groupedByComponent.has(key)) {
+      groupedByComponent.set(key, []);
+    }
+    groupedByComponent.get(key)!.push(reading);
+  });
+
+  // Create chart data for each component
+  groupedByComponent.forEach((readings, key) => {
+    if (readings.length < 2) return; // Need at least 2 points for a trend
+
+    // Sort by date
+    readings.sort((a, b) => {
+      const dateA = new Date(a.currentInspectionDate || a.createdAt).getTime();
+      const dateB = new Date(b.currentInspectionDate || b.createdAt).getTime();
+      return dateA - dateB;
+    });
+
+    const labels: string[] = [];
+    const thicknessData: number[] = [];
+    const nominalData: number[] = [];
+
+    readings.forEach((reading) => {
+      const date = new Date(reading.currentInspectionDate || reading.createdAt);
+      labels.push(date.toLocaleDateString());
+      
+      const thickness = parseFloat(reading.currentThickness || "0");
+      thicknessData.push(thickness);
+      
+      const nominal = parseFloat(reading.nominalThickness || "0");
+      nominalData.push(nominal);
+    });
+
+    // Determine chart color based on latest status
+    const latestReading = readings[readings.length - 1];
+    const current = parseFloat(latestReading.currentThickness || "0");
+    const nominal = parseFloat(latestReading.nominalThickness || "0");
+    const lossPercent = nominal > 0 ? ((nominal - current) / nominal) * 100 : 0;
+
+    let borderColor = "#10b981"; // green (stable)
+    if (lossPercent > 30) {
+      borderColor = "#ef4444"; // red (critical)
+    } else if (lossPercent > 20) {
+      borderColor = "#f97316"; // orange (warning)
+    } else if (lossPercent > 10) {
+      borderColor = "#eab308"; // yellow (caution)
+    }
+
+    charts.push({
+      component: latestReading.component,
+      location: latestReading.tmlId,
+      labels,
+      datasets: [
+        {
+          label: "Current Thickness",
+          data: thicknessData,
+          borderColor,
+          backgroundColor: borderColor + "20", // 20% opacity
+          tension: 0.1,
+          fill: false,
+        },
+        {
+          label: "Nominal Thickness",
+          data: nominalData,
+          borderColor: "#94a3b8", // gray
+          backgroundColor: "#94a3b820",
+          borderDash: [5, 5],
+          tension: 0,
+          fill: false,
+        },
+      ],
+    });
+  });
+
+  return charts;
 }
 
