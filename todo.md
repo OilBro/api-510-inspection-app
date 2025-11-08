@@ -482,3 +482,15 @@
 - [x] Fix Drizzle ORM error in professional report generation (moved imports to top of file)
 - [ ] Test report generation after fix
 
+
+
+
+## 📄 CUSTOMIZABLE PDF REPORT TEMPLATES
+- [x] Create report template configuration interface
+- [x] Add section toggle options (Executive Summary, Vessel Data, Component Calculations, etc.)
+- [x] Implement predefined templates (Full Report, Executive Summary, Client Summary, Technical Only)
+- [x] Update PDF generator to accept section configuration parameter
+- [x] Add template selection UI to Professional Report tab
+- [ ] Save user template preferences to database
+- [x] Test all template combinations
+

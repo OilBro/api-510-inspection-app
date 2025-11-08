@@ -445,11 +445,26 @@ export const professionalReportRouter = router({
     .input(z.object({
       reportId: z.string(),
       inspectionId: z.string(),
+      sectionConfig: z.object({
+        coverPage: z.boolean().optional(),
+        tableOfContents: z.boolean().optional(),
+        executiveSummary: z.boolean().optional(),
+        vesselData: z.boolean().optional(),
+        componentCalculations: z.boolean().optional(),
+        inspectionFindings: z.boolean().optional(),
+        recommendations: z.boolean().optional(),
+        thicknessReadings: z.boolean().optional(),
+        checklist: z.boolean().optional(),
+        ffsAssessment: z.boolean().optional(),
+        inLieuOfQualification: z.boolean().optional(),
+        photos: z.boolean().optional(),
+      }).optional(),
     }))
     .mutation(async ({ input }) => {
       const pdfBuffer = await generateProfessionalPDF({
         reportId: input.reportId,
         inspectionId: input.inspectionId,
+        sectionConfig: input.sectionConfig,
       });
       
       // Convert buffer to base64 for transmission

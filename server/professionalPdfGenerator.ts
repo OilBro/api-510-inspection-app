@@ -215,13 +215,126 @@ async function addTable(doc: PDFKit.PDFDocument, headers: string[], rows: string
 // MAIN PDF GENERATION
 // ============================================================================
 
+export interface ReportSectionConfig {
+  coverPage?: boolean;
+  tableOfContents?: boolean;
+  executiveSummary?: boolean;
+  vesselData?: boolean;
+  componentCalculations?: boolean;
+  inspectionFindings?: boolean;
+  recommendations?: boolean;
+  thicknessReadings?: boolean;
+  checklist?: boolean;
+  ffsAssessment?: boolean;
+  inLieuOfQualification?: boolean;
+  photos?: boolean;
+}
+
 export interface ProfessionalReportData {
   reportId: string;
   inspectionId: string;
+  sectionConfig?: ReportSectionConfig;
 }
 
+// Predefined templates
+export const REPORT_TEMPLATES = {
+  FULL_REPORT: {
+    name: 'Full Report',
+    description: 'Complete report with all sections',
+    config: {
+      coverPage: true,
+      tableOfContents: true,
+      executiveSummary: true,
+      vesselData: true,
+      componentCalculations: true,
+      inspectionFindings: true,
+      recommendations: true,
+      thicknessReadings: true,
+      checklist: true,
+      ffsAssessment: true,
+      inLieuOfQualification: true,
+      photos: true,
+    }
+  },
+  EXECUTIVE_SUMMARY: {
+    name: 'Executive Summary',
+    description: 'High-level summary for management',
+    config: {
+      coverPage: true,
+      tableOfContents: false,
+      executiveSummary: true,
+      vesselData: true,
+      componentCalculations: false,
+      inspectionFindings: true,
+      recommendations: true,
+      thicknessReadings: false,
+      checklist: false,
+      ffsAssessment: false,
+      inLieuOfQualification: false,
+      photos: false,
+    }
+  },
+  CLIENT_SUMMARY: {
+    name: 'Client Summary',
+    description: 'Client-facing report without technical details',
+    config: {
+      coverPage: true,
+      tableOfContents: true,
+      executiveSummary: true,
+      vesselData: true,
+      componentCalculations: false,
+      inspectionFindings: true,
+      recommendations: true,
+      thicknessReadings: false,
+      checklist: false,
+      ffsAssessment: true,
+      inLieuOfQualification: false,
+      photos: true,
+    }
+  },
+  TECHNICAL_REPORT: {
+    name: 'Technical Report',
+    description: 'Detailed technical analysis',
+    config: {
+      coverPage: true,
+      tableOfContents: true,
+      executiveSummary: false,
+      vesselData: true,
+      componentCalculations: true,
+      inspectionFindings: true,
+      recommendations: true,
+      thicknessReadings: true,
+      checklist: true,
+      ffsAssessment: true,
+      inLieuOfQualification: true,
+      photos: false,
+    }
+  },
+  COMPLIANCE_REPORT: {
+    name: 'Compliance Report',
+    description: 'Regulatory compliance documentation',
+    config: {
+      coverPage: true,
+      tableOfContents: true,
+      executiveSummary: true,
+      vesselData: true,
+      componentCalculations: true,
+      inspectionFindings: true,
+      recommendations: true,
+      thicknessReadings: true,
+      checklist: true,
+      ffsAssessment: true,
+      inLieuOfQualification: true,
+      photos: false,
+    }
+  },
+} as const;
+
 export async function generateProfessionalPDF(data: ProfessionalReportData): Promise<Buffer> {
-  const { reportId, inspectionId } = data;
+  const { reportId, inspectionId, sectionConfig } = data;
+  
+  // Default to full report if no config provided
+  const config: ReportSectionConfig = sectionConfig || REPORT_TEMPLATES.FULL_REPORT.config;
   
   // Load company logo
   let logoBuffer: Buffer | undefined;
@@ -272,54 +385,78 @@ export async function generateProfessionalPDF(data: ProfessionalReportData): Pro
     doc.on('error', reject);
   });
   
-  // Generate pages
-  console.log('[PDF DEBUG] Generating cover page...');
-  generateCoverPage(doc, report, inspection);
-  console.log('[PDF DEBUG] Page count after cover:', doc.bufferedPageRange().count);
+  // Generate pages based on section config
+  if (config.coverPage !== false) {
+    console.log('[PDF DEBUG] Generating cover page...');
+    generateCoverPage(doc, report, inspection);
+    console.log('[PDF DEBUG] Page count after cover:', doc.bufferedPageRange().count);
+  }
   
-  console.log('[PDF DEBUG] Generating TOC...');
-  await generateTableOfContents(doc, logoBuffer);
-  console.log('[PDF DEBUG] Page count after TOC:', doc.bufferedPageRange().count);
+  if (config.tableOfContents !== false) {
+    console.log('[PDF DEBUG] Generating TOC...');
+    await generateTableOfContents(doc, logoBuffer);
+    console.log('[PDF DEBUG] Page count after TOC:', doc.bufferedPageRange().count);
+  }
   
-  console.log('[PDF DEBUG] Generating executive summary...');
-  await generateExecutiveSummary(doc, report, components, logoBuffer);
-  console.log('[PDF DEBUG] Page count after exec summary:', doc.bufferedPageRange().count);
+  if (config.executiveSummary !== false) {
+    console.log('[PDF DEBUG] Generating executive summary...');
+    await generateExecutiveSummary(doc, report, components, logoBuffer);
+    console.log('[PDF DEBUG] Page count after exec summary:', doc.bufferedPageRange().count);
+  }
   
-  console.log('[PDF DEBUG] Generating vessel data...');
-  await generateVesselData(doc, inspection, logoBuffer);
-  console.log('[PDF DEBUG] Page count after vessel data:', doc.bufferedPageRange().count);
+  if (config.vesselData !== false) {
+    console.log('[PDF DEBUG] Generating vessel data...');
+    await generateVesselData(doc, inspection, logoBuffer);
+    console.log('[PDF DEBUG] Page count after vessel data:', doc.bufferedPageRange().count);
+  }
   
-  console.log('[PDF DEBUG] Generating component calculations...');
-  await generateComponentCalculations(doc, components, logoBuffer, inspection, tmlReadings);
-  console.log('[PDF DEBUG] Page count after components:', doc.bufferedPageRange().count);
+  if (config.componentCalculations !== false) {
+    console.log('[PDF DEBUG] Generating component calculations...');
+    await generateComponentCalculations(doc, components, logoBuffer, inspection, tmlReadings);
+    console.log('[PDF DEBUG] Page count after components:', doc.bufferedPageRange().count);
+  }
   
-  console.log('[PDF DEBUG] Generating findings...');
-  await generateInspectionFindings(doc, findings, logoBuffer);
-  console.log('[PDF DEBUG] Page count after findings:', doc.bufferedPageRange().count);
+  if (config.inspectionFindings !== false) {
+    console.log('[PDF DEBUG] Generating findings...');
+    await generateInspectionFindings(doc, findings, logoBuffer);
+    console.log('[PDF DEBUG] Page count after findings:', doc.bufferedPageRange().count);
+  }
   
-  console.log('[PDF DEBUG] Generating recommendations...');
-  await generateRecommendationsSection(doc, recommendations, logoBuffer);
-  console.log('[PDF DEBUG] Page count after recommendations:', doc.bufferedPageRange().count);
+  if (config.recommendations !== false) {
+    console.log('[PDF DEBUG] Generating recommendations...');
+    await generateRecommendationsSection(doc, recommendations, logoBuffer);
+    console.log('[PDF DEBUG] Page count after recommendations:', doc.bufferedPageRange().count);
+  }
   
-  console.log('[PDF DEBUG] Generating thickness readings...');
-  await generateThicknessReadings(doc, tmlReadings, logoBuffer);
-  console.log('[PDF DEBUG] Page count after TML:', doc.bufferedPageRange().count);
+  if (config.thicknessReadings !== false) {
+    console.log('[PDF DEBUG] Generating thickness readings...');
+    await generateThicknessReadings(doc, tmlReadings, logoBuffer);
+    console.log('[PDF DEBUG] Page count after TML:', doc.bufferedPageRange().count);
+  }
   
-  console.log('[PDF DEBUG] Generating checklist...');
-  await generateChecklist(doc, checklist, logoBuffer);
-  console.log('[PDF DEBUG] Page count after checklist:', doc.bufferedPageRange().count);
+  if (config.checklist !== false) {
+    console.log('[PDF DEBUG] Generating checklist...');
+    await generateChecklist(doc, checklist, logoBuffer);
+    console.log('[PDF DEBUG] Page count after checklist:', doc.bufferedPageRange().count);
+  }
   
-  console.log('[PDF DEBUG] Generating FFS assessment...');
-  await generateFfsAssessment(doc, inspectionId, logoBuffer);
-  console.log('[PDF DEBUG] Page count after FFS:', doc.bufferedPageRange().count);
+  if (config.ffsAssessment !== false) {
+    console.log('[PDF DEBUG] Generating FFS assessment...');
+    await generateFfsAssessment(doc, inspectionId, logoBuffer);
+    console.log('[PDF DEBUG] Page count after FFS:', doc.bufferedPageRange().count);
+  }
   
-  console.log('[PDF DEBUG] Generating In-Lieu-Of qualification...');
-  await generateInLieuOfQualification(doc, inspectionId, logoBuffer);
-  console.log('[PDF DEBUG] Page count after In-Lieu-Of:', doc.bufferedPageRange().count);
+  if (config.inLieuOfQualification !== false) {
+    console.log('[PDF DEBUG] Generating In-Lieu-Of qualification...');
+    await generateInLieuOfQualification(doc, inspectionId, logoBuffer);
+    console.log('[PDF DEBUG] Page count after In-Lieu-Of:', doc.bufferedPageRange().count);
+  }
   
-  console.log('[PDF DEBUG] Generating photos...');
-  await generatePhotos(doc, photos, logoBuffer);
-  console.log('[PDF DEBUG] Final page count:', doc.bufferedPageRange().count);
+  if (config.photos !== false) {
+    console.log('[PDF DEBUG] Generating photos...');
+    await generatePhotos(doc, photos, logoBuffer);
+    console.log('[PDF DEBUG] Final page count:', doc.bufferedPageRange().count);
+  }
   
   // Finalize
   doc.end();

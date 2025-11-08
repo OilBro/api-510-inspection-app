@@ -7,11 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, Download, Plus, Trash2, Upload } from "lucide-react";
+import { Loader2, Download, Plus, Trash2, Upload, FileText } from "lucide-react";
 import FindingsSection from "@/components/professionalReport/FindingsSection";
 import RecommendationsSection from "@/components/professionalReport/RecommendationsSection";
 import PhotosSection from "@/components/professionalReport/PhotosSection";
 import ChecklistSection from "@/components/professionalReport/ChecklistSection";
+import { ReportTemplateDialog, ReportSectionConfig } from "./ReportTemplateDialog";
 import {
   Dialog,
   DialogContent,
@@ -36,6 +37,7 @@ export default function ProfessionalReportTab({ inspectionId }: ProfessionalRepo
   const utils = trpc.useUtils();
   const [activeTab, setActiveTab] = useState("info");
   const [generating, setGenerating] = useState(false);
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
 
   // Get or create professional report
   const { data: report, isLoading } = trpc.professionalReport.getOrCreate.useQuery({
@@ -82,13 +84,18 @@ export default function ProfessionalReportTab({ inspectionId }: ProfessionalRepo
     },
   });
 
-  const handleGeneratePDF = () => {
+  const handleGeneratePDF = (sectionConfig?: ReportSectionConfig) => {
     if (!report) return;
     setGenerating(true);
     generatePDF.mutate({
       reportId: report.id,
       inspectionId,
+      sectionConfig,
     });
+  };
+
+  const handleOpenTemplateDialog = () => {
+    setTemplateDialogOpen(true);
   };
 
   const handleUpdateField = (field: string, value: string) => {
@@ -125,24 +132,36 @@ export default function ProfessionalReportTab({ inspectionId }: ProfessionalRepo
             API 510 Pressure Vessel Inspection Report - Complete Documentation
           </p>
         </div>
-        <Button
-          onClick={handleGeneratePDF}
-          disabled={generating}
-          size="lg"
-          className="gap-2"
-        >
-          {generating ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Generating...
-            </>
-          ) : (
-            <>
-              <Download className="h-4 w-4" />
-              Generate Final Report
-            </>
-          )}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => handleGeneratePDF()}
+            disabled={generating}
+            size="lg"
+            className="gap-2"
+          >
+            {generating ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4" />
+                Generate Full Report
+              </>
+            )}
+          </Button>
+          <Button
+            onClick={handleOpenTemplateDialog}
+            disabled={generating}
+            size="lg"
+            variant="outline"
+            className="gap-2"
+          >
+            <FileText className="h-4 w-4" />
+            Custom Template
+          </Button>
+        </div>
       </div>
 
       {/* Main Tabs */}
@@ -381,6 +400,13 @@ export default function ProfessionalReportTab({ inspectionId }: ProfessionalRepo
           <ChecklistSection reportId={report.id} />
         </TabsContent>
       </Tabs>
+
+      {/* Template Selection Dialog */}
+      <ReportTemplateDialog
+        open={templateDialogOpen}
+        onOpenChange={setTemplateDialogOpen}
+        onGenerate={handleGeneratePDF}
+      />
     </div>
   );
 }
