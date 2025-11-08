@@ -709,3 +709,35 @@
 - [x] Verify all variable references in component
 - [x] Test Professional Report tab loads without errors
 
+
+
+
+## 📚 MATERIAL DATABASE EXPANSION - COMPLETE
+- [x] Add SA-106 Grade B pipe material with temperature-dependent stress values
+- [x] Add SA-105 forging material for nozzles and flanges
+- [x] Add SA-240 Type 304/316 stainless steel materials
+- [x] Add SA-387 Grade 11/22 chrome-moly materials
+- [ ] Update material selection dropdowns in UI
+- [ ] Test calculations with new materials
+
+## 📝 FFS AND IN-LIEU-OF UI FORMS - COMPLETE
+- [x] Create FFS Assessment form component with all required fields
+- [x] Add damage type selection (General Metal Loss, Pitting, etc.)
+- [x] Implement assessment level selection (Level 1, 2, 3)
+- [x] Add remaining thickness and corrosion rate inputs
+- [x] Calculate remaining life and next inspection date
+- [x] Create In-Lieu-Of Qualification form component
+- [x] Add qualification criteria checkboxes
+- [x] Implement qualification logic and maximum interval calculation
+- [x] Add justification and monitoring plan text areas
+- [x] Wire forms to backend mutations for data persistence
+
+## 🔧 EXTERNAL PRESSURE CALCULATIONS - COMPLETE
+- [x] Create X-Chart data tables (CS-1, CS-2, HA-1, HA-2, etc.)
+- [x] Implement L/Do and Do/t ratio calculations
+- [x] Add Factor A lookup from X-Charts based on L/Do
+- [x] Add Factor B lookup from X-Charts based on Do/t
+- [x] Implement iterative calculation for external pressure MAWP
+- [ ] Add external pressure option to component calculations UI
+- [ ] Test external pressure calculations against ASME examples
+

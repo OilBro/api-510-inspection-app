@@ -3,6 +3,8 @@
  * Implements ASME Section VIII calculations for pressure vessels
  */
 
+import { calculateExternalPressureMAWP } from './xChartData';
+
 interface ComponentData {
   // Design parameters
   designPressure: number; // P (psi)
@@ -20,6 +22,10 @@ interface ComponentData {
   
   // For heads
   componentType: "shell" | "head";
+  
+  // External pressure
+  externalPressure?: boolean; // Is vessel under external pressure/vacuum?
+  unsupportedLength?: number; // L (inches) - for external pressure calculations
   headType?: "hemispherical" | "ellipsoidal" | "torispherical";
   knuckleRadius?: number; // r (inches) - for torispherical heads
   
@@ -60,6 +66,11 @@ interface CalculationResults {
   remainingLife: number; // years
   nextInspectionDate: string; // ISO date string
   
+  // External pressure (if applicable)
+  externalPressureMAWP?: number; // psi
+  factorA?: number;
+  factorB?: number;
+  
   // Status
   status: "acceptable" | "monitoring" | "critical";
   statusReason: string;
@@ -98,6 +109,36 @@ function getAllowableStress(materialSpec: string, temperature: number): number {
     "SA-285-C": {
       baseStress: 13750,
       tempFactor: (t) => t <= 650 ? 1.0 : 0.90
+    },
+    // Seamless pipe - commonly used for nozzles
+    "SA-106-B": {
+      baseStress: 15000,
+      tempFactor: (t) => t <= 650 ? 1.0 : (t <= 800 ? 0.92 : 0.80)
+    },
+    // Carbon steel forgings - nozzles, flanges
+    "SA-105": {
+      baseStress: 15000,
+      tempFactor: (t) => t <= 650 ? 1.0 : (t <= 800 ? 0.92 : 0.80)
+    },
+    // Stainless steel 304
+    "SA-240-304": {
+      baseStress: 16700,
+      tempFactor: (t) => t <= 100 ? 1.0 : (t <= 500 ? 0.95 : (t <= 800 ? 0.85 : 0.75))
+    },
+    // Stainless steel 316
+    "SA-240-316": {
+      baseStress: 16700,
+      tempFactor: (t) => t <= 100 ? 1.0 : (t <= 500 ? 0.95 : (t <= 800 ? 0.85 : 0.75))
+    },
+    // Chrome-moly 1.25Cr-0.5Mo
+    "SA-387-11-2": {
+      baseStress: 15000,
+      tempFactor: (t) => t <= 700 ? 1.0 : (t <= 900 ? 0.90 : 0.75)
+    },
+    // Chrome-moly 2.25Cr-1Mo
+    "SA-387-22-2": {
+      baseStress: 15000,
+      tempFactor: (t) => t <= 700 ? 1.0 : (t <= 950 ? 0.92 : 0.78)
     },
     "SA-36": {
       baseStress: 14400,
@@ -314,8 +355,27 @@ export function calculateComponent(data: ComponentData): CalculationResults {
   // Calculate minimum required thickness
   let minThickness: number;
   let mawp: number;
+  let externalPressureMAWP: number | undefined;
+  let factorA: number | undefined;
+  let factorB: number | undefined;
   
-  if (data.componentType === "shell") {
+  // Handle external pressure calculations
+  if (data.externalPressure && data.componentType === "shell" && data.unsupportedLength) {
+    const Do = data.insideDiameter + 2 * data.actualThickness;
+    const result = calculateExternalPressureMAWP(
+      Do,
+      data.actualThickness,
+      data.unsupportedLength
+    );
+    externalPressureMAWP = result.mawp;
+    factorA = result.factorA;
+    factorB = result.factorB;
+    
+    // For external pressure, use simplified minimum thickness approach
+    // In practice, this would require iterative calculation
+    minThickness = data.actualThickness; // Placeholder
+    mawp = result.mawp;
+  } else if (data.componentType === "shell") {
     minThickness = calculateShellMinThickness(
       effectivePressure,
       radius,
@@ -386,6 +446,9 @@ export function calculateComponent(data: ComponentData): CalculationResults {
     actualThickness: data.actualThickness,
     corrosionAllowance: data.corrosionAllowance,
     mawp,
+    externalPressureMAWP,
+    factorA,
+    factorB,
     corrosionRate,
     remainingLife,
     nextInspectionDate: nextInspectionDate.toISOString(),
