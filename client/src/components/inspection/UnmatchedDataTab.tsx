@@ -4,8 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
-import { AlertCircle, Check, X, Sparkles } from "lucide-react";
+import { AlertCircle, Check, X, Sparkles, Zap, CheckCheck } from "lucide-react";
 import { toast } from "sonner";
+import { findBestMatch, getConfidenceLevel, getConfidenceColor, type FieldMatch } from "@/lib/fieldMatcher";
+import { useEffect, useMemo } from "react";
 
 interface UnmatchedDataTabProps {
   inspectionId: string;
@@ -142,6 +144,37 @@ export default function UnmatchedDataTab({ inspectionId }: UnmatchedDataTabProps
   const utils = trpc.useUtils();
 
   const [selectedMappings, setSelectedMappings] = useState<Record<string, { section: string; field: string }>>({});
+  const [autoMatches, setAutoMatches] = useState<Record<string, FieldMatch>>({});
+  const [bulkProcessing, setBulkProcessing] = useState(false);
+
+  // Auto-match fields when data loads
+  useEffect(() => {
+    if (unmatchedData) {
+      const matches: Record<string, FieldMatch> = {};
+      for (const data of unmatchedData) {
+        const match = findBestMatch(data.fieldName, FIELD_MAPPINGS);
+        if (match) {
+          matches[data.id] = match;
+          // Auto-populate high-confidence matches
+          if (match.confidence >= 90) {
+            setSelectedMappings(prev => ({
+              ...prev,
+              [data.id]: { section: match.section, field: match.field }
+            }));
+          }
+        }
+      }
+      setAutoMatches(matches);
+    }
+  }, [unmatchedData]);
+
+  // Count matches by confidence
+  const matchStats = useMemo(() => {
+    const high = Object.values(autoMatches).filter(m => m.confidence >= 90).length;
+    const medium = Object.values(autoMatches).filter(m => m.confidence >= 70 && m.confidence < 90).length;
+    const low = Object.values(autoMatches).filter(m => m.confidence < 70).length;
+    return { high, medium, low, total: Object.keys(autoMatches).length };
+  }, [autoMatches]);
 
   const handleSectionChange = (dataId: string, section: string) => {
     setSelectedMappings((prev) => ({
@@ -205,6 +238,56 @@ export default function UnmatchedDataTab({ inspectionId }: UnmatchedDataTabProps
     }
   };
 
+  const handleAcceptAllHighConfidence = async () => {
+    if (!unmatchedData) return;
+    
+    setBulkProcessing(true);
+    let successCount = 0;
+    let failCount = 0;
+
+    try {
+      for (const data of unmatchedData) {
+        const match = autoMatches[data.id];
+        if (match && match.confidence >= 90 && selectedMappings[data.id]) {
+          try {
+            await mapMutation.mutateAsync({
+              id: data.id,
+              targetSection: match.section,
+              targetField: match.field,
+              sourceField: data.fieldName,
+              sourceValue: data.fieldValue || "",
+              learnMapping: true,
+            });
+            successCount++;
+          } catch (error) {
+            failCount++;
+            console.error(`Failed to map ${data.fieldName}:`, error);
+          }
+        }
+      }
+
+      if (successCount > 0) {
+        toast.success(`Successfully mapped ${successCount} field${successCount > 1 ? 's' : ''}!`);
+        utils.unmatchedData.list.invalidate({ inspectionId });
+      }
+      if (failCount > 0) {
+        toast.error(`Failed to map ${failCount} field${failCount > 1 ? 's' : ''}`);
+      }
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
+
+  const handleAcceptSuggestion = (dataId: string) => {
+    const match = autoMatches[dataId];
+    if (match) {
+      setSelectedMappings(prev => ({
+        ...prev,
+        [dataId]: { section: match.section, field: match.field }
+      }));
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -231,6 +314,46 @@ export default function UnmatchedDataTab({ inspectionId }: UnmatchedDataTabProps
 
   return (
     <div className="space-y-4">
+      {/* Smart Matching Summary */}
+      {matchStats.total > 0 && (
+        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+          <CardContent className="pt-6">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-3">
+                <Sparkles className="h-6 w-6 text-blue-600 mt-0.5" />
+                <div>
+                  <h3 className="font-semibold text-blue-900 mb-1">Smart Matching Active</h3>
+                  <p className="text-sm text-blue-700 mb-3">
+                    Found {matchStats.total} potential matches using AI field matching
+                  </p>
+                  <div className="flex gap-3 text-sm">
+                    <Badge className={getConfidenceColor(95)}>
+                      {matchStats.high} High Confidence (≥90%)
+                    </Badge>
+                    <Badge className={getConfidenceColor(80)}>
+                      {matchStats.medium} Medium (70-89%)
+                    </Badge>
+                    <Badge className={getConfidenceColor(60)}>
+                      {matchStats.low} Low (&lt;70%)
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+              {matchStats.high > 0 && (
+                <Button
+                  onClick={handleAcceptAllHighConfidence}
+                  disabled={bulkProcessing}
+                  className="gap-2"
+                >
+                  <CheckCheck className="h-4 w-4" />
+                  Accept All High Confidence ({matchStats.high})
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -239,15 +362,47 @@ export default function UnmatchedDataTab({ inspectionId }: UnmatchedDataTabProps
             <Badge variant="secondary">{unmatchedData.length} items</Badge>
           </CardTitle>
           <CardDescription>
-            These fields were extracted but couldn't be automatically mapped. Select the correct destination for each field,
-            and the system will learn from your choices to improve future imports.
+            Review and map extracted fields. High-confidence matches are pre-selected for quick approval.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {unmatchedData.map((data) => (
-            <Card key={data.id} className="border-l-4 border-l-orange-500">
+          {unmatchedData.map((data) => {
+            const match = autoMatches[data.id];
+            const borderColor = match && match.confidence >= 90 ? "border-l-green-500" : match && match.confidence >= 70 ? "border-l-yellow-500" : "border-l-orange-500";
+            
+            return (
+            <Card key={data.id} className={`border-l-4 ${borderColor}`}>
               <CardContent className="pt-6">
                 <div className="space-y-4">
+                  {/* Smart Suggestion Banner */}
+                  {match && (
+                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="flex items-center gap-2">
+                        <Zap className="h-4 w-4 text-blue-600" />
+                        <div>
+                          <span className="text-sm font-medium text-blue-900">Smart Suggestion: </span>
+                          <span className="text-sm text-blue-700">
+                            {FIELD_MAPPINGS[match.section as keyof typeof FIELD_MAPPINGS].label} → {FIELD_MAPPINGS[match.section as keyof typeof FIELD_MAPPINGS].fields[match.field as keyof typeof FIELD_MAPPINGS[typeof match.section]['fields']]}
+                          </span>
+                        </div>
+                        <Badge className={getConfidenceColor(match.confidence)}>
+                          {match.confidence}% match
+                        </Badge>
+                      </div>
+                      {match.confidence >= 70 && !selectedMappings[data.id] && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleAcceptSuggestion(data.id)}
+                          className="gap-1"
+                        >
+                          <Check className="h-3 w-3" />
+                          Accept
+                        </Button>
+                      )}
+                    </div>
+                  )}
+
                   {/* Field Information */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -335,7 +490,8 @@ export default function UnmatchedDataTab({ inspectionId }: UnmatchedDataTabProps
                 </div>
               </CardContent>
             </Card>
-          ))}
+          );
+        })}
         </CardContent>
       </Card>
 

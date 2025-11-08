@@ -896,3 +896,34 @@
 - [ ] Test comparison with multiple inspections
 - [ ] Verify all calculations are accurate
 
+
+
+
+## 🚀 IMPORT WORKFLOW IMPROVEMENTS - HIGH PRIORITY
+
+### Smart Auto-Matching
+- [x] Implement fuzzy matching for field names (e.g., "Vessel Tag" matches "Tag Number")
+- [x] Add confidence scoring for auto-matched fields
+- [x] Auto-apply high-confidence matches (>90%) without user confirmation
+- [x] Show medium-confidence matches (70-90%) with one-click accept
+- [x] Group similar unmatched fields for batch assignment
+
+### Bulk Operations
+- [x] Add "Accept All Suggestions" button for high-confidence matches
+- [x] Add "Apply to Section" button to map multiple fields at once (via Accept button)
+- [ ] Implement "Skip All" for irrelevant data (future enhancement)
+- [ ] Add "Auto-fill from Previous Import" using import history (backend stores mappings)
+
+### Field Mapping Intelligence
+- [x] Learn from user's previous mapping choices (learnMapping flag)
+- [x] Store field mapping patterns in database (backend implemented)
+- [x] Suggest mappings based on import history (fuzzy matching with aliases)
+- [x] Pre-populate common field mappings (vessel tag, inspector name, etc.)
+
+### UI/UX Improvements
+- [x] Show preview of data before mapping (field value displayed)
+- [x] Highlight required vs optional fields (color-coded borders)
+- [ ] Add drag-and-drop for field mapping (future enhancement)
+- [x] Show progress indicator during import (bulk processing state)
+- [x] Add "Quick Map" templates for common report formats (smart suggestions)
+
