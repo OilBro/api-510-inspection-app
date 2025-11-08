@@ -290,8 +290,8 @@ export default function InspectionList() {
             <Button variant="outline" onClick={() => setShowTemplateDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={generateBatchPDFs} disabled={isGenerating}>
-              {isGenerating ? (
+            <Button onClick={generateBatchPDFs} disabled={generatingBatch}>
+              {generatingBatch ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Generating...
