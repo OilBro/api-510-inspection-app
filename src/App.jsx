@@ -21,6 +21,7 @@ import {
   Droplets
 } from 'lucide-react'
 import './App.css'
+import { downloadAPI510Report } from './utils/pdfGenerator'
 
 function App() {
   const [activeTab, setActiveTab] = useState('vessel-data')
@@ -3157,7 +3158,45 @@ function App() {
               </div>
 
               <div className="flex space-x-4 mt-6">
-                <button className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors">Generate Complete Report</button>
+                <button 
+                  onClick={() => {
+                    try {
+                      const reportData = {
+                        reportHeader: {
+                          reportNumber: 'API510-2024-001',
+                          inspectionDate: new Date().toISOString().split('T')[0],
+                          reportDate: new Date().toISOString().split('T')[0],
+                          inspector: 'Sample Inspector',
+                          inspectorCertification: 'API 510 #12345',
+                          company: 'Inspection Services Inc.',
+                          customer: 'Sample Customer',
+                          location: 'Sample Location'
+                        },
+                        vesselData,
+                        calculations: calculationResults,
+                        executiveSummary: {
+                          overallCondition: 'Good',
+                          keyFindings: 'Vessel is in acceptable condition with no critical findings.',
+                          recommendations: 'Continue routine monitoring and inspections.',
+                          nextInspectionDate: new Date(Date.now() + 365*24*60*60*1000*4.25).toISOString().split('T')[0]
+                        },
+                        certifications: {
+                          inspectorStatement: 'I certify that this inspection was conducted in accordance with API 510 requirements.',
+                          certificationDate: new Date().toISOString().split('T')[0],
+                          nextDueDate: new Date(Date.now() + 365*24*60*60*1000*4.25).toISOString().split('T')[0]
+                        }
+                      };
+                      downloadAPI510Report(reportData);
+                      alert('PDF report generated successfully!');
+                    } catch (error) {
+                      console.error('Error generating PDF:', error);
+                      alert('Failed to generate PDF report. Error: ' + error.message);
+                    }
+                  }}
+                  className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors"
+                >
+                  Generate Complete Report
+                </button>
                 <button className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">Preview Report</button>
                 <button className="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors">Export Data</button>
                 <button className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors">Print Report</button>

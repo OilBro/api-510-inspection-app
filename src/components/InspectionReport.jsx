@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator.jsx'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs.jsx'
 import { FileText, Download, Printer, Mail, CheckCircle, AlertTriangle, Eye, Settings } from 'lucide-react'
+import { downloadAPI510Report } from '../utils/pdfGenerator'
 
 export default function InspectionReport({ data, onDataChange }) {
   const [reportHeader, setReportHeader] = useState({
@@ -105,8 +106,19 @@ export default function InspectionReport({ data, onDataChange }) {
   }
 
   const exportReport = (format) => {
-    // This would export the report in the specified format
-    console.log(`Exporting report as ${format}...`)
+    if (format === 'pdf') {
+      try {
+        downloadAPI510Report(data);
+        alert('PDF report generated successfully!');
+      } catch (error) {
+        console.error('Error generating PDF:', error);
+        alert('Failed to generate PDF report. Please check the console for details.');
+      }
+    } else {
+      // Other formats not yet implemented
+      console.log(`Exporting report as ${format}...`);
+      alert(`Export to ${format} is not yet implemented.`);
+    }
   }
 
   const getCompletionStatus = () => {
