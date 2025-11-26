@@ -1,6 +1,21 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { 
+  InsertUser, 
+  users, 
+  inspections,
+  InsertInspection,
+  calculations,
+  InsertCalculation,
+  tmlReadings,
+  InsertTmlReading,
+  externalInspections,
+  InsertExternalInspection,
+  internalInspections,
+  InsertInternalInspection,
+  importedFiles,
+  InsertImportedFile
+} from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -17,6 +32,8 @@ export async function getDb() {
   }
   return _db;
 }
+
+// ============= User Functions =============
 
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) {
@@ -89,4 +106,173 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// ============= Inspection Functions =============
+
+export async function getInspections(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db.select().from(inspections).where(eq(inspections.userId, userId));
+  return result;
+}
+
+export async function getInspection(id: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select().from(inspections).where(eq(inspections.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function createInspection(inspection: InsertInspection) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(inspections).values(inspection);
+  return inspection;
+}
+
+export async function updateInspection(id: string, data: Partial<InsertInspection>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(inspections).set(data).where(eq(inspections.id, id));
+}
+
+export async function deleteInspection(id: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(inspections).where(eq(inspections.id, id));
+}
+
+// ============= Calculation Functions =============
+
+export async function getCalculations(inspectionId: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select().from(calculations).where(eq(calculations.inspectionId, inspectionId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function saveCalculations(calculation: InsertCalculation) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(calculations).values(calculation).onDuplicateKeyUpdate({
+    set: calculation,
+  });
+}
+
+// ============= TML Reading Functions =============
+
+export async function getTmlReadings(inspectionId: string) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db.select().from(tmlReadings).where(eq(tmlReadings.inspectionId, inspectionId));
+  return result;
+}
+
+export async function createTmlReading(reading: InsertTmlReading) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(tmlReadings).values(reading);
+}
+
+export async function updateTmlReading(id: string, data: Partial<InsertTmlReading>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(tmlReadings).set(data).where(eq(tmlReadings.id, id));
+}
+
+export async function deleteTmlReading(id: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(tmlReadings).where(eq(tmlReadings.id, id));
+}
+
+// ============= External Inspection Functions =============
+
+export async function getExternalInspection(inspectionId: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select().from(externalInspections).where(eq(externalInspections.inspectionId, inspectionId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function saveExternalInspection(data: InsertExternalInspection) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(externalInspections).values(data).onDuplicateKeyUpdate({
+    set: data,
+  });
+}
+
+// ============= Internal Inspection Functions =============
+
+export async function getInternalInspection(inspectionId: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select().from(internalInspections).where(eq(internalInspections.inspectionId, inspectionId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function saveInternalInspection(data: InsertInternalInspection) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(internalInspections).values(data).onDuplicateKeyUpdate({
+    set: data,
+  });
+}
+
+// ============= Imported Files Functions =============
+
+export async function getImportedFiles(inspectionId: string) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db.select().from(importedFiles).where(eq(importedFiles.inspectionId, inspectionId));
+  return result;
+}
+
+export async function createImportedFile(file: InsertImportedFile) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(importedFiles).values(file);
+}
+
+// Alias functions for backward compatibility
+export const getUserInspections = getInspections;
+export const getCalculation = getCalculations;
+export const saveCalculation = saveCalculations;
+
+export async function updateCalculation(id: string, data: Partial<InsertCalculation>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(calculations).set(data).where(eq(calculations.id, id));
+}
+
+export async function updateExternalInspection(id: string, data: Partial<InsertExternalInspection>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(externalInspections).set(data).where(eq(externalInspections.id, id));
+}
+
+export async function updateImportedFile(id: string, data: Partial<InsertImportedFile>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(importedFiles).set(data).where(eq(importedFiles.id, id));
+}
