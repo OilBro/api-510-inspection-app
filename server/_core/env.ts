@@ -1,0 +1,21 @@
+export const ENV = {
+  appId: process.env.VITE_APP_ID ?? "",
+  cookieSecret: process.env.JWT_SECRET ?? "",
+  databaseUrl: process.env.DATABASE_URL ?? "",
+  oAuthServerUrl: process.env.OAUTH_SERVER_URL ?? "",
+  ownerId: process.env.OWNER_OPEN_ID ?? "",
+  isProduction: process.env.NODE_ENV === "production",
+  forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
+  forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
+  docupipeApiKey: process.env.DOCUPIPE_API_KEY || "",
+  docupipeSchemaId: process.env.DOCUPIPE_SCHEMA_ID || "",
+  parserType: (process.env.PARSER_TYPE || "docupipe") as "docupipe" | "manus",
+};
+
+// Debug logging for Docupipe env vars
+if (ENV.docupipeApiKey) {
+  console.log("[ENV] Docupipe API key loaded:", ENV.docupipeApiKey.substring(0, 10) + "...");
+} else {
+  console.warn("[ENV] WARNING: Docupipe API key is empty or undefined!");
+  console.warn("[ENV] process.env.DOCUPIPE_API_KEY:", process.env.DOCUPIPE_API_KEY);
+}
