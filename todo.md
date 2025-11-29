@@ -116,3 +116,6 @@
 - [x] Update PDF import router to use vision parser
 - [ ] Test with scanned PDFs containing thickness measurement tables
 - [ ] Verify previousThickness values are correctly extracted
+
+## UI Fix - Vision Parser Missing from Dropdown
+- [x] Add "Vision Parser" option to import page parser selection dropdown

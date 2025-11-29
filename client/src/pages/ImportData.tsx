@@ -20,7 +20,7 @@ export default function ImportData() {
   const [parseResult, setParseResult] = useState<any>(null);
   const [showChecklistReview, setShowChecklistReview] = useState(false);
   const [checklistItems, setChecklistItems] = useState<any[]>([]);
-  const [parserType, setParserType] = useState<"docupipe" | "manus">("docupipe");
+  const [parserType, setParserType] = useState<"docupipe" | "manus" | "vision">("docupipe");
   const [existingInspectionId, setExistingInspectionId] = useState<string | null>(null);
   const [continueMode, setContinueMode] = useState(false);
   
@@ -206,16 +206,17 @@ export default function ImportData() {
           <CardContent className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="parser">PDF Parser (for PDF files only)</Label>
-              <Select value={parserType} onValueChange={(value: "docupipe" | "manus") => setParserType(value)}>
+              <Select value={parserType} onValueChange={(value: "docupipe" | "manus" | "vision") => setParserType(value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="docupipe">Docupipe API (Recommended)</SelectItem>
                   <SelectItem value="manus">Manus Built-in API</SelectItem>
+                  <SelectItem value="vision">Vision Parser (For Scanned PDFs)</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-gray-500">Choose which parser to use for PDF extraction. Docupipe is optimized for API 510 reports.</p>
+              <p className="text-xs text-gray-500">Choose which parser to use for PDF extraction. Use Vision Parser for scanned documents with images.</p>
             </div>
 
             <div className="space-y-2">
