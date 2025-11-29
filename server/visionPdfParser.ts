@@ -1,13 +1,9 @@
 import { invokeLLM } from './_core/llm';
-import { writeFileSync, unlinkSync, mkdirSync, readFileSync } from 'fs';
-import { join } from 'path';
-import { tmpdir } from 'os';
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
-import { createCanvas } from 'canvas';
+import { storagePut } from './storage';
 
 /**
  * Vision-capable PDF parser that handles both text and scanned/image-based PDFs
- * Uses pdfjs-dist for PDF rendering (no system dependencies required)
+ * Uploads PDF to S3 and sends URL to vision LLM for analysis
  */
 
 interface VisionParsedData {
@@ -56,62 +52,22 @@ interface VisionParsedData {
  * Handles scanned PDFs and images within PDFs
  */
 export async function parseWithVision(pdfBuffer: Buffer): Promise<VisionParsedData> {
-  const tempDir = join(tmpdir(), `pdf-vision-${Date.now()}`);
-  mkdirSync(tempDir, { recursive: true });
-  
   try {
-    console.log('[Vision Parser] Starting PDF rendering with pdfjs-dist');
+    console.log('[Vision Parser] Starting PDF analysis with vision LLM');
     
-    // Load PDF document
-    const loadingTask = pdfjsLib.getDocument({
-      data: new Uint8Array(pdfBuffer),
-      useSystemFonts: true,
-    });
+    // Upload PDF to S3 for LLM access
+    const { url: pdfUrl } = await storagePut(
+      `vision-parser/${Date.now()}-inspection.pdf`,
+      pdfBuffer,
+      'application/pdf'
+    );
     
-    const pdfDocument = await loadingTask.promise;
-    const numPages = Math.min(pdfDocument.numPages, 10); // Process max 10 pages
-    
-    console.log(`[Vision Parser] PDF loaded with ${pdfDocument.numPages} pages, processing ${numPages}`);
-    
-    // Render each page to image
-    const imageDataUrls: string[] = [];
-    
-    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-      try {
-        const page = await pdfDocument.getPage(pageNum);
-        const viewport = page.getViewport({ scale: 2.0 }); // 2x scale for better quality
-        
-        // Create canvas
-        const canvas = createCanvas(viewport.width, viewport.height);
-        const context = canvas.getContext('2d');
-        
-        // Render PDF page to canvas
-        await page.render({
-          canvasContext: context as any,
-          viewport: viewport,
-          canvas: canvas as any,
-        }).promise;
-        
-        // Convert canvas to base64 data URL
-        const dataUrl = canvas.toDataURL('image/png');
-        imageDataUrls.push(dataUrl);
-        
-        console.log(`[Vision Parser] Rendered page ${pageNum}/${numPages}`);
-      } catch (error: any) {
-        console.error(`[Vision Parser] Failed to render page ${pageNum}:`, error.message);
-      }
-    }
-    
-    if (imageDataUrls.length === 0) {
-      throw new Error('Failed to render any PDF pages to images');
-    }
-    
-    console.log(`[Vision Parser] Successfully rendered ${imageDataUrls.length} pages`);
+    console.log('[Vision Parser] PDF uploaded to:', pdfUrl);
     
     // Prepare vision LLM prompt
     const extractionPrompt = `You are an expert at extracting data from API 510 pressure vessel inspection reports.
 
-Analyze these inspection report pages and extract ALL available data in the following JSON structure:
+Analyze this inspection report PDF and extract ALL available data in the following JSON structure:
 
 {
   "vesselInfo": {
@@ -160,27 +116,26 @@ CRITICAL INSTRUCTIONS:
 5. Pay special attention to scanned tables and handwritten values
 6. Return ONLY valid JSON, no additional text`;
 
-    // Build message content with images
-    const messageContent: Array<{ type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string } }> = [
-      { type: 'text', text: extractionPrompt }
-    ];
+    console.log('[Vision Parser] Sending PDF to LLM for analysis...');
     
-    // Add all page images
-    for (const dataUrl of imageDataUrls) {
-      messageContent.push({
-        type: 'image_url',
-        image_url: { url: dataUrl }
-      });
-    }
-    
-    console.log('[Vision Parser] Sending images to LLM for analysis...');
-    
-    // Call vision LLM
+    // Call vision LLM with PDF file
     const response = await invokeLLM({
       messages: [
         {
           role: 'user',
-          content: messageContent
+          content: [
+            {
+              type: 'text',
+              text: extractionPrompt
+            },
+            {
+              type: 'file_url',
+              file_url: {
+                url: pdfUrl,
+                mime_type: 'application/pdf'
+              }
+            }
+          ]
         }
       ],
       response_format: {
@@ -270,13 +225,5 @@ CRITICAL INSTRUCTIONS:
   } catch (error: any) {
     console.error('[Vision Parser] Error:', error);
     throw new Error(`Failed to parse PDF file: ${error.message}`);
-  } finally {
-    // Cleanup temp directory
-    try {
-      const fs = await import('fs/promises');
-      await fs.rm(tempDir, { recursive: true, force: true });
-    } catch (cleanupError) {
-      console.error('[Vision Parser] Cleanup error:', cleanupError);
-    }
   }
 }

@@ -125,3 +125,14 @@
 - [x] Verify GraphicsMagick is properly configured
 - [x] Test pdf2pic library integration
 - [x] Replace pdf2pic with pure JavaScript solution (pdfjs-dist) for production compatibility
+
+## PDF Import Auto-Population Issue
+- [x] Investigate why imported data doesn't auto-populate Calculations page
+- [x] Add auto-creation of calculations record during PDF import
+- [ ] Investigate why imported data doesn't auto-populate Nozzles page
+- [ ] Add auto-creation of nozzle records when nozzle data is in PDF
+- [ ] Ensure vessel data, TML readings, and nozzle data are properly linked
+
+## Publishing Issue
+- [x] Fix timestamp-related error during publishing (removed canvas library with native dependencies)
+- [x] Rewrite vision parser to upload PDF to S3 and send URL to LLM instead of rendering locally

@@ -791,6 +791,23 @@ export const appRouter = router({
             await fieldMappingDb.bulkCreateUnmatchedData(unmatchedFields);
           }
 
+          // Auto-create calculations record if this is a new inspection
+          if (isNewInspection) {
+            const calculationRecord: any = {
+              id: nanoid(),
+              inspectionId: inspection.id,
+            };
+            
+            // Populate calculation fields from imported data if available
+            if (inspection.designPressure) {
+              calculationRecord.minThicknessDesignPressure = inspection.designPressure;
+              calculationRecord.mawpInsideRadius = inspection.insideDiameter ? (parseFloat(inspection.insideDiameter) / 2).toString() : null;
+            }
+            
+            await db.saveCalculations(calculationRecord);
+            console.log(`[PDF Import] Auto-created calculations record for inspection ${inspection.id}`);
+          }
+
           return {
             success: true,
             inspectionId: inspection.id,
