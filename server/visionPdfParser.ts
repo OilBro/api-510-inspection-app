@@ -1,9 +1,13 @@
 import { invokeLLM } from './_core/llm';
 import { storagePut } from './storage';
+import { pdfToPng } from 'pdf-to-png-converter';
+import { writeFileSync, mkdirSync } from 'fs';
+import { join } from 'path';
+import { tmpdir } from 'os';
 
 /**
  * Vision-capable PDF parser that handles both text and scanned/image-based PDFs
- * Uploads PDF to S3 and sends URL to vision LLM for analysis
+ * Converts PDF pages to images and sends to vision LLM for analysis
  */
 
 interface VisionParsedData {
@@ -52,22 +56,51 @@ interface VisionParsedData {
  * Handles scanned PDFs and images within PDFs
  */
 export async function parseWithVision(pdfBuffer: Buffer): Promise<VisionParsedData> {
+  const tempDir = join(tmpdir(), `pdf-vision-${Date.now()}`);
+  mkdirSync(tempDir, { recursive: true });
+  
+  const pdfPath = join(tempDir, 'input.pdf');
+  writeFileSync(pdfPath, pdfBuffer);
+  
   try {
-    console.log('[Vision Parser] Starting PDF analysis with vision LLM');
+    console.log('[Vision Parser] Starting PDF to image conversion');
     
-    // Upload PDF to S3 for LLM access
-    const { url: pdfUrl } = await storagePut(
-      `vision-parser/${Date.now()}-inspection.pdf`,
-      pdfBuffer,
-      'application/pdf'
-    );
+    // Convert PDF to PNG images
+    const pngPages = await pdfToPng(pdfPath, {
+      outputFolder: tempDir,
+    });
     
-    console.log('[Vision Parser] PDF uploaded to:', pdfUrl);
+    console.log(`[Vision Parser] Converted ${pngPages.length} pages to images`);
+    
+    if (pngPages.length === 0) {
+      throw new Error('Failed to convert PDF pages to images');
+    }
+    
+    // Upload images to S3 and collect URLs
+    const imageUrls: string[] = [];
+    const maxPages = Math.min(pngPages.length, 50); // Process max 50 pages
+    
+    for (let i = 0; i < maxPages; i++) {
+      const page = pngPages[i];
+      if (!page.content) {
+        console.warn(`[Vision Parser] Page ${i + 1} has no content, skipping`);
+        continue;
+      }
+      const { url } = await storagePut(
+        `vision-parser/${Date.now()}-page-${i + 1}.png`,
+        page.content,
+        'image/png'
+      );
+      imageUrls.push(url);
+      console.log(`[Vision Parser] Uploaded page ${i + 1} to S3`);
+    }
+    
+    console.log(`[Vision Parser] Successfully uploaded ${imageUrls.length} images`);
     
     // Prepare vision LLM prompt
     const extractionPrompt = `You are an expert at extracting data from API 510 pressure vessel inspection reports.
 
-Analyze this inspection report PDF and extract ALL available data in the following JSON structure:
+Analyze these inspection report pages and extract ALL available data in the following JSON structure:
 
 {
   "vesselInfo": {
@@ -116,26 +149,30 @@ CRITICAL INSTRUCTIONS:
 5. Pay special attention to scanned tables and handwritten values
 6. Return ONLY valid JSON, no additional text`;
 
-    console.log('[Vision Parser] Sending PDF to LLM for analysis...');
+    // Build message content with images
+    const messageContent: Array<{ type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string; detail?: 'auto' | 'low' | 'high' } }> = [
+      { type: 'text', text: extractionPrompt }
+    ];
     
-    // Call vision LLM with PDF file
+    // Add all page images
+    for (const imageUrl of imageUrls) {
+      messageContent.push({
+        type: 'image_url',
+        image_url: { 
+          url: imageUrl,
+          detail: 'high' as const // Request high detail for better text extraction
+        }
+      });
+    }
+    
+    console.log('[Vision Parser] Sending images to LLM for analysis...');
+    
+    // Call vision LLM with images
     const response = await invokeLLM({
       messages: [
         {
           role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: extractionPrompt
-            },
-            {
-              type: 'file_url',
-              file_url: {
-                url: pdfUrl,
-                mime_type: 'application/pdf'
-              }
-            }
-          ]
+          content: messageContent
         }
       ],
       response_format: {
@@ -208,8 +245,15 @@ CRITICAL INSTRUCTIONS:
       },
     });
     
+    // Check if response is valid
+    if (!response || !response.choices || response.choices.length === 0) {
+      console.error('[Vision Parser] Invalid LLM response:', response);
+      throw new Error('LLM returned empty or invalid response');
+    }
+    
     const content = response.choices[0].message.content;
     if (typeof content !== 'string') {
+      console.error('[Vision Parser] Content is not a string:', content);
       throw new Error('Unexpected response format from LLM');
     }
     
@@ -225,5 +269,13 @@ CRITICAL INSTRUCTIONS:
   } catch (error: any) {
     console.error('[Vision Parser] Error:', error);
     throw new Error(`Failed to parse PDF file: ${error.message}`);
+  } finally {
+    // Cleanup temp directory
+    try {
+      const fs = await import('fs/promises');
+      await fs.rm(tempDir, { recursive: true, force: true });
+    } catch (cleanupError) {
+      console.error('[Vision Parser] Cleanup error:', cleanupError);
+    }
   }
 }

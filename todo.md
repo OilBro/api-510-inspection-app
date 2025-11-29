@@ -136,3 +136,27 @@
 ## Publishing Issue
 - [x] Fix timestamp-related error during publishing (removed canvas library with native dependencies)
 - [x] Rewrite vision parser to upload PDF to S3 and send URL to LLM instead of rendering locally
+
+## Vision Parser Error
+- [x] Fix "Cannot read properties of undefined (reading '0')" error in vision parser
+- [x] Add proper error handling for LLM response
+- [x] Add detailed logging to diagnose LLM request/response issues
+- [x] LLM doesn't support PDF via file_url - need to convert PDF to images first
+- [x] Use pdf-to-png-converter library to convert PDF pages to images
+- [x] Upload images to S3 and send image URLs to vision LLM
+
+## Vision Parser Page Limit
+- [x] Increase vision parser page limit from 10 to 50 pages
+
+## PDF to PNG Conversion Issue
+- [ ] pdf-to-png-converter requires system dependencies (poppler) not available in production
+- [ ] Need pure JavaScript PDF rendering solution
+- [ ] Consider using pdfjs-dist with node-canvas-webgl or similar
+
+## Parser Enhancement for Previous Thickness
+- [x] Investigate what data Docupipe parser currently extracts
+- [x] Investigate what data Manus parser currently extracts
+- [x] Add extraction logic for previous thickness values
+- [x] Add extraction logic for other missing TML fields (cmlNumber, tmlId, nominalThickness, tml1-4, etc.)
+- [x] Enhanced LLM prompt to specifically target previous thickness extraction
+- [ ] Test with real inspection PDFs

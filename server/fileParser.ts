@@ -198,11 +198,11 @@ export async function parsePDFFile(buffer: Buffer, parserType?: "docupipe" | "ma
           {
             role: "system",
             content:
-              "You are an expert at extracting vessel inspection data from API 510 reports. Extract all available information and return it as JSON.",
+              "You are an expert at extracting vessel inspection data from API 510 reports. Extract all available information and return it as JSON. Pay special attention to thickness measurement tables - extract BOTH current AND previous thickness values, along with CML numbers, TML IDs, and all measurement readings (tml1, tml2, tml3, tml4).",
           },
           {
             role: "user",
-            content: `Extract vessel inspection data from this report:\n\n${fullText.substring(0, 8000)}`,
+            content: `Extract vessel inspection data from this report. CRITICAL: For thickness measurements, look for tables with columns like 'Previous Thickness', 'Last Reading', 'Prior Thickness', 'Previous', etc. Extract these values into the previousThickness field.\n\nReport text:\n\n${fullText.substring(0, 12000)}`,
           },
         ],
         response_format: {
@@ -229,9 +229,20 @@ export async function parsePDFFile(buffer: Buffer, parserType?: "docupipe" | "ma
                   items: {
                     type: "object",
                     properties: {
+                      cmlNumber: { type: "string" },
+                      tmlId: { type: "string" },
                       location: { type: "string" },
                       component: { type: "string" },
+                      componentType: { type: "string" },
                       currentThickness: { type: "string" },
+                      previousThickness: { type: "string" },
+                      nominalThickness: { type: "string" },
+                      minimumRequired: { type: "number" },
+                      tActual: { type: "string" },
+                      tml1: { type: "string" },
+                      tml2: { type: "string" },
+                      tml3: { type: "string" },
+                      tml4: { type: "string" },
                     },
                     required: ["location", "component"],
                     additionalProperties: false,

@@ -196,6 +196,9 @@ importers:
       pdf-parse:
         specifier: ^2.4.5
         version: 2.4.5
+      pdf-to-png-converter:
+        specifier: ^3.11.0
+        version: 3.11.0
       pdf2pic:
         specifier: ^3.2.0
         version: 3.2.0
@@ -4023,6 +4026,10 @@ packages:
     engines: {node: '>=20.16.0 <21 || >=22.3.0'}
     hasBin: true
 
+  pdf-to-png-converter@3.11.0:
+    resolution: {integrity: sha512-9V4seNenywRMGKX2AQX2IHdxUxTBffqfGNtozQjx2RokePG/TjvwABGfr7tozmWkmc4oAsO2q2RL6lFp5Bqxhw==}
+    engines: {node: '>=20'}
+
   pdf2pic@3.2.0:
     resolution: {integrity: sha512-p0bp+Mp4iJy2hqSCLvJ521rDaZkzBvDFT9O9Y0BUID3I04/eDaebAFM5t8hoWeo2BCf42cDijLCGJWTOtkJVpA==}
     engines: {node: '>=14'}
@@ -5816,7 +5823,6 @@ snapshots:
       '@napi-rs/canvas-linux-x64-gnu': 0.1.83
       '@napi-rs/canvas-linux-x64-musl': 0.1.83
       '@napi-rs/canvas-win32-x64-msvc': 0.1.83
-    optional: true
 
   '@radix-ui/number@1.1.1': {}
 
@@ -8994,6 +9000,11 @@ snapshots:
     dependencies:
       '@napi-rs/canvas': 0.1.80
       pdfjs-dist: 5.4.296
+
+  pdf-to-png-converter@3.11.0:
+    dependencies:
+      '@napi-rs/canvas': 0.1.83
+      pdfjs-dist: 5.4.394
 
   pdf2pic@3.2.0:
     dependencies:
