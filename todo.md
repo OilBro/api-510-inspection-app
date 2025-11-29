@@ -80,3 +80,6 @@
 - [ ] Add dropdown field selector for manual data mapping
 - [ ] Implement learning system to store successful mappings
 - [ ] Support incremental data import from multiple sources
+
+## Urgent Bugs
+- [x] Fix missing pdfjs-dist dependency for Manus PDF parser
