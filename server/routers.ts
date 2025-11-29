@@ -874,6 +874,40 @@ export const appRouter = router({
                 }
               }
               
+              // Calculate derived values
+              const P = parseFloat(inspection.designPressure || "0");
+              const R = inspection.insideDiameter ? parseFloat(inspection.insideDiameter) / 2 : 0;
+              const S = 15000; // Default allowable stress
+              const E = 1.0; // Default joint efficiency
+              const CA = 0.125; // Default corrosion allowance (1/8 inch)
+              
+              // Minimum thickness calculation (ASME Section VIII Div 1, UG-27)
+              let minimumThickness;
+              if (P && R && S && E) {
+                const denominator = S * E - 0.6 * P;
+                if (denominator > 0) {
+                  minimumThickness = ((P * R) / denominator + CA).toFixed(4);
+                }
+              }
+              
+              // Corrosion rate calculation
+              let corrosionRate, remainingLife;
+              if (avgPreviousThickness && avgCurrentThickness) {
+                const prevThick = parseFloat(avgPreviousThickness);
+                const currThick = parseFloat(avgCurrentThickness);
+                const timeSpan = 10; // Default: assume 10 years between inspections
+                corrosionRate = ((prevThick - currThick) / timeSpan).toFixed(6);
+                
+                // Remaining life calculation
+                if (minimumThickness) {
+                  const minThick = parseFloat(minimumThickness);
+                  const cr = parseFloat(corrosionRate);
+                  if (cr > 0) {
+                    remainingLife = ((currThick - minThick) / cr).toFixed(2);
+                  }
+                }
+              }
+              
               await professionalReportDb.createComponentCalculation({
                 id: nanoid(),
                 reportId: report.id,
@@ -887,8 +921,14 @@ export const appRouter = router({
                 nominalThickness: avgNominalThickness,
                 previousThickness: avgPreviousThickness,
                 actualThickness: avgCurrentThickness,
+                minimumThickness: minimumThickness,
+                corrosionRate: corrosionRate,
+                remainingLife: remainingLife,
+                timeSpan: "10", // Default time span
+                nextInspectionYears: remainingLife ? (parseFloat(remainingLife) * 0.5).toFixed(2) : "5", // Half of remaining life or 5 years
                 allowableStress: "15000", // Default
                 jointEfficiency: "1.0", // Default
+                corrosionAllowance: CA.toString(),
               });
               console.log(`[PDF Import] Auto-created shell component calculation for report ${report.id}`);
             }

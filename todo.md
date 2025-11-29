@@ -176,3 +176,10 @@
 - [x] Populate component calculation with material spec and thickness averages from TML readings
 - [ ] Remove Docupipe parser option from UI (user converting all PDFs to text-based)
 - [ ] Test that enhanced calculations show up with all fields populated
+
+## Component Calculation Formulas
+- [x] Calculate minimum thickness using ASME formula (P*R/(S*E-0.6*P) + CA)
+- [x] Calculate corrosion rate from previous and current thickness
+- [x] Calculate remaining life from corrosion rate and current thickness
+- [x] Set next inspection interval (half of remaining life or 5 years default)
+- [ ] Test calculations with real imported PDF data
