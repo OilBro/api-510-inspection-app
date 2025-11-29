@@ -1,12 +1,13 @@
-import { fromPath } from 'pdf2pic';
 import { invokeLLM } from './_core/llm';
-import { writeFileSync, unlinkSync, mkdirSync } from 'fs';
+import { writeFileSync, unlinkSync, mkdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { createCanvas } from 'canvas';
 
 /**
  * Vision-capable PDF parser that handles both text and scanned/image-based PDFs
- * Converts PDF pages to images and uses GPT-4 Vision to extract data
+ * Uses pdfjs-dist for PDF rendering (no system dependencies required)
  */
 
 interface VisionParsedData {
@@ -58,42 +59,54 @@ export async function parseWithVision(pdfBuffer: Buffer): Promise<VisionParsedDa
   const tempDir = join(tmpdir(), `pdf-vision-${Date.now()}`);
   mkdirSync(tempDir, { recursive: true });
   
-  const pdfPath = join(tempDir, 'input.pdf');
-  writeFileSync(pdfPath, pdfBuffer);
-  
   try {
-    // Convert PDF pages to images
-    const converter = fromPath(pdfPath, {
-      density: 200, // DPI for image quality
-      saveFilename: 'page',
-      savePath: tempDir,
-      format: 'png',
-      width: 2000,
-      height: 2000,
+    console.log('[Vision Parser] Starting PDF rendering with pdfjs-dist');
+    
+    // Load PDF document
+    const loadingTask = pdfjsLib.getDocument({
+      data: new Uint8Array(pdfBuffer),
+      useSystemFonts: true,
     });
     
-    // Convert first 10 pages (adjust as needed)
-    const maxPages = 10;
-    const imagePromises: Promise<{ page: number; path: string }>[] = [];
+    const pdfDocument = await loadingTask.promise;
+    const numPages = Math.min(pdfDocument.numPages, 10); // Process max 10 pages
     
-    for (let i = 1; i <= maxPages; i++) {
-      imagePromises.push(
-        converter(i, { responseType: 'image' })
-          .then((result: any) => ({
-            page: result.page,
-            path: result.path,
-          }))
-          .catch(() => null as any)
-      );
+    console.log(`[Vision Parser] PDF loaded with ${pdfDocument.numPages} pages, processing ${numPages}`);
+    
+    // Render each page to image
+    const imageDataUrls: string[] = [];
+    
+    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+      try {
+        const page = await pdfDocument.getPage(pageNum);
+        const viewport = page.getViewport({ scale: 2.0 }); // 2x scale for better quality
+        
+        // Create canvas
+        const canvas = createCanvas(viewport.width, viewport.height);
+        const context = canvas.getContext('2d');
+        
+        // Render PDF page to canvas
+        await page.render({
+          canvasContext: context as any,
+          viewport: viewport,
+          canvas: canvas as any,
+        }).promise;
+        
+        // Convert canvas to base64 data URL
+        const dataUrl = canvas.toDataURL('image/png');
+        imageDataUrls.push(dataUrl);
+        
+        console.log(`[Vision Parser] Rendered page ${pageNum}/${numPages}`);
+      } catch (error: any) {
+        console.error(`[Vision Parser] Failed to render page ${pageNum}:`, error.message);
+      }
     }
     
-    const images = (await Promise.all(imagePromises)).filter(Boolean);
-    
-    if (images.length === 0) {
-      throw new Error('Failed to convert PDF pages to images');
+    if (imageDataUrls.length === 0) {
+      throw new Error('Failed to render any PDF pages to images');
     }
     
-    console.log(`[Vision Parser] Converted ${images.length} pages to images`);
+    console.log(`[Vision Parser] Successfully rendered ${imageDataUrls.length} pages`);
     
     // Prepare vision LLM prompt
     const extractionPrompt = `You are an expert at extracting data from API 510 pressure vessel inspection reports.
@@ -118,57 +131,49 @@ Analyze these inspection report pages and extract ALL available data in the foll
       "component": "component name (e.g., Shell, Head, Nozzle)",
       "componentType": "component type",
       "currentThickness": 0.652,
-      "previousThickness": 0.750,
-      "nominalThickness": 0.875,
+      "previousThickness": 0.689,
+      "nominalThickness": 0.750,
+      "minimumRequired": 0.500,
+      "tActual": 0.652,
       "tml1": 0.652,
-      "tml2": 0.655,
-      "tml3": 0.648,
+      "tml2": 0.648,
+      "tml3": 0.655,
       "tml4": 0.650
     }
   ],
   "checklistItems": [
     {
-      "category": "Visual Inspection",
+      "category": "External Visual",
       "itemNumber": "1",
-      "itemText": "Check for corrosion",
-      "status": "Pass"
+      "itemText": "Check item description",
+      "description": "detailed description",
+      "status": "Satisfactory"
     }
   ]
 }
 
 CRITICAL INSTRUCTIONS:
-1. Extract ALL thickness measurements from tables, even if they're in scanned images
-2. Pay special attention to "Previous Thickness" or "Prior Thickness" columns
-3. Include all TML readings (tml1, tml2, tml3, tml4) if available
-4. Convert all thickness values to numbers (inches)
-5. If a table has multiple rows, create a separate entry for each row
-6. Return ONLY valid JSON, no markdown formatting
+1. Extract PREVIOUS THICKNESS values from any tables, forms, or text
+2. Look for thickness measurement tables with columns like "Previous", "Last Reading", "Prior Thickness", etc.
+3. Extract ALL TML (Thickness Measurement Location) readings you can find
+4. If a field is not present in the document, omit it from the JSON (do not use null or empty string)
+5. Pay special attention to scanned tables and handwritten values
+6. Return ONLY valid JSON, no additional text`;
 
-Extract as much data as possible from the images.`;
-    
-    // Build message content with all page images
-    const messageContent: any[] = [
+    // Build message content with images
+    const messageContent: Array<{ type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string } }> = [
       { type: 'text', text: extractionPrompt }
     ];
     
-    // Add up to 5 pages to avoid token limits
-    const pagesToAnalyze = images.slice(0, 5);
-    for (const img of pagesToAnalyze) {
-      // Read image as base64
-      const fs = await import('fs/promises');
-      const imageBuffer = await fs.readFile(img.path);
-      const base64Image = imageBuffer.toString('base64');
-      
+    // Add all page images
+    for (const dataUrl of imageDataUrls) {
       messageContent.push({
         type: 'image_url',
-        image_url: {
-          url: `data:image/png;base64,${base64Image}`,
-          detail: 'high'
-        }
+        image_url: { url: dataUrl }
       });
     }
     
-    console.log(`[Vision Parser] Sending ${pagesToAnalyze.length} pages to vision LLM`);
+    console.log('[Vision Parser] Sending images to LLM for analysis...');
     
     // Call vision LLM
     const response = await invokeLLM({
@@ -196,10 +201,10 @@ Extract as much data as possible from the images.`;
                   yearBuilt: { type: 'string' },
                   designPressure: { type: 'string' },
                   designTemperature: { type: 'string' },
-                  corrosionAllowance: { type: 'string' }
+                  corrosionAllowance: { type: 'string' },
                 },
                 required: [],
-                additionalProperties: false
+                additionalProperties: false,
               },
               thicknessMeasurements: {
                 type: 'array',
@@ -207,20 +212,23 @@ Extract as much data as possible from the images.`;
                   type: 'object',
                   properties: {
                     cmlNumber: { type: 'string' },
+                    tmlId: { type: 'string' },
                     location: { type: 'string' },
                     component: { type: 'string' },
                     componentType: { type: 'string' },
-                    currentThickness: { type: 'number' },
-                    previousThickness: { type: 'number' },
-                    nominalThickness: { type: 'number' },
-                    tml1: { type: 'number' },
-                    tml2: { type: 'number' },
-                    tml3: { type: 'number' },
-                    tml4: { type: 'number' }
+                    currentThickness: { type: ['string', 'number'] },
+                    previousThickness: { type: ['string', 'number'] },
+                    nominalThickness: { type: ['string', 'number'] },
+                    minimumRequired: { type: 'number' },
+                    tActual: { type: ['string', 'number'] },
+                    tml1: { type: ['string', 'number'] },
+                    tml2: { type: ['string', 'number'] },
+                    tml3: { type: ['string', 'number'] },
+                    tml4: { type: ['string', 'number'] },
                   },
                   required: [],
-                  additionalProperties: false
-                }
+                  additionalProperties: false,
+                },
               },
               checklistItems: {
                 type: 'array',
@@ -230,37 +238,45 @@ Extract as much data as possible from the images.`;
                     category: { type: 'string' },
                     itemNumber: { type: 'string' },
                     itemText: { type: 'string' },
-                    status: { type: 'string' }
+                    description: { type: 'string' },
+                    status: { type: 'string' },
                   },
                   required: [],
-                  additionalProperties: false
-                }
-              }
+                  additionalProperties: false,
+                },
+              },
             },
             required: [],
-            additionalProperties: false
-          }
-        }
-      }
+            additionalProperties: false,
+          },
+        },
+      },
     });
     
-    const content = response.choices[0]?.message?.content;
-    if (!content) {
-      throw new Error('No response from vision LLM');
+    const content = response.choices[0].message.content;
+    if (typeof content !== 'string') {
+      throw new Error('Unexpected response format from LLM');
     }
     
     const parsedData: VisionParsedData = JSON.parse(content);
-    console.log(`[Vision Parser] Extracted ${parsedData.thicknessMeasurements?.length || 0} thickness measurements`);
+    
+    console.log('[Vision Parser] Successfully extracted data from PDF');
+    console.log('[Vision Parser] Vessel info:', parsedData.vesselInfo);
+    console.log('[Vision Parser] TML readings:', parsedData.thicknessMeasurements?.length || 0);
+    console.log('[Vision Parser] Checklist items:', parsedData.checklistItems?.length || 0);
     
     return parsedData;
     
+  } catch (error: any) {
+    console.error('[Vision Parser] Error:', error);
+    throw new Error(`Failed to parse PDF file: ${error.message}`);
   } finally {
-    // Cleanup temp files
+    // Cleanup temp directory
     try {
       const fs = await import('fs/promises');
       await fs.rm(tempDir, { recursive: true, force: true });
-    } catch (err) {
-      console.error('[Vision Parser] Failed to cleanup temp files:', err);
+    } catch (cleanupError) {
+      console.error('[Vision Parser] Cleanup error:', cleanupError);
     }
   }
 }
