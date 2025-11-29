@@ -65,3 +65,6 @@
 ## Known Issues
 - Some TypeScript type warnings (non-critical)
 - Some LLM message content type mismatches (non-critical)
+
+## Bugs to Fix
+- [x] Fix TML readings insertion error in PDF import (missing required fields: cmlNumber, componentType, location)

@@ -251,10 +251,10 @@ Extract ALL thickness measurements from any tables in the report. Be thorough an
         const tmlRecords = input.thicknessMeasurements.map((measurement) => ({
           id: nanoid(),
           inspectionId: inspectionId,
-          cmlNumber: measurement.cml || '',
-          componentType: measurement.component || '',
-          location: '', // TODO: Parse from measurement data
-          service: '', // For nozzles only
+          cmlNumber: measurement.cml || 'N/A',
+          componentType: measurement.component || 'Unknown',
+          location: measurement.location || 'N/A', // Parse from measurement data if available
+          service: null, // For nozzles only
           tml1: measurement.thickness?.toString() || null,
           tml2: null,
           tml3: null,
