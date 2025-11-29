@@ -1,0 +1,41 @@
+{
+  "query": "SHOW CREATE TABLE tmlReadings",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2vRv1t5JdAedAFZ.807c3fab4c80 --database A4XPjAmiHcgmrps2ZTa96H --execute SHOW CREATE TABLE tmlReadings",
+  "rows": [
+    {
+      "Table": "tmlReadings",
+      "Create Table": "CREATE TABLE `tmlReadings` ("
+    }
+  ],
+  "messages": [
+    "  `id` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,",
+    "  `inspectionId` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,",
+    "  `cmlNumber` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL,",
+    "  `componentType` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,",
+    "  `location` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,",
+    "  `service` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,",
+    "  `tml1` decimal(10,4) DEFAULT NULL,",
+    "  `tml2` decimal(10,4) DEFAULT NULL,",
+    "  `tml3` decimal(10,4) DEFAULT NULL,",
+    "  `tml4` decimal(10,4) DEFAULT NULL,",
+    "  `tActual` decimal(10,4) DEFAULT NULL,",
+    "  `nominalThickness` decimal(10,4) DEFAULT NULL,",
+    "  `previousThickness` decimal(10,4) DEFAULT NULL,",
+    "  `previousInspectionDate` timestamp NULL DEFAULT NULL,",
+    "  `currentInspectionDate` timestamp NULL DEFAULT NULL,",
+    "  `loss` decimal(10,4) DEFAULT NULL,",
+    "  `lossPercent` decimal(10,2) DEFAULT NULL,",
+    "  `corrosionRate` decimal(10,2) DEFAULT NULL,",
+    "  `status` enum('good','monitor','critical') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'good',",
+    "  `tmlId` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,",
+    "  `component` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,",
+    "  `currentThickness` decimal(10,4) DEFAULT NULL,",
+    "  `createdAt` timestamp DEFAULT CURRENT_TIMESTAMP,",
+    "  `updatedAt` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,",
+    "  PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */",
+    ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+  ],
+  "stdout": "Table\tCreate Table\ntmlReadings\tCREATE TABLE `tmlReadings` (\n  `id` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `inspectionId` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `cmlNumber` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `componentType` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `location` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `service` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `tml1` decimal(10,4) DEFAULT NULL,\n  `tml2` decimal(10,4) DEFAULT NULL,\n  `tml3` decimal(10,4) DEFAULT NULL,\n  `tml4` decimal(10,4) DEFAULT NULL,\n  `tActual` decimal(10,4) DEFAULT NULL,\n  `nominalThickness` decimal(10,4) DEFAULT NULL,\n  `previousThickness` decimal(10,4) DEFAULT NULL,\n  `previousInspectionDate` timestamp NULL DEFAULT NULL,\n  `currentInspectionDate` timestamp NULL DEFAULT NULL,\n  `loss` decimal(10,4) DEFAULT NULL,\n  `lossPercent` decimal(10,2) DEFAULT NULL,\n  `corrosionRate` decimal(10,2) DEFAULT NULL,\n  `status` enum('good','monitor','critical') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'good',\n  `tmlId` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `component` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `currentThickness` decimal(10,4) DEFAULT NULL,\n  `createdAt` timestamp DEFAULT CURRENT_TIMESTAMP,\n  `updatedAt` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci\n",
+  "stderr": "",
+  "execution_time_ms": 52
+}

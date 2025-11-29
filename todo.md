@@ -67,4 +67,16 @@
 - Some LLM message content type mismatches (non-critical)
 
 ## Bugs to Fix
-- [x] Fix TML readings insertion error in PDF import (missing required fields: cmlNumber, componentType, location)
+- [ ] Complete flexible PDF parser integration (parser created, needs router integration)
+- [ ] Fix TML readings insertion to handle variable PDF field names
+
+## New Feature: Intelligent PDF Import System
+- [x] Create flexible PDF parser (two-stage: extract + map)
+- [x] Implement AI-powered field mapping using LLM
+- [x] Add confidence scores for AI mappings
+- [ ] Integrate flexible parser into PDF import router
+- [ ] Handle variable field names in TML readings mapping
+- [ ] Create "Unmatched Data" review interface
+- [ ] Add dropdown field selector for manual data mapping
+- [ ] Implement learning system to store successful mappings
+- [ ] Support incremental data import from multiple sources

@@ -267,13 +267,14 @@ Extract ALL thickness measurements from any tables in the report. Be thorough an
           corrosionRate: null,
           status: "good" as const,
           // Legacy fields for backward compatibility
-          tmlId: measurement.cml,
-          component: measurement.component,
+          tmlId: measurement.cml || null,
+          component: measurement.component || null,
           currentThickness: measurement.thickness?.toString() || null,
           createdAt: new Date(),
           updatedAt: new Date(),
         }));
 
+        console.log('[PDF Import] Inserting TML records:', JSON.stringify(tmlRecords, null, 2));
         await db.insert(tmlReadings).values(tmlRecords);
       }
 
