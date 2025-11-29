@@ -22,6 +22,7 @@ function Router() {
       <Route path={"/inspections"} component={InspectionList} />
       <Route path={"/inspections/new"} component={NewInspection} />
       <Route path={"/inspections/:id"} component={InspectionDetail} />
+      <Route path={"/inspection/:id"} component={InspectionDetail} />
       <Route path={"/import"} component={ImportData} />
       <Route path={"comparison"} component={ReportComparison} />
       <Route path={"import-pdf"} component={ImportPDF} />

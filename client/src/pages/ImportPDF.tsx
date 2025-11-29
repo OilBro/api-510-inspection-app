@@ -89,7 +89,7 @@ export default function ImportPDF() {
       
       if (result.success) {
         toast.success("Inspection imported successfully!");
-        setLocation(`/inspection/${result.inspectionId}`);
+        setLocation(`/inspections/${result.inspectionId}`);
       }
     } catch (error) {
       console.error("Save failed:", error);
