@@ -677,6 +677,7 @@ export const appRouter = router({
           }
 
           // Create TML readings if available
+          const createdTMLs: any[] = [];
           if (parsedData.tmlReadings && parsedData.tmlReadings.length > 0) {
             for (const reading of parsedData.tmlReadings) {
               const tmlRecord: any = {
@@ -707,6 +708,7 @@ export const appRouter = router({
               }
               
               await db.createTmlReading(tmlRecord);
+              createdTMLs.push(tmlRecord);
             }
           }
 
@@ -791,37 +793,105 @@ export const appRouter = router({
             await fieldMappingDb.bulkCreateUnmatchedData(unmatchedFields);
           }
 
-          // Auto-create calculations record with all available data
+          // Auto-create calculations record with vessel data
           if (isNewInspection) {
             const calculationRecord: any = {
               id: nanoid(),
               inspectionId: inspection.id,
             };
             
-            // Populate calculation fields from imported vessel data
+            // Populate calculation fields from imported vessel data (only fields that exist in schema)
             if (inspection.designPressure) {
               calculationRecord.minThicknessDesignPressure = inspection.designPressure;
             }
-            if (inspection.designTemperature) {
-              calculationRecord.minThicknessDesignTemp = inspection.designTemperature;
-            }
             if (inspection.insideDiameter) {
-              calculationRecord.mawpInsideRadius = (parseFloat(inspection.insideDiameter) / 2).toString();
-            }
-            if (inspection.materialSpec) {
-              calculationRecord.materialSpecification = inspection.materialSpec;
+              const radius = parseFloat(inspection.insideDiameter) / 2;
+              calculationRecord.minThicknessInsideRadius = radius;
+              calculationRecord.mawpInsideRadius = radius;
             }
             if (parsedData.corrosionAllowance) {
               const ca = parseNumeric(parsedData.corrosionAllowance);
-              if (ca) calculationRecord.minThicknessCorrosionAllowance = ca;
+              if (ca) {
+                calculationRecord.minThicknessCorrosionAllowance = ca;
+                calculationRecord.mawpCorrosionAllowance = ca;
+              }
             }
             
-            // Set default values for required calculation fields
-            calculationRecord.minThicknessAllowableStress = calculationRecord.minThicknessAllowableStress || 15000; // Default allowable stress
-            calculationRecord.minThicknessJointEfficiency = calculationRecord.minThicknessJointEfficiency || 1.0; // Default joint efficiency
+            // Set default values for calculation fields
+            calculationRecord.minThicknessAllowableStress = 15000; // Default allowable stress (psi)
+            calculationRecord.minThicknessJointEfficiency = 1.0; // Default joint efficiency
+            calculationRecord.mawpAllowableStress = 15000;
+            calculationRecord.mawpJointEfficiency = 1.0;
             
             await db.saveCalculations(calculationRecord);
-            console.log(`[PDF Import] Auto-created calculations record with ${Object.keys(calculationRecord).length} fields for inspection ${inspection.id}`);
+            console.log(`[PDF Import] Auto-created calculations record for inspection ${inspection.id}`);
+            
+            // Also create component calculation for Professional Report
+            let report = await professionalReportDb.getProfessionalReportByInspection(inspection.id);
+            if (!report) {
+              // Create professional report if it doesn't exist
+              const reportId = nanoid();
+              await professionalReportDb.createProfessionalReport({
+                id: reportId,
+                inspectionId: inspection.id,
+                userId: ctx.user.id,
+                reportNumber: `RPT-${Date.now()}`,
+                reportDate: new Date(),
+                inspectorName: ctx.user.name || "",
+                employerName: "OilPro Consulting LLC",
+              });
+              report = await professionalReportDb.getProfessionalReportByInspection(inspection.id);
+              console.log(`[PDF Import] Auto-created professional report ${reportId}`);
+            }
+            
+            // Create shell component calculation with imported data if report exists
+            if (report) {
+              // Get average thickness values from TML readings for shell
+              const shellTMLs = createdTMLs.filter((tml: any) => 
+                tml.component && tml.component.toLowerCase().includes('shell')
+              );
+              
+              let avgCurrentThickness, avgPreviousThickness, avgNominalThickness;
+              if (shellTMLs.length > 0) {
+                const currentThicknesses = shellTMLs
+                  .map((t: any) => parseFloat(t.currentThickness))
+                  .filter((v: number) => !isNaN(v));
+                const previousThicknesses = shellTMLs
+                  .map((t: any) => parseFloat(t.previousThickness))
+                  .filter((v: number) => !isNaN(v));
+                const nominalThicknesses = shellTMLs
+                  .map((t: any) => parseFloat(t.nominalThickness))
+                  .filter((v: number) => !isNaN(v));
+                
+                if (currentThicknesses.length > 0) {
+                  avgCurrentThickness = (currentThicknesses.reduce((a: number, b: number) => a + b, 0) / currentThicknesses.length).toFixed(4);
+                }
+                if (previousThicknesses.length > 0) {
+                  avgPreviousThickness = (previousThicknesses.reduce((a: number, b: number) => a + b, 0) / previousThicknesses.length).toFixed(4);
+                }
+                if (nominalThicknesses.length > 0) {
+                  avgNominalThickness = (nominalThicknesses.reduce((a: number, b: number) => a + b, 0) / nominalThicknesses.length).toFixed(4);
+                }
+              }
+              
+              await professionalReportDb.createComponentCalculation({
+                id: nanoid(),
+                reportId: report.id,
+                componentName: "Shell",
+                componentType: "shell",
+                materialCode: inspection.materialSpec,
+                materialName: inspection.materialSpec,
+                designTemp: inspection.designTemperature ? inspection.designTemperature.toString() : undefined,
+                designMAWP: inspection.designPressure ? inspection.designPressure.toString() : undefined,
+                insideDiameter: inspection.insideDiameter ? inspection.insideDiameter.toString() : undefined,
+                nominalThickness: avgNominalThickness,
+                previousThickness: avgPreviousThickness,
+                actualThickness: avgCurrentThickness,
+                allowableStress: "15000", // Default
+                jointEfficiency: "1.0", // Default
+              });
+              console.log(`[PDF Import] Auto-created shell component calculation for report ${report.id}`);
+            }
           }
 
           return {

@@ -166,3 +166,13 @@
 - [ ] Extract nozzle data from PDFs if present
 - [ ] Create nozzle evaluation records during import
 - [ ] Test that all three pages (Report Data, Calculations, Nozzles) populate after import
+
+## Debug Calculations Not Populating
+- [x] Check server logs to see if calculations record is being created
+- [x] Verify calculations record exists in database (confirmed: it does)
+- [x] Discovered: Professional Report Calculations uses componentCalculations table, not calculations table
+- [x] Create componentCalculations record during PDF import (linked to professional report)
+- [x] Auto-create professional report if it doesn't exist during import
+- [x] Populate component calculation with material spec and thickness averages from TML readings
+- [ ] Remove Docupipe parser option from UI (user converting all PDFs to text-based)
+- [ ] Test that enhanced calculations show up with all fields populated

@@ -140,15 +140,25 @@ export default function CalculationsTab({ inspectionId }: CalculationsTabProps) 
   // Load saved calculations
   useEffect(() => {
     if (calculations) {
-      if (calculations.minThicknessResult) {
-        setShellMinThickness({
-          designPressure: calculations.minThicknessDesignPressure || "",
-          insideRadius: calculations.minThicknessInsideRadius || "",
-          allowableStress: calculations.minThicknessAllowableStress || "",
-          jointEfficiency: calculations.minThicknessJointEfficiency || "1.0",
-          corrosionAllowance: calculations.minThicknessCorrosionAllowance || "",
-          result: calculations.minThicknessResult || "",
-        });
+      // Pre-fill shell minimum thickness fields from imported data
+      setShellMinThickness(prev => ({
+        ...prev,
+        designPressure: calculations.minThicknessDesignPressure || prev.designPressure,
+        insideRadius: calculations.mawpInsideRadius || prev.insideRadius,
+        allowableStress: calculations.minThicknessAllowableStress || "15000",
+        jointEfficiency: calculations.minThicknessJointEfficiency || "1.0",
+        corrosionAllowance: calculations.minThicknessCorrosionAllowance || "",
+        result: calculations.minThicknessResult || "",
+      }));
+      
+      // Pre-fill MAWP fields
+      if (calculations.mawpInsideRadius) {
+        setShellMAWP(prev => ({
+          ...prev,
+          insideRadius: calculations.mawpInsideRadius,
+          allowableStress: calculations.mawpAllowableStress || "15000",
+          jointEfficiency: calculations.mawpJointEfficiency || "1.0",
+        }));
       }
 
       if (calculations.mawpResult) {
