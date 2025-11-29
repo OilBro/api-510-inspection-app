@@ -18,6 +18,7 @@ interface ParsedVesselData {
   vesselType?: string;
   insideDiameter?: string;
   overallLength?: string;
+  corrosionAllowance?: string;
   
   // Additional fields from Docupipe standardization
   reportNumber?: string;
@@ -224,6 +225,7 @@ export async function parsePDFFile(buffer: Buffer, parserType?: "docupipe" | "ma
                 vesselType: { type: "string" },
                 insideDiameter: { type: "string" },
                 overallLength: { type: "string" },
+                corrosionAllowance: { type: "string" },
                 tmlReadings: {
                   type: "array",
                   items: {

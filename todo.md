@@ -160,3 +160,9 @@
 - [x] Add extraction logic for other missing TML fields (cmlNumber, tmlId, nominalThickness, tml1-4, etc.)
 - [x] Enhanced LLM prompt to specifically target previous thickness extraction
 - [ ] Test with real inspection PDFs
+
+## Auto-populate Calculations and Nozzles from Import
+- [x] Update PDF import to populate calculations record with vessel data (pressure, temperature, material spec, corrosion allowance, etc.)
+- [ ] Extract nozzle data from PDFs if present
+- [ ] Create nozzle evaluation records during import
+- [ ] Test that all three pages (Report Data, Calculations, Nozzles) populate after import

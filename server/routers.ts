@@ -791,21 +791,37 @@ export const appRouter = router({
             await fieldMappingDb.bulkCreateUnmatchedData(unmatchedFields);
           }
 
-          // Auto-create calculations record if this is a new inspection
+          // Auto-create calculations record with all available data
           if (isNewInspection) {
             const calculationRecord: any = {
               id: nanoid(),
               inspectionId: inspection.id,
             };
             
-            // Populate calculation fields from imported data if available
+            // Populate calculation fields from imported vessel data
             if (inspection.designPressure) {
               calculationRecord.minThicknessDesignPressure = inspection.designPressure;
-              calculationRecord.mawpInsideRadius = inspection.insideDiameter ? (parseFloat(inspection.insideDiameter) / 2).toString() : null;
+            }
+            if (inspection.designTemperature) {
+              calculationRecord.minThicknessDesignTemp = inspection.designTemperature;
+            }
+            if (inspection.insideDiameter) {
+              calculationRecord.mawpInsideRadius = (parseFloat(inspection.insideDiameter) / 2).toString();
+            }
+            if (inspection.materialSpec) {
+              calculationRecord.materialSpecification = inspection.materialSpec;
+            }
+            if (parsedData.corrosionAllowance) {
+              const ca = parseNumeric(parsedData.corrosionAllowance);
+              if (ca) calculationRecord.minThicknessCorrosionAllowance = ca;
             }
             
+            // Set default values for required calculation fields
+            calculationRecord.minThicknessAllowableStress = calculationRecord.minThicknessAllowableStress || 15000; // Default allowable stress
+            calculationRecord.minThicknessJointEfficiency = calculationRecord.minThicknessJointEfficiency || 1.0; // Default joint efficiency
+            
             await db.saveCalculations(calculationRecord);
-            console.log(`[PDF Import] Auto-created calculations record for inspection ${inspection.id}`);
+            console.log(`[PDF Import] Auto-created calculations record with ${Object.keys(calculationRecord).length} fields for inspection ${inspection.id}`);
           }
 
           return {
