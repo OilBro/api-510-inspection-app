@@ -51,13 +51,17 @@ export const professionalReportRouter = router({
   getOrCreate: protectedProcedure
     .input(z.object({ inspectionId: z.string() }))
     .query(async ({ input, ctx }) => {
-      let report = await getProfessionalReportByInspection(input.inspectionId);
+      console.log('[Professional Report] getOrCreate called for inspection:', input.inspectionId);
+      try {
+        let report = await getProfessionalReportByInspection(input.inspectionId);
+        console.log('[Professional Report] Existing report found:', !!report);
       
-      if (!report) {
+        if (!report) {
         const reportId = nanoid();
         await createProfessionalReport({
           id: reportId,
           inspectionId: input.inspectionId,
+          userId: ctx.user.id,
           reportNumber: `RPT-${Date.now()}`,
           reportDate: new Date(),
           inspectorName: ctx.user.name || '',
@@ -69,10 +73,14 @@ export const professionalReportRouter = router({
         // Initialize default checklist
         await initializeDefaultChecklist(reportId);
         
-        report = await getProfessionalReport(reportId);
-      }
+          report = await getProfessionalReport(reportId);
+        }
       
-      return report;
+        return report;
+      } catch (error) {
+        console.error('[Professional Report] Error in getOrCreate:', error);
+        throw error;
+      }
     }),
   
   // Update professional report

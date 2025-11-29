@@ -156,12 +156,32 @@ export async function parseExcelFile(buffer: Buffer): Promise<ParsedVesselData> 
 /**
  * Parse PDF file using Docupipe standardized extraction
  */
-export async function parsePDFFile(buffer: Buffer, parserType?: "docupipe" | "manus"): Promise<ParsedVesselData> {
+export async function parsePDFFile(buffer: Buffer, parserType?: "docupipe" | "manus" | "vision"): Promise<ParsedVesselData> {
   // Use provided parser type or fall back to ENV configuration
   const selectedParser = parserType || ENV.parserType;
   console.log(`[PDF Parser] Using parser: ${selectedParser}`);
   
   try {
+    // If vision parser is requested, use vision-based extraction
+    if (selectedParser === "vision") {
+      console.log("[PDF Parser] Using vision LLM parser for scanned documents...");
+      const { parseWithVision } = await import('./visionPdfParser');
+      const visionData = await parseWithVision(buffer);
+      
+      // Convert vision data to ParsedVesselData format
+      return {
+        vesselTagNumber: visionData.vesselInfo?.vesselTag || '',
+        vesselName: visionData.vesselInfo?.vesselDescription || '',
+        manufacturer: visionData.vesselInfo?.manufacturer || '',
+        yearBuilt: visionData.vesselInfo?.yearBuilt ? parseInt(visionData.vesselInfo.yearBuilt, 10) : undefined,
+        designPressure: visionData.vesselInfo?.designPressure || '',
+        designTemperature: visionData.vesselInfo?.designTemperature || '',
+        corrosionAllowance: visionData.vesselInfo?.corrosionAllowance || '',
+        tmlReadings: visionData.thicknessMeasurements || [],
+        checklistItems: visionData.checklistItems || [],
+      };
+    }
+    
     // Use basic parsing + LLM extraction (standardization APIs are unreliable)
     console.log("[PDF Parser] Using basic parsing + LLM extraction...");
     

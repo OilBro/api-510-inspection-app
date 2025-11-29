@@ -1,9 +1,10 @@
-import { router, protectedProcedure } from "../_core/trpc";
+import { router, publicProcedure, protectedProcedure } from "../_core/trpc";
 import { z } from "zod";
 import { invokeLLM } from "../_core/llm";
 import { storagePut } from "../storage";
 import { nanoid } from "nanoid";
 import { inspections, tmlReadings, inspectionFindings } from "../../drizzle/schema";
+import { sql } from "drizzle-orm";
 import { getDb } from "../db";
 
 /**
@@ -248,34 +249,53 @@ Extract ALL thickness measurements from any tables in the report. Be thorough an
 
       // Import thickness measurements
       if (input.thicknessMeasurements && input.thicknessMeasurements.length > 0) {
-        const tmlRecords = input.thicknessMeasurements.map((measurement) => ({
-          id: nanoid(),
-          inspectionId: inspectionId,
-          cmlNumber: measurement.cml || 'N/A',
-          componentType: measurement.component || 'Unknown',
-          location: measurement.location || 'N/A', // Parse from measurement data if available
-          service: null, // For nozzles only
-          tml1: measurement.thickness?.toString() || null,
-          tml2: null,
-          tml3: null,
-          tml4: null,
-          tActual: measurement.thickness?.toString() || null,
-          nominalThickness: measurement.thickness?.toString() || null,
-          previousThickness: null,
-          loss: null,
-          lossPercent: null,
-          corrosionRate: null,
-          status: "good" as const,
-          // Legacy fields for backward compatibility
-          tmlId: measurement.cml || null,
-          component: measurement.component || null,
-          currentThickness: measurement.thickness?.toString() || null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }));
+        const tmlRecords = input.thicknessMeasurements.map((measurement) => {
+          const record = {
+            id: nanoid(),
+            inspectionId: inspectionId,
+            cmlNumber: String(measurement.cml || 'N/A'),
+            componentType: String(measurement.component || 'Unknown'),
+            location: String(measurement.location || 'N/A'),
+            service: null as string | null,
+            tml1: measurement.thickness?.toString() || null,
+            tml2: null as string | null,
+            tml3: null as string | null,
+            tml4: null as string | null,
+            tActual: measurement.thickness?.toString() || null,
+            nominalThickness: measurement.thickness?.toString() || null,
+            previousThickness: null as string | null,
+            previousInspectionDate: null as Date | null,
+            currentInspectionDate: null as Date | null,
+            loss: null as string | null,
+            lossPercent: null as string | null,
+            corrosionRate: null as string | null,
+            status: "good" as const,
+            tmlId: measurement.cml || null,
+            component: measurement.component || null,
+            currentThickness: measurement.thickness?.toString() || null,
+          };
+          console.log('[PDF Import] TML record to insert:', JSON.stringify(record, null, 2));
+          return record;
+        });
 
-        console.log('[PDF Import] Inserting TML records:', JSON.stringify(tmlRecords, null, 2));
-        await db.insert(tmlReadings).values(tmlRecords);
+        console.log('[PDF Import] About to insert', tmlRecords.length, 'TML records');
+        
+        // Use raw SQL to bypass Drizzle ORM issue with defaults
+        for (const record of tmlRecords) {
+          await db.execute(sql`
+            INSERT INTO tmlReadings (
+              id, inspectionId, cmlNumber, componentType, location, service,
+              tml1, tml2, tml3, tml4, tActual, nominalThickness, previousThickness,
+              previousInspectionDate, currentInspectionDate, loss, lossPercent, corrosionRate,
+              status, tmlId, component, currentThickness
+            ) VALUES (
+              ${record.id}, ${record.inspectionId}, ${record.cmlNumber}, ${record.componentType}, ${record.location}, ${record.service},
+              ${record.tml1}, ${record.tml2}, ${record.tml3}, ${record.tml4}, ${record.tActual}, ${record.nominalThickness}, ${record.previousThickness},
+              ${record.previousInspectionDate}, ${record.currentInspectionDate}, ${record.loss}, ${record.lossPercent}, ${record.corrosionRate},
+              ${record.status}, ${record.tmlId}, ${record.component}, ${record.currentThickness}
+            )
+          `);
+        }
       }
 
       // Import findings

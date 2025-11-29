@@ -83,3 +83,36 @@
 
 ## Urgent Bugs
 - [x] Fix missing pdfjs-dist dependency for Manus PDF parser
+
+- [x] Fix TML readings database insertion - values showing as 'default' instead of actual parsed data (fixed in routers.ts line 686-688)
+
+- [ ] Investigate why code changes to TML insert aren't taking effect (possible caching/build issue)
+
+- [x] Add status field to TML record creation (set to 'good' by default)
+- [x] Add field length truncation to prevent 'Data too long' errors
+
+- [x] Fix Professional Report tab error after PDF import (added missing userId field)
+
+- [x] Add missing userId column to professionalReports table in database schema
+
+## Sentry Integration
+- [ ] Install Sentry SDK packages
+- [ ] Configure Sentry DSN in environment
+- [ ] Add Sentry initialization to server
+- [ ] Add Sentry initialization to client
+- [ ] Test error capture
+- [ ] Use Sentry to debug Professional Report error
+
+## Professional Report Issues
+- [ ] Fix executive summary Table A to display previous thickness values instead of dashes
+- [ ] Verify PDF import captures previousThickness field correctly
+- [ ] Ensure executive summary pulls data from correct TML reading fields
+
+## Vision LLM PDF Parsing for Scanned Documents
+- [x] Install pdf-to-image conversion library (pdf2pic)
+- [x] Install GraphicsMagick system package
+- [x] Create vision LLM parser that converts PDF pages to images
+- [x] Send images to GPT-4 Vision for data extraction
+- [x] Update PDF import router to use vision parser
+- [ ] Test with scanned PDFs containing thickness measurement tables
+- [ ] Verify previousThickness values are correctly extracted

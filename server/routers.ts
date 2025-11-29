@@ -502,7 +502,7 @@ export const appRouter = router({
         fileData: z.string(), // Base64 encoded file
         fileName: z.string(),
         fileType: z.enum(["pdf", "excel"]),
-        parserType: z.enum(["docupipe", "manus"]).optional(), // Optional parser selection
+        parserType: z.enum(["docupipe", "manus", "vision"]).optional(), // Optional parser selection
         inspectionId: z.string().optional(), // Optional: append to existing inspection
       }))
       .mutation(async ({ ctx, input }) => {
@@ -682,22 +682,28 @@ export const appRouter = router({
               const tmlRecord: any = {
                 id: nanoid(),
                 inspectionId: inspection.id,
+                // Required fields (with length limits)
+                cmlNumber: String(reading.cmlNumber || reading.tmlId || reading.location || 'N/A').substring(0, 10),
+                componentType: String(reading.componentType || reading.component || 'Unknown').substring(0, 255),
+                location: String(reading.location || reading.cmlNumber || 'N/A').substring(0, 50),
+                status: 'good' as const,
+                // Legacy fields for backward compatibility
                 tmlId: reading.tmlId || `TML-${nanoid()}`,
-                component: reading.component || "Unknown",
+                component: reading.component || reading.componentType || "Unknown",
               };
               
               // Only add optional fields if they exist
               if (reading.nominalThickness) {
                 const val = typeof reading.nominalThickness === 'number' ? reading.nominalThickness : parseFloat(String(reading.nominalThickness));
-                if (!isNaN(val)) tmlRecord.nominalThickness = val;
+                if (!isNaN(val)) tmlRecord.nominalThickness = val.toString();
               }
               if (reading.previousThickness) {
                 const val = parseFloat(String(reading.previousThickness));
-                if (!isNaN(val)) tmlRecord.previousThickness = val;
+                if (!isNaN(val)) tmlRecord.previousThickness = val.toString();
               }
               if (reading.currentThickness) {
                 const val = typeof reading.currentThickness === 'number' ? reading.currentThickness : parseFloat(String(reading.currentThickness));
-                if (!isNaN(val)) tmlRecord.currentThickness = val;
+                if (!isNaN(val)) tmlRecord.currentThickness = val.toString();
               }
               
               await db.createTmlReading(tmlRecord);
@@ -824,13 +830,14 @@ export const appRouter = router({
           checkedDate: z.string().optional(),
         })),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         try {
           // Create professional report if it doesn't exist
           const reportId = nanoid();
           await professionalReportDb.createProfessionalReport({
             id: reportId,
             inspectionId: input.inspectionId,
+            userId: ctx.user.id,
             reportNumber: `RPT-${Date.now()}`,
             reportDate: new Date(),
           });

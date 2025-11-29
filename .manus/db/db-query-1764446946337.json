@@ -1,0 +1,50 @@
+{
+  "query": "SELECT id, cmlNumber, componentType, currentThickness, previousThickness, tActual FROM tmlReadings LIMIT 5",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2vRv1t5JdAedAFZ.807c3fab4c80 --database A4XPjAmiHcgmrps2ZTa96H --execute SELECT id, cmlNumber, componentType, currentThickness, previousThickness, tActual FROM tmlReadings LIMIT 5",
+  "rows": [
+    {
+      "id": "-A5Su0pUFUhqCpCmEI4rT",
+      "cmlNumber": "082",
+      "componentType": "Vessel Shell",
+      "currentThickness": "0.6620",
+      "previousThickness": "NULL",
+      "tActual": "0.6620"
+    },
+    {
+      "id": "-QsQ3sJAM6K38wXvYat1F",
+      "cmlNumber": "Vessel She",
+      "componentType": "Shell",
+      "currentThickness": "0.6520",
+      "previousThickness": "NULL",
+      "tActual": "NULL"
+    },
+    {
+      "id": "0_FtG9lXvzjQ2JysmbAlL",
+      "cmlNumber": "067",
+      "componentType": "Vessel Shell",
+      "currentThickness": "0.6640",
+      "previousThickness": "NULL",
+      "tActual": "0.6640"
+    },
+    {
+      "id": "0_qJO2FVCngm5RA-sBMOk",
+      "cmlNumber": "114",
+      "componentType": "N8 Vaper In",
+      "currentThickness": "0.1330",
+      "previousThickness": "NULL",
+      "tActual": "0.1330"
+    },
+    {
+      "id": "2mr6Io99ixakPmbSjfAoD",
+      "cmlNumber": "107",
+      "componentType": "N1 Manhole",
+      "currentThickness": "0.3750",
+      "previousThickness": "NULL",
+      "tActual": "0.3750"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcmlNumber\tcomponentType\tcurrentThickness\tpreviousThickness\ttActual\n-A5Su0pUFUhqCpCmEI4rT\t082\tVessel Shell\t0.6620\tNULL\t0.6620\n-QsQ3sJAM6K38wXvYat1F\tVessel She\tShell\t0.6520\tNULL\tNULL\n0_FtG9lXvzjQ2JysmbAlL\t067\tVessel Shell\t0.6640\tNULL\t0.6640\n0_qJO2FVCngm5RA-sBMOk\t114\tN8 Vaper In\t0.1330\tNULL\t0.1330\n2mr6Io99ixakPmbSjfAoD\t107\tN1 Manhole\t0.3750\tNULL\t0.3750\n",
+  "stderr": "",
+  "execution_time_ms": 52
+}
