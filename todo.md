@@ -234,3 +234,15 @@
 - [ ] Identify what's causing the upload failure
 - [ ] Fix the error
 - [ ] Test uploading 2017 baseline + 2025 UT readings successfully
+
+## New UT Results Upload Feature
+- [x] Create UI for uploading new UT results to existing reports
+- [x] Add report selection dropdown/interface for choosing target report
+- [x] Backend procedure to accept UT data and target report ID
+- [x] Parse uploaded UT data (PDF/Excel) and extract thickness readings
+- [x] Add new TML readings to selected report (append, don't replace)
+- [ ] Recalculate component calculations with new UT data
+- [ ] Update corrosion rates using time between inspections
+- [ ] Update remaining life calculations based on new readings
+- [ ] Show before/after comparison of thickness readings
+- [ ] Test with 2017 baseline report + 2025 UT readings scenario

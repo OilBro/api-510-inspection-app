@@ -120,14 +120,28 @@ export default function Home() {
             </CardHeader>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setLocation("/import-pdf")}>
-            <CardHeader>
-              <FileText className="h-12 w-12 text-indigo-600 mb-4" />
-              <CardTitle>Import from PDF (AI)</CardTitle>
-              <CardDescription>
-                Upload inspection report PDF and automatically extract all data using AI
-              </CardDescription>
-            </CardHeader>
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <Link href="/import-pdf">
+              <CardHeader>
+                <Upload className="h-10 w-10 text-primary mb-2" />
+                <CardTitle>Import from PDF (AI)</CardTitle>
+                <CardDescription>
+                  Upload inspection report PDF and automatically extract all data using AI
+                </CardDescription>
+              </CardHeader>
+            </Link>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <Link href="/upload-ut-results">
+              <CardHeader>
+                <Upload className="h-10 w-10 text-green-600 mb-2" />
+                <CardTitle>Upload UT Results</CardTitle>
+                <CardDescription>
+                  Add new ultrasonic thickness measurements to an existing inspection
+                </CardDescription>
+              </CardHeader>
+            </Link>
           </Card>
 
           <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setLocation("/calculation-worksheet")}>

@@ -13,6 +13,7 @@ import ImportData from "./pages/ImportData";
 import ReportComparison from "./pages/ReportComparison";
 import ImportPDF from "./pages/ImportPDF";
 import ConvertImages from "./pages/ConvertImages";
+import UploadUTResults from "./pages/UploadUTResults";
 
 function Router() {
   return (
@@ -26,6 +27,7 @@ function Router() {
       <Route path={"comparison"} component={ReportComparison} />
       <Route path={"import-pdf"} component={ImportPDF} />
       <Route path={"convert-images"} component={ConvertImages} />
+      <Route path={"upload-ut-results"} component={UploadUTResults} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
