@@ -1,0 +1,8 @@
+{
+  "query": "SELECT designPressure, insideRadius, allowableStress, jointEfficiency, minimumThickness, corrosionAllowance FROM componentCalculations WHERE id IN (SELECT id FROM componentCalculations ORDER BY createdAt DESC LIMIT 1)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2vRv1t5JdAedAFZ.807c3fab4c80 --database A4XPjAmiHcgmrps2ZTa96H --execute SELECT designPressure, insideRadius, allowableStress, jointEfficiency, minimumThickness, corrosionAllowance FROM componentCalculations WHERE id IN (SELECT id FROM componentCalculations ORDER BY createdAt DESC LIMIT 1)",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'designpressure' in 'field list'"
+  ]
+}

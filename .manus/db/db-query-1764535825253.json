@@ -1,0 +1,43 @@
+{
+  "query": "SELECT * FROM componentCalculations ORDER BY createdAt DESC LIMIT 1",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2vRv1t5JdAedAFZ.807c3fab4c80 --database A4XPjAmiHcgmrps2ZTa96H --execute SELECT * FROM componentCalculations ORDER BY createdAt DESC LIMIT 1",
+  "rows": [
+    {
+      "id": "Gw0qYwP8aqXv3x8P9_aHG",
+      "reportId": "88IEEo9pI7aJwLBf4iU58",
+      "componentName": "Shell",
+      "componentType": "shell",
+      "materialCode": "NULL",
+      "materialName": "NULL",
+      "designTemp": "NULL",
+      "designMAWP": "NULL",
+      "staticHead": "NULL",
+      "specificGravity": "NULL",
+      "insideDiameter": "NULL",
+      "nominalThickness": "NULL",
+      "allowableStress": "15000.00",
+      "jointEfficiency": "1.00",
+      "headType": "NULL",
+      "crownRadius": "NULL",
+      "knuckleRadius": "NULL",
+      "headFactor": "NULL",
+      "previousThickness": "NULL",
+      "actualThickness": "NULL",
+      "minimumThickness": "NULL",
+      "timeSpan": "10.00",
+      "nextInspectionYears": "5.00",
+      "corrosionAllowance": "0.1250",
+      "corrosionRate": "NULL",
+      "remainingLife": "NULL",
+      "thicknessAtNextInspection": "NULL",
+      "pressureAtNextInspection": "NULL",
+      "mawpAtNextInspection": "NULL",
+      "createdAt": "2025-11-30 20:25:15",
+      "updatedAt": "2025-11-30 20:25:15"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\treportId\tcomponentName\tcomponentType\tmaterialCode\tmaterialName\tdesignTemp\tdesignMAWP\tstaticHead\tspecificGravity\tinsideDiameter\tnominalThickness\tallowableStress\tjointEfficiency\theadType\tcrownRadius\tknuckleRadius\theadFactor\tpreviousThickness\tactualThickness\tminimumThickness\ttimeSpan\tnextInspectionYears\tcorrosionAllowance\tcorrosionRate\tremainingLife\tthicknessAtNextInspection\tpressureAtNextInspection\tmawpAtNextInspection\tcreatedAt\tupdatedAt\nGw0qYwP8aqXv3x8P9_aHG\t88IEEo9pI7aJwLBf4iU58\tShell\tshell\tNULL\tNULL\tNULL\tNULL\tNULL\tNULL\tNULL\tNULL\t15000.00\t1.00\tNULL\tNULL\tNULL\tNULL\tNULL\tNULL\tNULL\t10.00\t5.00\t0.1250\tNULL\tNULL\tNULL\tNULL\tNULL\t2025-11-30 20:25:15\t2025-11-30 20:25:15\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

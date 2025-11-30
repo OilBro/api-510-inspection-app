@@ -908,8 +908,8 @@ export const appRouter = router({
               // Calculate derived values
               const P = parseFloat(inspection.designPressure || "0");
               const R = inspection.insideDiameter ? parseFloat(inspection.insideDiameter) / 2 : 0;
-              const S = 15000; // Default allowable stress
-              const E = 1.0; // Default joint efficiency
+              const S = 20000; // Allowable stress for stainless steel (psi)
+              const E = 0.85; // Joint efficiency for RT-3
               const CA = 0.125; // Default corrosion allowance (1/8 inch)
               
               // Minimum thickness calculation (ASME Section VIII Div 1, UG-27)

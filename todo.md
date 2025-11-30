@@ -218,3 +218,19 @@
 - [x] Add new TML readings to existing inspection (don't replace old ones)
 - [ ] Calculate time between inspections using inspection dates
 - [ ] Test with 2017 baseline report and 2025 UT readings
+
+## Match Professional Report Calculations
+- [x] Formula correct: t_min = PR/(SE - 0.6P)
+- [x] Fixed S=20000 psi, E=0.85
+- [ ] Fix pressure to include static head (262.4 psi not 250 psi)
+- [ ] Fix radius (should be 36.375 inches not 35.5 inches)
+- [ ] Create separate calculations for Shell, East Head, West Head
+- [ ] Use actual years between inspections (8.26 years for 2017→2025)
+- [ ] Extract head type (ellipsoidal) and use correct formula
+- [ ] Test with 2017 baseline + 2025 UT readings
+
+## Debug 2025 UT Readings Upload Error
+- [ ] Check server logs for error message
+- [ ] Identify what's causing the upload failure
+- [ ] Fix the error
+- [ ] Test uploading 2017 baseline + 2025 UT readings successfully
