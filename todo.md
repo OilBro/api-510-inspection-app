@@ -210,3 +210,11 @@
 - [ ] Add support for importing updated UT readings to existing inspections
 - [ ] Calculate separate component calculations for shell, east head, west head
 - [ ] Flag components below minimum thickness as critical findings
+
+## Vessel Matching for Updated UT Readings
+- [x] Check if vessel tag matching logic exists in import flow
+- [x] When importing, look for existing inspection with same vessel tag number
+- [x] If found, update existing inspection instead of creating new one
+- [x] Add new TML readings to existing inspection (don't replace old ones)
+- [ ] Calculate time between inspections using inspection dates
+- [ ] Test with 2017 baseline report and 2025 UT readings

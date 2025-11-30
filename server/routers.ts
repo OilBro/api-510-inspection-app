@@ -563,15 +563,31 @@ export const appRouter = router({
             }
             console.log(`[Multi-Source Import] Appending to existing inspection: ${input.inspectionId}`);
           } else {
-            // Create new inspection
-            isNewInspection = true;
-            inspection = {
-              id: nanoid(),
-              userId: ctx.user.id,
-              vesselTagNumber: parsedData.vesselTagNumber || `IMPORT-${Date.now()}`,
-              status: "draft" as const,
-            };
-            console.log(`[Multi-Source Import] Creating new inspection: ${inspection.id}`);
+            // Try to find existing inspection by vessel tag number
+            let existingInspection = null;
+            if (parsedData.vesselTagNumber) {
+              const userInspections = await db.getInspections(ctx.user.id);
+              existingInspection = userInspections.find(
+                (insp: any) => insp.vesselTagNumber === parsedData.vesselTagNumber
+              );
+            }
+            
+            if (existingInspection) {
+              // Update existing inspection with same vessel tag
+              isNewInspection = false;
+              inspection = existingInspection;
+              console.log(`[Multi-Source Import] Found existing vessel ${parsedData.vesselTagNumber}, updating inspection: ${inspection.id}`);
+            } else {
+              // Create new inspection
+              isNewInspection = true;
+              inspection = {
+                id: nanoid(),
+                userId: ctx.user.id,
+                vesselTagNumber: parsedData.vesselTagNumber || `IMPORT-${Date.now()}`,
+                status: "draft" as const,
+              };
+              console.log(`[Multi-Source Import] Creating new inspection: ${inspection.id}`);
+            }
           }
 
           // Track successfully mapped fields for learning
@@ -700,12 +716,12 @@ export const appRouter = router({
                 inspectionId: inspection.id,
                 // Required fields (with length limits)
                 cmlNumber: String(reading.cmlNumber || reading.tmlId || reading.location || 'N/A').substring(0, 10),
-                componentType: String(reading.componentType || reading.component || 'Unknown').substring(0, 255),
+                componentType: String(reading.component || 'Unknown').substring(0, 255),
                 location: String(reading.location || reading.cmlNumber || 'N/A').substring(0, 50),
                 status: 'good' as const,
                 // Legacy fields for backward compatibility
                 tmlId: reading.tmlId || `TML-${nanoid()}`,
-                component: reading.component || reading.componentType || "Unknown",
+                component: reading.component || "Unknown",
               };
               
               // Only add optional fields if they exist
