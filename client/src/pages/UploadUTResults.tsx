@@ -74,7 +74,7 @@ export default function UploadUTResults() {
       const uploadResult = await uploadMutation.mutateAsync({
         base64Data,
         filename: selectedFile.name,
-        mimeType: selectedFile.type,
+        contentType: selectedFile.type,
       });
 
       setUploading(false);

@@ -355,24 +355,32 @@ Extract ALL thickness measurements from any tables in the report. Be thorough an
         }
 
         // Extract UT data from PDF
-        const extractionPrompt = `You are an expert at extracting ultrasonic thickness (UT) measurement data from inspection reports.
+        const extractionPrompt = `You are an expert at extracting ultrasonic thickness (UT) measurement data from API 510 pressure vessel inspection reports.
 
-Analyze this UT report PDF and extract ALL thickness measurements in JSON format:
+Analyze this UT report PDF and extract ALL thickness measurements in JSON format.
 
+IMPORTANT INSTRUCTIONS:
+1. CML numbers: Extract the exact CML identifier (e.g., "CML-1", "CML-2", "1", "2", etc.)
+2. Component: Identify the vessel component (e.g., "Vessel Shell", "Shell", "East Head", "West Head", "Nozzle N1")
+3. Location: Extract specific location description if available (e.g., "12 o'clock", "Top", "Bottom")
+4. Thickness: Current measured thickness in inches (decimal format)
+5. Previous Thickness: If shown in the report, extract the previous inspection thickness
+
+Format:
 {
   "inspectionDate": "YYYY-MM-DD",
   "thicknessMeasurements": [
     {
-      "cml": "string (CML number)",
-      "component": "string (e.g., 'Vessel Shell', 'East Head', 'West Head')",
-      "location": "string (specific location description)",
-      "thickness": "number (inches)",
-      "previousThickness": "number (inches, if available)"
+      "cml": "CML identifier (e.g., 'CML-1', '1', 'A-1')",
+      "component": "Component name (e.g., 'Vessel Shell', 'East Head')",
+      "location": "Specific location (e.g., '12 o'clock', 'Top')",
+      "thickness": 0.XXX (current thickness in inches),
+      "previousThickness": 0.XXX (previous thickness if available)
     }
   ]
 }
 
-Extract ALL thickness measurements from tables. Be thorough and accurate. If previous thickness values are shown, include them.`;
+Extract ALL thickness measurements from tables. Be thorough and accurate. Match CML numbers exactly as they appear in the document.`;
 
         const response = await invokeLLM({
           messages: [
@@ -443,54 +451,114 @@ Extract ALL thickness measurements from tables. Be thorough and accurate. If pre
             .where(sql`id = ${input.targetInspectionId}`);
         }
 
-        // Add new TML readings to the inspection
-        const newTmlRecords = extractedData.thicknessMeasurements.map((measurement: any) => ({
-          id: nanoid(),
-          inspectionId: input.targetInspectionId,
-          cmlNumber: String(measurement.cml || "N/A"),
-          componentType: String(measurement.component || "Unknown"),
-          location: String(measurement.location || "N/A"),
-          service: null as string | null,
-          tml1: measurement.thickness?.toString() || null,
-          tml2: null as string | null,
-          tml3: null as string | null,
-          tml4: null as string | null,
-          tActual: measurement.thickness?.toString() || null,
-          nominalThickness: null as string | null,
-          previousThickness: measurement.previousThickness?.toString() || null,
-          previousInspectionDate: existingInspection.inspectionDate || null,
-          currentInspectionDate: extractedData.inspectionDate ? new Date(extractedData.inspectionDate) : new Date(),
-          loss: null as string | null,
-          lossPercent: null as string | null,
-          corrosionRate: null as string | null,
-          status: "good" as const,
-          tmlId: measurement.cml || null,
-          component: measurement.component || null,
-          currentThickness: measurement.thickness?.toString() || null,
-        }));
+        // Get existing TML readings for this inspection
+        const existingTmlReadings = await db
+          .select()
+          .from(tmlReadings)
+          .where(eq(tmlReadings.inspectionId, input.targetInspectionId));
 
-        // Insert new TML readings
-        for (const record of newTmlRecords) {
-          await db.execute(sql`
-            INSERT INTO tmlReadings (
-              id, inspectionId, cmlNumber, componentType, location, service,
-              tml1, tml2, tml3, tml4, tActual, nominalThickness, previousThickness,
-              previousInspectionDate, currentInspectionDate, loss, lossPercent, corrosionRate,
-              status, tmlId, component, currentThickness
-            ) VALUES (
-              ${record.id}, ${record.inspectionId}, ${record.cmlNumber}, ${record.componentType}, ${record.location}, ${record.service},
-              ${record.tml1}, ${record.tml2}, ${record.tml3}, ${record.tml4}, ${record.tActual}, ${record.nominalThickness}, ${record.previousThickness},
-              ${record.previousInspectionDate}, ${record.currentInspectionDate}, ${record.loss}, ${record.lossPercent}, ${record.corrosionRate},
-              ${record.status}, ${record.tmlId}, ${record.component}, ${record.currentThickness}
-            )
-          `);
+        let updatedCount = 0;
+        let addedCount = 0;
+        const newInspectionDate = extractedData.inspectionDate ? new Date(extractedData.inspectionDate) : new Date();
+
+        // Process each measurement
+        for (const measurement of extractedData.thicknessMeasurements) {
+          const cmlNumber = String(measurement.cml || "N/A");
+          const componentType = String(measurement.component || "Unknown");
+          const location = String(measurement.location || "N/A");
+          const newThickness = measurement.thickness?.toString() || null;
+
+          // Try to find matching existing TML record by CML number and component
+          const existingRecord = existingTmlReadings.find(
+            (tml) =>
+              tml.cmlNumber === cmlNumber &&
+              (tml.componentType === componentType || tml.component === componentType)
+          );
+
+          if (existingRecord && newThickness) {
+            // Update existing record: move current to previous, set new as current
+            const previousThickness = existingRecord.currentThickness || existingRecord.tActual;
+            const previousDate = existingRecord.currentInspectionDate || existingRecord.previousInspectionDate || existingInspection.inspectionDate;
+
+            // Calculate corrosion rate if we have both dates and thicknesses
+            let corrosionRate = null;
+            if (previousThickness && previousDate) {
+              const prevThick = parseFloat(previousThickness);
+              const currThick = parseFloat(newThickness);
+              const timeSpanMs = newInspectionDate.getTime() - new Date(previousDate).getTime();
+              const timeSpanYears = timeSpanMs / (1000 * 60 * 60 * 24 * 365.25);
+
+              if (timeSpanYears > 0) {
+                const thicknessLoss = prevThick - currThick;
+                const corrosionRateMpy = (thicknessLoss / timeSpanYears) * 1000; // Convert to mils per year
+                corrosionRate = corrosionRateMpy.toFixed(4);
+              }
+            }
+
+            // Update the existing record
+            await db.execute(sql`
+              UPDATE tmlReadings
+              SET
+                previousThickness = ${previousThickness},
+                previousInspectionDate = ${previousDate},
+                currentThickness = ${newThickness},
+                tActual = ${newThickness},
+                currentInspectionDate = ${newInspectionDate},
+                corrosionRate = ${corrosionRate},
+                tml1 = ${newThickness}
+              WHERE id = ${existingRecord.id}
+            `);
+            updatedCount++;
+          } else {
+            // Create new TML record
+            const record = {
+              id: nanoid(),
+              inspectionId: input.targetInspectionId,
+              cmlNumber,
+              componentType,
+              location,
+              service: null as string | null,
+              tml1: newThickness,
+              tml2: null as string | null,
+              tml3: null as string | null,
+              tml4: null as string | null,
+              tActual: newThickness,
+              nominalThickness: null as string | null,
+              previousThickness: measurement.previousThickness?.toString() || null,
+              previousInspectionDate: existingInspection.inspectionDate || null,
+              currentInspectionDate: newInspectionDate,
+              loss: null as string | null,
+              lossPercent: null as string | null,
+              corrosionRate: null as string | null,
+              status: "good" as const,
+              tmlId: measurement.cml || null,
+              component: measurement.component || null,
+              currentThickness: newThickness,
+            };
+
+            await db.execute(sql`
+              INSERT INTO tmlReadings (
+                id, inspectionId, cmlNumber, componentType, location, service,
+                tml1, tml2, tml3, tml4, tActual, nominalThickness, previousThickness,
+                previousInspectionDate, currentInspectionDate, loss, lossPercent, corrosionRate,
+                status, tmlId, component, currentThickness
+              ) VALUES (
+                ${record.id}, ${record.inspectionId}, ${record.cmlNumber}, ${record.componentType}, ${record.location}, ${record.service},
+                ${record.tml1}, ${record.tml2}, ${record.tml3}, ${record.tml4}, ${record.tActual}, ${record.nominalThickness}, ${record.previousThickness},
+                ${record.previousInspectionDate}, ${record.currentInspectionDate}, ${record.loss}, ${record.lossPercent}, ${record.corrosionRate},
+                ${record.status}, ${record.tmlId}, ${record.component}, ${record.currentThickness}
+              )
+            `);
+            addedCount++;
+          }
         }
 
         return {
           success: true,
           inspectionId: input.targetInspectionId,
-          addedMeasurements: newTmlRecords.length,
-          message: `Successfully added ${newTmlRecords.length} new thickness measurements to the inspection`,
+          addedMeasurements: addedCount,
+          updatedMeasurements: updatedCount,
+          message: `Successfully processed ${addedCount + updatedCount} thickness measurements (${updatedCount} updated, ${addedCount} new)`,
         };
       } catch (error) {
         console.error("UT upload failed:", error);

@@ -246,3 +246,11 @@
 - [ ] Update remaining life calculations based on new readings
 - [ ] Show before/after comparison of thickness readings
 - [ ] Test with 2017 baseline report + 2025 UT readings scenario
+
+## UT Upload Bugs to Fix
+- [x] Fix contentType error in file upload (missing parameter in mutation call)
+- [x] Improve UT data parsing to correctly extract CML numbers and locations
+- [x] Implement intelligent CML matching to link new readings with existing TML records
+- [x] Update existing TML records instead of creating duplicates when CML matches
+- [x] Calculate corrosion rates using actual time between inspection dates
+- [ ] Test with real UT upload PDFs to validate parsing accuracy
