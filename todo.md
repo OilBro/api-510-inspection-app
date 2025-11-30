@@ -198,3 +198,15 @@
 - [x] Add createNozzleEvaluation function to db.ts
 - [x] Add nozzle creation logic to PDF import flow
 - [ ] Test nozzle data shows in Nozzles tab
+
+## Fix Calculation Accuracy to Professional Standards
+- [x] Fix shell minimum thickness formula: t_min = PR/(SE - 0.6P)
+- [ ] Fix torispherical head minimum thickness formula: t_min = PLM/(2SE - 0.2P)
+- [x] Save inspection date from PDF import
+- [ ] Calculate actual time between inspections from dates (currently using 10-year default)
+- [x] Fix corrosion rate calculation: Cr = (t_prev - t_act) / Years
+- [x] Fix remaining life calculation: RL = Ca / Cr where Ca = t_act - t_min
+- [ ] Fix MAWP at next inspection projection
+- [ ] Add support for importing updated UT readings to existing inspections
+- [ ] Calculate separate component calculations for shell, east head, west head
+- [ ] Flag components below minimum thickness as critical findings

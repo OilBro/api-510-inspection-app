@@ -646,6 +646,21 @@ export const appRouter = router({
               trackMapping('overallLength', 'overallLength', parsedData.overallLength);
             }
           }
+          
+          // Save inspection date if available
+          if (parsedData.inspectionDate) {
+            try {
+              const dateStr = String(parsedData.inspectionDate);
+              // Try to parse various date formats
+              const parsedDate = new Date(dateStr);
+              if (!isNaN(parsedDate.getTime())) {
+                inspection.inspectionDate = parsedDate;
+                trackMapping('inspectionDate', 'inspectionDate', parsedData.inspectionDate);
+              }
+            } catch (e) {
+              console.warn('[PDF Import] Failed to parse inspection date:', parsedData.inspectionDate);
+            }
+          }
 
           // Create or update inspection
           if (isNewInspection) {
@@ -882,29 +897,40 @@ export const appRouter = router({
               const CA = 0.125; // Default corrosion allowance (1/8 inch)
               
               // Minimum thickness calculation (ASME Section VIII Div 1, UG-27)
+              // t_min = PR/(SE - 0.6P) - DO NOT add CA here
               let minimumThickness;
               if (P && R && S && E) {
                 const denominator = S * E - 0.6 * P;
                 if (denominator > 0) {
-                  minimumThickness = ((P * R) / denominator + CA).toFixed(4);
+                  minimumThickness = ((P * R) / denominator).toFixed(4);
                 }
               }
               
-              // Corrosion rate calculation
-              let corrosionRate, remainingLife;
-              if (avgPreviousThickness && avgCurrentThickness) {
+              // Corrosion rate and remaining life calculation
+              let corrosionRate, remainingLife, corrosionAllowance;
+              if (avgPreviousThickness && avgCurrentThickness && minimumThickness) {
                 const prevThick = parseFloat(avgPreviousThickness);
                 const currThick = parseFloat(avgCurrentThickness);
-                const timeSpan = 10; // Default: assume 10 years between inspections
+                const minThick = parseFloat(minimumThickness);
+                
+                // TODO: Get actual time between inspections from inspection dates
+                // For now, use 10 years as default
+                const timeSpan = 10;
+                
+                // Corrosion rate: Cr = (t_prev - t_act) / Years
                 corrosionRate = ((prevThick - currThick) / timeSpan).toFixed(6);
                 
-                // Remaining life calculation
-                if (minimumThickness) {
-                  const minThick = parseFloat(minimumThickness);
-                  const cr = parseFloat(corrosionRate);
-                  if (cr > 0) {
-                    remainingLife = ((currThick - minThick) / cr).toFixed(2);
-                  }
+                // Corrosion allowance: Ca = t_act - t_min
+                corrosionAllowance = (currThick - minThick).toFixed(4);
+                
+                // Remaining life: RL = Ca / Cr
+                const cr = parseFloat(corrosionRate);
+                const ca = parseFloat(corrosionAllowance);
+                if (cr > 0 && ca > 0) {
+                  remainingLife = (ca / cr).toFixed(2);
+                } else if (ca <= 0) {
+                  // Below minimum thickness - negative remaining life
+                  remainingLife = "0.00";
                 }
               }
               
