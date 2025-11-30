@@ -183,3 +183,18 @@
 - [x] Calculate remaining life from corrosion rate and current thickness
 - [x] Set next inspection interval (half of remaining life or 5 years default)
 - [ ] Test calculations with real imported PDF data
+
+## Fix Minimum Thickness Calculation
+- [ ] Debug why minimum thickness calculation is incorrect
+- [ ] Verify ASME Section VIII formula is correct
+- [ ] Check if corrosion allowance should be included or separate
+
+## Add Nozzle Auto-Population
+- [x] Enhance PDF parser to extract nozzle data
+- [x] Add nozzles array to ParsedVesselData interface
+- [x] Add nozzles to LLM extraction schema
+- [x] Update LLM prompt to extract nozzle information
+- [x] Create nozzle evaluation records during import
+- [x] Add createNozzleEvaluation function to db.ts
+- [x] Add nozzle creation logic to PDF import flow
+- [ ] Test nozzle data shows in Nozzles tab

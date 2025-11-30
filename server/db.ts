@@ -14,7 +14,9 @@ import {
   internalInspections,
   InsertInternalInspection,
   importedFiles,
-  InsertImportedFile
+  InsertImportedFile,
+  nozzleEvaluations,
+  InsertNozzleEvaluation
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -275,4 +277,20 @@ export async function updateImportedFile(id: string, data: Partial<InsertImporte
   if (!db) throw new Error("Database not available");
   
   await db.update(importedFiles).set(data).where(eq(importedFiles.id, id));
+}
+
+// ============= Nozzle Evaluation Functions =============
+
+export async function createNozzleEvaluation(nozzle: InsertNozzleEvaluation) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(nozzleEvaluations).values(nozzle);
+}
+
+export async function getNozzleEvaluations(inspectionId: string) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(nozzleEvaluations).where(eq(nozzleEvaluations.inspectionId, inspectionId));
 }

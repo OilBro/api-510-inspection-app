@@ -933,6 +933,43 @@ export const appRouter = router({
               console.log(`[PDF Import] Auto-created shell component calculation for report ${report.id}`);
             }
           }
+          
+          // Create nozzle evaluations if available
+          if (parsedData.nozzles && parsedData.nozzles.length > 0) {
+            console.log(`[PDF Import] Creating ${parsedData.nozzles.length} nozzle evaluations...`);
+            for (const nozzle of parsedData.nozzles) {
+              const nozzleRecord: any = {
+                id: nanoid(),
+                inspectionId: inspection.id,
+                nozzleNumber: nozzle.nozzleNumber,
+                nozzleDescription: nozzle.nozzleDescription,
+                location: nozzle.location,
+                nominalSize: nozzle.nominalSize,
+                schedule: nozzle.schedule,
+                notes: nozzle.notes,
+              };
+              
+              // Add optional numeric fields
+              if (nozzle.actualThickness) {
+                const val = typeof nozzle.actualThickness === 'number' ? nozzle.actualThickness : parseFloat(String(nozzle.actualThickness));
+                if (!isNaN(val)) nozzleRecord.actualThickness = val.toString();
+              }
+              if (nozzle.pipeNominalThickness) {
+                const val = typeof nozzle.pipeNominalThickness === 'number' ? nozzle.pipeNominalThickness : parseFloat(String(nozzle.pipeNominalThickness));
+                if (!isNaN(val)) nozzleRecord.pipeNominalThickness = val.toString();
+              }
+              if (nozzle.minimumRequired) {
+                const val = typeof nozzle.minimumRequired === 'number' ? nozzle.minimumRequired : parseFloat(String(nozzle.minimumRequired));
+                if (!isNaN(val)) nozzleRecord.minimumRequired = val.toString();
+              }
+              if (nozzle.acceptable !== undefined) {
+                nozzleRecord.acceptable = Boolean(nozzle.acceptable);
+              }
+              
+              await db.createNozzleEvaluation(nozzleRecord);
+            }
+            console.log(`[PDF Import] Created ${parsedData.nozzles.length} nozzle evaluations`);
+          }
 
           return {
             success: true,

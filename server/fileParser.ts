@@ -61,6 +61,19 @@ interface ParsedVesselData {
     checkedBy?: string;
     checkedDate?: string;
   }>;
+  
+  nozzles?: Array<{
+    nozzleNumber: string;
+    nozzleDescription?: string;
+    location?: string;
+    nominalSize: string;
+    schedule?: string;
+    actualThickness?: string | number;
+    pipeNominalThickness?: string | number;
+    minimumRequired?: string | number;
+    acceptable?: boolean;
+    notes?: string;
+  }>;
 }
 
 /**
@@ -199,7 +212,7 @@ export async function parsePDFFile(buffer: Buffer, parserType?: "docupipe" | "ma
           {
             role: "system",
             content:
-              "You are an expert at extracting vessel inspection data from API 510 reports. Extract all available information and return it as JSON. Pay special attention to thickness measurement tables - extract BOTH current AND previous thickness values, along with CML numbers, TML IDs, and all measurement readings (tml1, tml2, tml3, tml4).",
+              "You are an expert at extracting vessel inspection data from API 510 reports. Extract all available information and return it as JSON. Pay special attention to: 1) Thickness measurement tables - extract BOTH current AND previous thickness values, along with CML numbers, TML IDs, and all measurement readings (tml1, tml2, tml3, tml4). 2) Nozzle data - extract nozzle numbers, descriptions, sizes, schedules, and thickness measurements from nozzle tables or sections.",
           },
           {
             role: "user",
@@ -247,6 +260,26 @@ export async function parsePDFFile(buffer: Buffer, parserType?: "docupipe" | "ma
                       tml4: { type: "string" },
                     },
                     required: ["location", "component"],
+                    additionalProperties: false,
+                  },
+                },
+                nozzles: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      nozzleNumber: { type: "string" },
+                      nozzleDescription: { type: "string" },
+                      location: { type: "string" },
+                      nominalSize: { type: "string" },
+                      schedule: { type: "string" },
+                      actualThickness: { type: "string" },
+                      pipeNominalThickness: { type: "string" },
+                      minimumRequired: { type: "string" },
+                      acceptable: { type: "boolean" },
+                      notes: { type: "string" },
+                    },
+                    required: ["nozzleNumber", "nominalSize"],
                     additionalProperties: false,
                   },
                 },
