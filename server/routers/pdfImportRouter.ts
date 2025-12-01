@@ -38,10 +38,18 @@ Analyze this inspection report PDF and extract ALL the following information in 
     "designPressure": "number (psig)",
     "designTemperature": "number (°F)",
     "operatingPressure": "number (psig)",
+    "operatingTemperature": "number (°F)",
+    "mdmt": "number (°F) - Minimum Design Metal Temperature",
     "materialSpec": "string",
     "vesselType": "string",
     "insideDiameter": "number (inches)",
-    "overallLength": "number (inches)"
+    "overallLength": "number (inches)",
+    "product": "string - vessel contents/service",
+    "constructionCode": "string (e.g., ASME S8 D1)",
+    "vesselConfiguration": "string (Horizontal or Vertical)",
+    "headType": "string (e.g., 2:1 Ellipsoidal, Hemispherical)",
+    "insulationType": "string (e.g., None, Fiberglass)",
+    "nbNumber": "string - National Board Number"
   },
   "inspectionData": {
     "inspectionDate": "YYYY-MM-DD",
@@ -51,10 +59,14 @@ Analyze this inspection report PDF and extract ALL the following information in 
   },
   "thicknessMeasurements": [
     {
-      "cml": "string (CML number)",
-      "component": "string (e.g., 'Vessel Shell', 'East Head')",
-      "location": "string",
-      "thickness": "number (inches)"
+      "cml": "string (CML number, e.g., '6', '7', 'Shell 1')",
+      "component": "string (FULL component name, e.g., '2\" East Head Seam - Head Side', 'Vessel Shell', 'Manway')",
+      "location": "string (specific location description)",
+      "readings": [
+        "number (all thickness readings for this CML in inches, e.g., [0.663, 0.666, 0.679, 0.656])"
+      ],
+      "minThickness": "number (minimum of all readings)",
+      "nominalThickness": "number (tmin or nominal design thickness if available)"
     }
   ],
   "findings": [
@@ -66,7 +78,14 @@ Analyze this inspection report PDF and extract ALL the following information in 
   ]
 }
 
-Extract ALL thickness measurements from any tables in the report. Be thorough and accurate.`;
+IMPORTANT: For thickness measurements:
+- Each CML should be ONE entry with ALL its readings in the 'readings' array
+- Do NOT create separate entries for each angle measurement (0°, 90°, 180°, 270°)
+- Extract the FULL component name (e.g., '2\" East Head Seam - Head Side', not just 'East Head')
+- minThickness should be the minimum of all readings for that CML
+- Include nominal/design thickness (tmin) if shown in the table
+
+Extract ALL thickness measurements from tables. Be thorough and accurate.`;
 
         const response = await invokeLLM({
           messages: [
@@ -105,10 +124,18 @@ Extract ALL thickness measurements from any tables in the report. Be thorough an
                       designPressure: { type: "number" },
                       designTemperature: { type: "number" },
                       operatingPressure: { type: "number" },
+                      operatingTemperature: { type: "number" },
+                      mdmt: { type: "number" },
                       materialSpec: { type: "string" },
                       vesselType: { type: "string" },
                       insideDiameter: { type: "number" },
                       overallLength: { type: "number" },
+                      product: { type: "string" },
+                      constructionCode: { type: "string" },
+                      vesselConfiguration: { type: "string" },
+                      headType: { type: "string" },
+                      insulationType: { type: "string" },
+                      nbNumber: { type: "string" },
                     },
                     required: ["vesselTagNumber"],
                     additionalProperties: false,
@@ -132,9 +159,14 @@ Extract ALL thickness measurements from any tables in the report. Be thorough an
                         cml: { type: "string" },
                         component: { type: "string" },
                         location: { type: "string" },
-                        thickness: { type: "number" },
+                        readings: {
+                          type: "array",
+                          items: { type: "number" },
+                        },
+                        minThickness: { type: "number" },
+                        nominalThickness: { type: "number" },
                       },
-                      required: ["cml", "component", "thickness"],
+                      required: ["cml", "component", "readings", "minThickness"],
                       additionalProperties: false,
                     },
                   },
@@ -186,10 +218,18 @@ Extract ALL thickness measurements from any tables in the report. Be thorough an
           designPressure: z.number().optional(),
           designTemperature: z.number().optional(),
           operatingPressure: z.number().optional(),
+          operatingTemperature: z.number().optional(),
+          mdmt: z.number().optional(),
           materialSpec: z.string().optional(),
           vesselType: z.string().optional(),
           insideDiameter: z.number().optional(),
           overallLength: z.number().optional(),
+          product: z.string().optional(),
+          constructionCode: z.string().optional(),
+          vesselConfiguration: z.string().optional(),
+          headType: z.string().optional(),
+          insulationType: z.string().optional(),
+          nbNumber: z.string().optional(),
         }),
         inspectionData: z.object({
           inspectionDate: z.string(),
@@ -203,7 +243,9 @@ Extract ALL thickness measurements from any tables in the report. Be thorough an
               cml: z.string(),
               component: z.string(),
               location: z.string().optional(),
-              thickness: z.number(),
+              readings: z.array(z.number()),
+              minThickness: z.number(),
+              nominalThickness: z.number().optional(),
             })
           )
           .optional(),
@@ -237,10 +279,18 @@ Extract ALL thickness measurements from any tables in the report. Be thorough an
         designPressure: input.vesselData.designPressure?.toString() || null,
         designTemperature: input.vesselData.designTemperature?.toString() || null,
         operatingPressure: input.vesselData.operatingPressure?.toString() || null,
+        operatingTemperature: input.vesselData.operatingTemperature?.toString() || null,
+        mdmt: input.vesselData.mdmt?.toString() || null,
         materialSpec: input.vesselData.materialSpec || null,
         vesselType: input.vesselData.vesselType || null,
         insideDiameter: input.vesselData.insideDiameter?.toString() || null,
         overallLength: input.vesselData.overallLength?.toString() || null,
+        product: input.vesselData.product || null,
+        constructionCode: input.vesselData.constructionCode || null,
+        vesselConfiguration: input.vesselData.vesselConfiguration || null,
+        headType: input.vesselData.headType || null,
+        insulationType: input.vesselData.insulationType || null,
+        nbNumber: input.vesselData.nbNumber || null,
         status: "completed",
         inspectionDate: new Date(input.inspectionData.inspectionDate),
         completedAt: new Date(input.inspectionData.inspectionDate),
@@ -251,6 +301,8 @@ Extract ALL thickness measurements from any tables in the report. Be thorough an
       // Import thickness measurements
       if (input.thicknessMeasurements && input.thicknessMeasurements.length > 0) {
         const tmlRecords = input.thicknessMeasurements.map((measurement) => {
+          // Distribute readings across tml1, tml2, tml3, tml4
+          const readings = measurement.readings || [];
           const record = {
             id: nanoid(),
             inspectionId: inspectionId,
@@ -258,12 +310,12 @@ Extract ALL thickness measurements from any tables in the report. Be thorough an
             componentType: String(measurement.component || 'Unknown'),
             location: String(measurement.location || 'N/A'),
             service: null as string | null,
-            tml1: measurement.thickness?.toString() || null,
-            tml2: null as string | null,
-            tml3: null as string | null,
-            tml4: null as string | null,
-            tActual: measurement.thickness?.toString() || null,
-            nominalThickness: measurement.thickness?.toString() || null,
+            tml1: readings[0]?.toString() || null,
+            tml2: readings[1]?.toString() || null,
+            tml3: readings[2]?.toString() || null,
+            tml4: readings[3]?.toString() || null,
+            tActual: measurement.minThickness?.toString() || null,
+            nominalThickness: measurement.nominalThickness?.toString() || null,
             previousThickness: null as string | null,
             previousInspectionDate: null as Date | null,
             currentInspectionDate: null as Date | null,
@@ -273,7 +325,7 @@ Extract ALL thickness measurements from any tables in the report. Be thorough an
             status: "good" as const,
             tmlId: measurement.cml || null,
             component: measurement.component || null,
-            currentThickness: measurement.thickness?.toString() || null,
+            currentThickness: measurement.minThickness?.toString() || null,
           };
           console.log('[PDF Import] TML record to insert:', JSON.stringify(record, null, 2));
           return record;

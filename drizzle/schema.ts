@@ -35,8 +35,16 @@ export const inspections = mysqlTable("inspections", {
   designPressure: decimal("designPressure", { precision: 10, scale: 2 }),
   designTemperature: decimal("designTemperature", { precision: 10, scale: 2 }),
   operatingPressure: decimal("operatingPressure", { precision: 10, scale: 2 }),
+  operatingTemperature: decimal("operatingTemperature", { precision: 10, scale: 2 }),
+  mdmt: decimal("mdmt", { precision: 10, scale: 2 }),
   materialSpec: varchar("materialSpec", { length: 255 }),
   vesselType: varchar("vesselType", { length: 255 }),
+  product: text("product"),
+  constructionCode: varchar("constructionCode", { length: 255 }),
+  vesselConfiguration: varchar("vesselConfiguration", { length: 255 }),
+  headType: varchar("headType", { length: 255 }),
+  insulationType: varchar("insulationType", { length: 255 }),
+  nbNumber: varchar("nbNumber", { length: 255 }),
   
   // Geometry
   insideDiameter: decimal("insideDiameter", { precision: 10, scale: 2 }),

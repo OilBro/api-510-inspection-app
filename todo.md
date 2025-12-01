@@ -254,3 +254,40 @@
 - [x] Update existing TML records instead of creating duplicates when CML matches
 - [x] Calculate corrosion rates using actual time between inspection dates
 - [ ] Test with real UT upload PDFs to validate parsing accuracy
+
+## P0 - Critical Issues (Must Fix Immediately)
+- [x] Fix Executive Summary table - show Nominal Thickness (not Previous), Min Required, Calculated MAWP columns
+- [x] Fix Executive Summary - Vessel Shell actual thickness showing blank (now pulls from component calculations)
+- [ ] Fix head MAWP calculations - East Head should be 263.9 psi (PDF has internal inconsistencies, see CALCULATION_ANALYSIS.md)
+- [ ] Fix head MAWP calculations - West Head should be 262.5 psi (PDF has internal inconsistencies, see CALCULATION_ANALYSIS.md)
+- [ ] Fix minimum required thickness for heads - should be 0.500" (depends on E value, see CALCULATION_ANALYSIS.md)
+- [ ] Fix remaining life for East Head - should be >13 years (depends on correct thickness values)
+- [ ] Fix remaining life for West Head - should be >15 years (depends on correct thickness values)
+
+## P1 - High Priority Data Issues
+- [ ] Fix PDF extraction to correctly parse multi-page thickness tables
+- [x] Fix CML duplicate entries in thickness measurements
+- [ ] Organize thickness readings by component type (Shell, East Head, West Head, Nozzles)
+- [ ] Extract nozzle sizes from descriptions (24", 3", 2", 1")
+- [ ] Extract nozzle types (Manway, Relief, Vapor Out, Sight Gauge, Reactor Feed, Gauge, Vapor In, Out)
+- [x] Add missing vessel data fields: MDMT, Operating Temp, Product, Construction Code, Vessel Config, Head Type, Insulation
+- [ ] Fix component name truncation ("Vessel..." should show full "Vessel Shell")
+- [ ] Add tmin column to thickness measurements table
+- [ ] Calculate and display corrosion rates in thickness table
+
+## P2 - Medium Priority Quality Issues
+- [ ] Extract Section 3.0 Inspection Results (Foundation, Shell, Heads, Appurtenances findings)
+- [ ] Extract Section 4.0 Recommendations from PDF
+- [ ] Add references to Appendices A-G
+- [ ] Improve CML matching logic to handle multi-angle readings per CML
+- [ ] Group East Head seam readings (CML 6-7) separately from spot readings
+- [ ] Group West Head seam readings (CML 16-17) separately from spot readings
+- [ ] Add East Head spot readings by clock position (12, 3, 6, 9 o'clock)
+- [ ] Add West Head spot readings by clock position (12, 3, 6, 9 o'clock)
+
+## P3 - Low Priority Enhancements
+- [ ] Extract and display photographs from PDF
+- [ ] Extract inspection checklist items
+- [ ] Add manufacturer data sheet references
+- [ ] Improve report formatting to match professional PDF layout
+- [ ] Add thickness trend charts/visualizations

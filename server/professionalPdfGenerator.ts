@@ -652,69 +652,56 @@ async function generateExecutiveSummary(doc: PDFKit.PDFDocument, report: any, co
     console.log('[TABLE A DEBUG] tmlReadings count:', tmlReadings?.length || 0);
     console.log('[TABLE A DEBUG] tmlReadings sample:', tmlReadings?.[0]);
   
-  // Aggregate TML readings by component type
-  const componentGroups: { [key: string]: any[] } = {
-    'Vessel Shell': [],
-    'East Head': [],
-    'West Head': [],
+  // Get component calculations for TABLE A
+  // These should have been created during PDF import or manually
+  const componentCalcs = await getComponentCalculations(report.id);
+  
+  console.log('[TABLE A DEBUG] Component calculations:', componentCalcs.length);
+  
+  // Find the three main components
+  const findComponent = (name: string) => {
+    return componentCalcs.find(c => 
+      c.componentName?.toLowerCase().includes(name.toLowerCase()) ||
+      c.componentType?.toLowerCase().includes(name.toLowerCase())
+    );
   };
   
-  // Group TML readings by componentType
-  if (tmlReadings && tmlReadings.length > 0) {
-    tmlReadings.forEach((tml: any) => {
-      const compType = tml.componentType || tml.component || '';
-      if (compType.toLowerCase().includes('shell') || compType.toLowerCase().includes('vessel shell')) {
-        componentGroups['Vessel Shell'].push(tml);
-      } else if (compType.toLowerCase().includes('east')) {
-        componentGroups['East Head'].push(tml);
-      } else if (compType.toLowerCase().includes('west')) {
-        componentGroups['West Head'].push(tml);
-      }
-    });
-  }
+  const shellCalc = findComponent('shell');
+  const eastCalc = findComponent('east');
+  const westCalc = findComponent('west');
   
-  // Calculate aggregates for each component type
-  const calculateAggregates = (tmls: any[]) => {
-    if (!tmls || tmls.length === 0) return { tPrev: '-', tActual: '-', tMin: '-', mawp: '-', rl: '>20' };
-    
-    // Safe number parsing helper
-    const safeParseFloat = (value: any): number | null => {
-      if (value == null || value === '' || value === '-') return null;
-      const str = String(value).trim();
-      if (str === '' || str === '-') return null;
-      const num = parseFloat(str);
-      return !isNaN(num) && isFinite(num) ? num : null;
-    };
-    
-    // Extract and filter valid thickness values
-    const actualValues = tmls
-      .map(t => safeParseFloat(t.tActual || t.currentThickness))
-      .filter(v => v !== null) as number[];
-    
-    const prevValues = tmls
-      .map(t => safeParseFloat(t.previousThickness))
-      .filter(v => v !== null) as number[];
-    
-    const tActual = actualValues.length > 0 ? Math.min(...actualValues) : null;
-    const tPrev = prevValues.length > 0 ? Math.min(...prevValues) : null;
+  console.log('[TABLE A DEBUG] Shell calc:', shellCalc?.componentName);
+  console.log('[TABLE A DEBUG] East calc:', eastCalc?.componentName);
+  console.log('[TABLE A DEBUG] West calc:', westCalc?.componentName);
+  
+  // Helper to format values
+  const formatValue = (val: any, decimals: number = 3): string => {
+    if (val == null || val === '' || val === '-') return '-';
+    const num = parseFloat(String(val));
+    return !isNaN(num) && isFinite(num) ? num.toFixed(decimals) : '-';
+  };
+  
+  // Extract data from component calculations
+  const getComponentData = (calc: any) => {
+    if (!calc) return { tNom: '-', tActual: '-', tMin: '-', mawp: '-', rl: '>20' };
     
     return {
-      tPrev: tPrev !== null ? tPrev.toFixed(3) : '-',
-      tActual: tActual !== null ? tActual.toFixed(3) : '-',
-      tMin: '-', // TODO: Calculate from design specs
-      mawp: '-', // TODO: Calculate from pressure formulas
-      rl: '>20', // TODO: Calculate remaining life
+      tNom: formatValue(calc.nominalThickness),
+      tActual: formatValue(calc.actualThickness),
+      tMin: formatValue(calc.minimumRequired),
+      mawp: formatValue(calc.calculatedMAWP, 1),
+      rl: calc.remainingLife || '>20',
     };
   };
   
-  const shellAgg = calculateAggregates(componentGroups['Vessel Shell']);
-  const eastAgg = calculateAggregates(componentGroups['East Head']);
-  const westAgg = calculateAggregates(componentGroups['West Head']);
+  const shellData = getComponentData(shellCalc);
+  const eastData = getComponentData(eastCalc);
+  const westData = getComponentData(westCalc);
   
   // Create table structure with aggregated data
   const tableHeaders = [
     'Component',
-    'Previous\nThickness\n(in.)',
+    'Nominal\nDesign\nThickness\n(in.)',
     'Actual\nMeasured\nThickness\n(in.)',
     'Minimum\nRequired\nThickness\n(in.)',
     'Design\nMAWP\n(psi)\nInternal',
@@ -733,30 +720,30 @@ async function generateExecutiveSummary(doc: PDFKit.PDFDocument, report: any, co
   const tableRows = [
     [
       'Vessel Shell',
-      toStr(shellAgg.tPrev),
-      toStr(shellAgg.tActual),
-      toStr(shellAgg.tMin),
+      toStr(shellData.tNom),
+      toStr(shellData.tActual),
+      toStr(shellData.tMin),
       toStr(inspection?.designPressure || '250'),
-      toStr(shellAgg.mawp),
-      toStr(shellAgg.rl),
+      toStr(shellData.mawp),
+      toStr(shellData.rl),
     ],
     [
       'East Head',
-      toStr(eastAgg.tPrev),
-      toStr(eastAgg.tActual),
-      toStr(eastAgg.tMin),
+      toStr(eastData.tNom),
+      toStr(eastData.tActual),
+      toStr(eastData.tMin),
       toStr(inspection?.designPressure || '250'),
-      toStr(eastAgg.mawp),
-      toStr(eastAgg.rl),
+      toStr(eastData.mawp),
+      toStr(eastData.rl),
     ],
     [
       'West Head',
-      toStr(westAgg.tPrev),
-      toStr(westAgg.tActual),
-      toStr(westAgg.tMin),
+      toStr(westData.tNom),
+      toStr(westData.tActual),
+      toStr(westData.tMin),
       toStr(inspection?.designPressure || '250'),
-      toStr(westAgg.mawp),
-      toStr(westAgg.rl),
+      toStr(westData.mawp),
+      toStr(westData.rl),
     ],
   ];
   
@@ -766,7 +753,7 @@ async function generateExecutiveSummary(doc: PDFKit.PDFDocument, report: any, co
   // Total CONTENT_WIDTH is ~515, distribute to fit long headers
   const tableAColWidths = [
     70,  // Component
-    65,  // Previous Thickness
+    65,  // Nominal Design Thickness
     80,  // Actual Measured Thickness (wider)
     80,  // Minimum Required Thickness (wider)
     70,  // Design MAWP
@@ -783,7 +770,7 @@ async function generateExecutiveSummary(doc: PDFKit.PDFDocument, report: any, co
     console.error('[TABLE A ERROR] Stack:', error instanceof Error ? error.stack : 'No stack');
     
     // Fallback: Generate simple table with dashes
-    const fallbackHeaders = ['Component', 'Previous\nThickness\n(in.)', 'Actual\nMeasured\nThickness\n(in.)', 'Minimum\nRequired\nThickness\n(in.)', 'Design\nMAWP\n(psi)\nInternal', 'Calculated\nMAWP\n(psi)\nInternal', 'Remaining\nLife\n(years)'];
+    const fallbackHeaders = ['Component', 'Nominal\nDesign\nThickness\n(in.)', 'Actual\nMeasured\nThickness\n(in.)', 'Minimum\nRequired\nThickness\n(in.)', 'Design\nMAWP\n(psi)\nInternal', 'Calculated\nMAWP\n(psi)\nInternal', 'Remaining\nLife\n(years)'];
     const fallbackRows = [
       ['Vessel Shell', '-', '-', '-', inspection?.designPressure || '250', '-', '>20'],
       ['East Head', '-', '-', '-', inspection?.designPressure || '250', '-', '>20'],
