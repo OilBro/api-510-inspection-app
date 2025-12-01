@@ -291,3 +291,11 @@
 - [ ] Add manufacturer data sheet references
 - [ ] Improve report formatting to match professional PDF layout
 - [ ] Add thickness trend charts/visualizations
+
+## P0 - CRITICAL BUGS (User Reported)
+- [x] Fix "View Report" button showing "Error: Page Not Found" after PDF import
+- [x] Implement proper nozzle evaluation table format (one row per nozzle with calculations, not all TML readings)
+- [x] Fix missing data (dashes) in Manus import - enhanced extraction prompt with specific guidelines
+- [x] Nozzle table should use minimum thickness from all readings for calculations
+- [x] Nozzle table needs columns: CML, Noz ID, Size, Material, Age, t prev, t act, t min, Ca, Cr, RL
+- [x] Automatically create nozzle records from TML readings with nozzle keywords (Manway, Relief, etc.)

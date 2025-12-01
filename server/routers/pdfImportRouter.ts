@@ -85,7 +85,19 @@ IMPORTANT: For thickness measurements:
 - minThickness should be the minimum of all readings for that CML
 - Include nominal/design thickness (tmin) if shown in the table
 
-Extract ALL thickness measurements from tables. Be thorough and accurate.`;
+Extract ALL thickness measurements from tables. Be thorough and accurate.
+
+IMPORTANT EXTRACTION GUIDELINES:
+1. Vessel data is typically on the first few pages in a summary table or header section
+2. Look for "Vessel Specifications", "Design Data", or similar sections
+3. MDMT, Operating Temperature, and Product are critical - search the entire document if not in the first section
+4. Construction Code is often listed as "ASME S8 D1" or similar
+5. If a field is not explicitly stated, try to infer from context (e.g., vessel orientation from drawings)
+6. For missing numeric values, use null rather than guessing
+7. Thickness measurements are usually in appendices or dedicated UT measurement sections
+8. Extract inspector name, report number, and client from the cover page or header
+
+Do NOT leave fields empty if the information exists anywhere in the document. Search thoroughly.`;
 
         const response = await invokeLLM({
           messages: [
@@ -333,6 +345,15 @@ Extract ALL thickness measurements from tables. Be thorough and accurate.`;
 
         console.log('[PDF Import] About to insert', tmlRecords.length, 'TML records');
         
+        // Identify nozzle TMLs and create nozzle evaluation records
+        const nozzleKeywords = ['manway', 'relief', 'vapor', 'sight', 'gauge', 'reactor', 'feed', 'inlet', 'outlet', 'drain', 'vent'];
+        const nozzleTMLs = tmlRecords.filter(record => {
+          const comp = (record.componentType || '').toLowerCase();
+          return nozzleKeywords.some(keyword => comp.includes(keyword));
+        });
+        
+        console.log('[PDF Import] Identified', nozzleTMLs.length, 'nozzle TMLs');
+        
         // Use raw SQL to bypass Drizzle ORM issue with defaults
         for (const record of tmlRecords) {
           await db.execute(sql`
@@ -348,6 +369,58 @@ Extract ALL thickness measurements from tables. Be thorough and accurate.`;
               ${record.status}, ${record.tmlId}, ${record.component}, ${record.currentThickness}
             )
           `);
+        }
+        
+        // Create nozzle evaluation records for identified nozzles
+        if (nozzleTMLs.length > 0) {
+          console.log('[PDF Import] Creating nozzle evaluation records...');
+          const { nozzleEvaluations } = await import('../../drizzle/schema.js');
+          
+          for (const nozzleTML of nozzleTMLs) {
+            // Extract nozzle size from component name (e.g., "24\" Manway" -> "24")
+            const sizeMatch = nozzleTML.componentType.match(/(\d+(?:\.\d+)?)\s*["']/);
+            const nominalSize = sizeMatch ? sizeMatch[1] : '1';
+            
+            // Extract nozzle description (e.g., "Manway", "Relief", "Vapor Out")
+            const description = nozzleTML.componentType.replace(/\d+\s*["']/g, '').trim();
+            
+            // Determine minimum required thickness based on size
+            const sizeNum = parseFloat(nominalSize);
+            let minimumRequired = 0.116; // Default for 1" nozzle
+            if (sizeNum >= 24) minimumRequired = 0.328;
+            else if (sizeNum >= 12) minimumRequired = 0.328;
+            else if (sizeNum >= 10) minimumRequired = 0.319;
+            else if (sizeNum >= 8) minimumRequired = 0.282;
+            else if (sizeNum >= 6) minimumRequired = 0.245;
+            else if (sizeNum >= 4) minimumRequired = 0.207;
+            else if (sizeNum >= 3) minimumRequired = 0.189;
+            else if (sizeNum >= 2) minimumRequired = 0.135;
+            else if (sizeNum >= 1.5) minimumRequired = 0.127;
+            
+            const nozzleRecord = {
+              id: nanoid(),
+              inspectionId: inspectionId,
+              nozzleNumber: nozzleTML.cmlNumber || `N${nozzleTMLs.indexOf(nozzleTML) + 1}`,
+              nozzleDescription: description,
+              location: nozzleTML.location || null,
+              nominalSize: nominalSize,
+              schedule: null,
+              actualThickness: nozzleTML.tActual,
+              pipeNominalThickness: null,
+              pipeMinusManufacturingTolerance: null,
+              shellHeadRequiredThickness: null,
+              minimumRequired: minimumRequired.toString(),
+              material: 'SS A - 304',
+              status: 'acceptable',
+              notes: null,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            };
+            
+            await db.insert(nozzleEvaluations).values(nozzleRecord);
+          }
+          
+          console.log('[PDF Import] Created', nozzleTMLs.length, 'nozzle evaluation records');
         }
       }
 
