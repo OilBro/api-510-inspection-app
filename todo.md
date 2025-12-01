@@ -299,3 +299,11 @@
 - [x] Nozzle table should use minimum thickness from all readings for calculations
 - [x] Nozzle table needs columns: CML, Noz ID, Size, Material, Age, t prev, t act, t min, Ca, Cr, RL
 - [x] Automatically create nozzle records from TML readings with nozzle keywords (Manway, Relief, etc.)
+
+## P0 - URGENT: Missing Data in Generated PDF (User Reported)
+- [x] Analyze generated PDF to identify all fields showing dashes instead of actual data
+- [x] Fix PDF generator to pull all available data from inspection record
+- [x] Ensure Manus import parser extracts all fields from source PDF
+- [x] Verify vessel metadata (MDMT, Operating Temp, Product, etc.) displays correctly
+- [x] Check component calculations populate properly in executive summary - added East Head and West Head calculations
+- [x] Validate nozzle table shows all extracted nozzle data

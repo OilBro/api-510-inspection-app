@@ -973,6 +973,160 @@ export const appRouter = router({
                 corrosionAllowance: CA.toString(),
               });
               console.log(`[PDF Import] Auto-created shell component calculation for report ${report.id}`);
+              
+              // Create East Head component calculation
+              const eastHeadTMLs = createdTMLs.filter((tml: any) => 
+                tml.component && (tml.component.toLowerCase().includes('east') && tml.component.toLowerCase().includes('head'))
+              );
+              
+              if (eastHeadTMLs.length > 0) {
+                const eastCurrentThicknesses = eastHeadTMLs
+                  .map((t: any) => parseFloat(t.currentThickness))
+                  .filter((v: number) => !isNaN(v));
+                const eastPreviousThicknesses = eastHeadTMLs
+                  .map((t: any) => parseFloat(t.previousThickness))
+                  .filter((v: number) => !isNaN(v));
+                const eastNominalThicknesses = eastHeadTMLs
+                  .map((t: any) => parseFloat(t.nominalThickness))
+                  .filter((v: number) => !isNaN(v));
+                
+                const eastAvgCurrent = eastCurrentThicknesses.length > 0 ? 
+                  (eastCurrentThicknesses.reduce((a, b) => a + b, 0) / eastCurrentThicknesses.length).toFixed(4) : undefined;
+                const eastAvgPrevious = eastPreviousThicknesses.length > 0 ? 
+                  (eastPreviousThicknesses.reduce((a, b) => a + b, 0) / eastPreviousThicknesses.length).toFixed(4) : undefined;
+                const eastAvgNominal = eastNominalThicknesses.length > 0 ? 
+                  (eastNominalThicknesses.reduce((a, b) => a + b, 0) / eastNominalThicknesses.length).toFixed(4) : undefined;
+                
+                // Calculate East Head minimum thickness (2:1 ellipsoidal head)
+                let eastMinThickness;
+                if (P && R && S && E) {
+                  const denominator = 2 * S * E - 0.2 * P;
+                  if (denominator > 0) {
+                    eastMinThickness = ((P * R) / denominator).toFixed(4);
+                  }
+                }
+                
+                // Calculate East Head corrosion rate and remaining life
+                let eastCorrosionRate, eastRemainingLife, eastCorrosionAllowance;
+                if (eastAvgPrevious && eastAvgCurrent && eastMinThickness) {
+                  const prevThick = parseFloat(eastAvgPrevious);
+                  const currThick = parseFloat(eastAvgCurrent);
+                  const minThick = parseFloat(eastMinThickness);
+                  const timeSpan = 10;
+                  
+                  eastCorrosionRate = ((prevThick - currThick) / timeSpan).toFixed(6);
+                  eastCorrosionAllowance = (currThick - minThick).toFixed(4);
+                  
+                  const cr = parseFloat(eastCorrosionRate);
+                  const ca = parseFloat(eastCorrosionAllowance);
+                  if (cr > 0 && ca > 0) {
+                    eastRemainingLife = (ca / cr).toFixed(2);
+                  } else if (ca <= 0) {
+                    eastRemainingLife = "0.00";
+                  }
+                }
+                
+                await professionalReportDb.createComponentCalculation({
+                  id: nanoid(),
+                  reportId: report.id,
+                  componentName: "East Head",
+                  componentType: "head",
+                  materialCode: inspection.materialSpec,
+                  materialName: inspection.materialSpec,
+                  designTemp: inspection.designTemperature ? inspection.designTemperature.toString() : undefined,
+                  designMAWP: inspection.designPressure ? inspection.designPressure.toString() : undefined,
+                  insideDiameter: inspection.insideDiameter ? inspection.insideDiameter.toString() : undefined,
+                  nominalThickness: eastAvgNominal,
+                  previousThickness: eastAvgPrevious,
+                  actualThickness: eastAvgCurrent,
+                  minimumThickness: eastMinThickness,
+                  corrosionRate: eastCorrosionRate,
+                  remainingLife: eastRemainingLife,
+                  timeSpan: "10",
+                  nextInspectionYears: eastRemainingLife ? (parseFloat(eastRemainingLife) * 0.5).toFixed(2) : "5",
+                  allowableStress: "15000",
+                  jointEfficiency: "1.0",
+                  corrosionAllowance: CA.toString(),
+                });
+                console.log(`[PDF Import] Auto-created East Head component calculation for report ${report.id}`);
+              }
+              
+              // Create West Head component calculation
+              const westHeadTMLs = createdTMLs.filter((tml: any) => 
+                tml.component && (tml.component.toLowerCase().includes('west') && tml.component.toLowerCase().includes('head'))
+              );
+              
+              if (westHeadTMLs.length > 0) {
+                const westCurrentThicknesses = westHeadTMLs
+                  .map((t: any) => parseFloat(t.currentThickness))
+                  .filter((v: number) => !isNaN(v));
+                const westPreviousThicknesses = westHeadTMLs
+                  .map((t: any) => parseFloat(t.previousThickness))
+                  .filter((v: number) => !isNaN(v));
+                const westNominalThicknesses = westHeadTMLs
+                  .map((t: any) => parseFloat(t.nominalThickness))
+                  .filter((v: number) => !isNaN(v));
+                
+                const westAvgCurrent = westCurrentThicknesses.length > 0 ? 
+                  (westCurrentThicknesses.reduce((a, b) => a + b, 0) / westCurrentThicknesses.length).toFixed(4) : undefined;
+                const westAvgPrevious = westPreviousThicknesses.length > 0 ? 
+                  (westPreviousThicknesses.reduce((a, b) => a + b, 0) / westPreviousThicknesses.length).toFixed(4) : undefined;
+                const westAvgNominal = westNominalThicknesses.length > 0 ? 
+                  (westNominalThicknesses.reduce((a, b) => a + b, 0) / westNominalThicknesses.length).toFixed(4) : undefined;
+                
+                // Calculate West Head minimum thickness (2:1 ellipsoidal head)
+                let westMinThickness;
+                if (P && R && S && E) {
+                  const denominator = 2 * S * E - 0.2 * P;
+                  if (denominator > 0) {
+                    westMinThickness = ((P * R) / denominator).toFixed(4);
+                  }
+                }
+                
+                // Calculate West Head corrosion rate and remaining life
+                let westCorrosionRate, westRemainingLife, westCorrosionAllowance;
+                if (westAvgPrevious && westAvgCurrent && westMinThickness) {
+                  const prevThick = parseFloat(westAvgPrevious);
+                  const currThick = parseFloat(westAvgCurrent);
+                  const minThick = parseFloat(westMinThickness);
+                  const timeSpan = 10;
+                  
+                  westCorrosionRate = ((prevThick - currThick) / timeSpan).toFixed(6);
+                  westCorrosionAllowance = (currThick - minThick).toFixed(4);
+                  
+                  const cr = parseFloat(westCorrosionRate);
+                  const ca = parseFloat(westCorrosionAllowance);
+                  if (cr > 0 && ca > 0) {
+                    westRemainingLife = (ca / cr).toFixed(2);
+                  } else if (ca <= 0) {
+                    westRemainingLife = "0.00";
+                  }
+                }
+                
+                await professionalReportDb.createComponentCalculation({
+                  id: nanoid(),
+                  reportId: report.id,
+                  componentName: "West Head",
+                  componentType: "head",
+                  materialCode: inspection.materialSpec,
+                  materialName: inspection.materialSpec,
+                  designTemp: inspection.designTemperature ? inspection.designTemperature.toString() : undefined,
+                  designMAWP: inspection.designPressure ? inspection.designPressure.toString() : undefined,
+                  insideDiameter: inspection.insideDiameter ? inspection.insideDiameter.toString() : undefined,
+                  nominalThickness: westAvgNominal,
+                  previousThickness: westAvgPrevious,
+                  actualThickness: westAvgCurrent,
+                  minimumThickness: westMinThickness,
+                  corrosionRate: westCorrosionRate,
+                  remainingLife: westRemainingLife,
+                  timeSpan: "10",
+                  nextInspectionYears: westRemainingLife ? (parseFloat(westRemainingLife) * 0.5).toFixed(2) : "5",
+                  allowableStress: "15000",
+                  jointEfficiency: "1.0",
+                  corrosionAllowance: CA.toString(),
+                });
+                console.log(`[PDF Import] Auto-created West Head component calculation for report ${report.id}`);
+              }
             }
           }
           
