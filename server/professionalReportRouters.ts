@@ -19,6 +19,7 @@ import {
   getRecommendations,
   updateRecommendation,
   deleteRecommendation,
+  generateDefaultCalculationsForInspection,
   createInspectionPhoto,
   getInspectionPhotos,
   updateInspectionPhoto,
@@ -72,6 +73,9 @@ export const professionalReportRouter = router({
         
         // Initialize default checklist
         await initializeDefaultChecklist(reportId);
+        
+        // Generate default component calculations
+        await generateDefaultCalculationsForInspection(input.inspectionId, reportId);
         
           report = await getProfessionalReport(reportId);
         }
@@ -699,6 +703,10 @@ export const professionalReportRouter = router({
           inspectorName: ctx.user.name || '',
           employerName: 'OilPro Consulting LLC',
         });
+        
+        // Generate default component calculations
+        await professionalReportDb.generateDefaultCalculationsForInspection(input.inspectionId, reportId);
+        
         report = await professionalReportDb.getProfessionalReport(reportId);
       }
       

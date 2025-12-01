@@ -413,3 +413,12 @@
 - [x] Test calculations against 54-11-067 expected: Shell 307.5 psi, East Head 263.9 psi, West Head 262.5 psi
 - [x] Add allowable stress lookup for SA-240 304 SS at 200°F
 - [x] Verify joint efficiency E = 0.85 is correctly applied
+
+## P0 - CRITICAL BUG: Data Isolation Issue (User Reported)
+- [x] Fix PDF generator showing data from different vessel/report in heads section
+- [x] Investigate where component calculations are being queried incorrectly
+- [x] Ensure all queries filter by correct reportId/inspectionId
+- [x] Add validation to prevent cross-contamination between reports
+- [ ] Test with multiple vessels to verify data isolation
+
+**Root Cause:** Component calculations were not being automatically generated when creating professional reports. Added generateDefaultCalculationsForInspection() calls to both report creation paths.

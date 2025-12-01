@@ -1,0 +1,34 @@
+{
+  "query": "SELECT pr.id as reportId, pr.inspectionId, i.vesselTagNumber, pr.createdAt FROM professionalReports pr JOIN inspections i ON pr.inspectionId = i.id ORDER BY i.vesselTagNumber;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2vRv1t5JdAedAFZ.807c3fab4c80 --database A4XPjAmiHcgmrps2ZTa96H --execute SELECT pr.id as reportId, pr.inspectionId, i.vesselTagNumber, pr.createdAt FROM professionalReports pr JOIN inspections i ON pr.inspectionId = i.id ORDER BY i.vesselTagNumber;",
+  "rows": [
+    {
+      "reportId": "l3viB2kdJN38AG7ReWQEg",
+      "inspectionId": "0FbIOL_efD78_-B3W6xxl",
+      "vesselTagNumber": "54-11-004",
+      "createdAt": "2025-12-01 15:45:59"
+    },
+    {
+      "reportId": "TYuk8N1VDzQmPsL8za_ma",
+      "inspectionId": "D0TYRj0TwmUIlPd7Q5Jnj",
+      "vesselTagNumber": "54-11-005",
+      "createdAt": "2025-12-01 15:42:58"
+    },
+    {
+      "reportId": "CjnjvPWE57_PrqTyZkKox",
+      "inspectionId": "X-A6pjhI--FW6PE8L3Xqs",
+      "vesselTagNumber": "54-11-067",
+      "createdAt": "2025-12-01 07:56:39"
+    },
+    {
+      "reportId": "kpevCXP1IzVZuqrz-m4lw",
+      "inspectionId": "-hVQHlzdjeyw4lqUsqKry",
+      "vesselTagNumber": "54-11-067",
+      "createdAt": "2025-12-01 04:54:13"
+    }
+  ],
+  "messages": [],
+  "stdout": "reportId\tinspectionId\tvesselTagNumber\tcreatedAt\nl3viB2kdJN38AG7ReWQEg\t0FbIOL_efD78_-B3W6xxl\t54-11-004\t2025-12-01 15:45:59\nTYuk8N1VDzQmPsL8za_ma\tD0TYRj0TwmUIlPd7Q5Jnj\t54-11-005\t2025-12-01 15:42:58\nCjnjvPWE57_PrqTyZkKox\tX-A6pjhI--FW6PE8L3Xqs\t54-11-067\t2025-12-01 07:56:39\nkpevCXP1IzVZuqrz-m4lw\t-hVQHlzdjeyw4lqUsqKry\t54-11-067\t2025-12-01 04:54:13\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}

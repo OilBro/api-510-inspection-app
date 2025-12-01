@@ -1,0 +1,22 @@
+{
+  "query": "SELECT cc.componentName, i.vesselTagNumber, cc.reportId, cc.actualThickness FROM componentCalculations cc JOIN professionalReports pr ON cc.reportId = pr.id JOIN inspections i ON pr.inspectionId = i.id ORDER BY i.vesselTagNumber, cc.componentName;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2vRv1t5JdAedAFZ.807c3fab4c80 --database A4XPjAmiHcgmrps2ZTa96H --execute SELECT cc.componentName, i.vesselTagNumber, cc.reportId, cc.actualThickness FROM componentCalculations cc JOIN professionalReports pr ON cc.reportId = pr.id JOIN inspections i ON pr.inspectionId = i.id ORDER BY i.vesselTagNumber, cc.componentName;",
+  "rows": [
+    {
+      "componentName": "East Head",
+      "vesselTagNumber": "54-11-004",
+      "reportId": "l3viB2kdJN38AG7ReWQEg",
+      "actualThickness": "0.4943"
+    },
+    {
+      "componentName": "Shell",
+      "vesselTagNumber": "54-11-004",
+      "reportId": "l3viB2kdJN38AG7ReWQEg",
+      "actualThickness": "0.3139"
+    }
+  ],
+  "messages": [],
+  "stdout": "componentName\tvesselTagNumber\treportId\tactualThickness\nEast Head\t54-11-004\tl3viB2kdJN38AG7ReWQEg\t0.4943\nShell\t54-11-004\tl3viB2kdJN38AG7ReWQEg\t0.3139\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

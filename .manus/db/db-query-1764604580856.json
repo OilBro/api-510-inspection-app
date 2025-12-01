@@ -1,0 +1,38 @@
+{
+  "query": "SELECT id, vesselTagNumber, vesselName, inspectionDate, status FROM inspections ORDER BY vesselTagNumber;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2vRv1t5JdAedAFZ.807c3fab4c80 --database A4XPjAmiHcgmrps2ZTa96H --execute SELECT id, vesselTagNumber, vesselName, inspectionDate, status FROM inspections ORDER BY vesselTagNumber;",
+  "rows": [
+    {
+      "id": "0FbIOL_efD78_-B3W6xxl",
+      "vesselTagNumber": "54-11-004",
+      "vesselName": "Tank Storage Area",
+      "inspectionDate": "NULL",
+      "status": "draft"
+    },
+    {
+      "id": "D0TYRj0TwmUIlPd7Q5Jnj",
+      "vesselTagNumber": "54-11-005",
+      "vesselName": "54-11-005",
+      "inspectionDate": "NULL",
+      "status": "draft"
+    },
+    {
+      "id": "-hVQHlzdjeyw4lqUsqKry",
+      "vesselTagNumber": "54-11-067",
+      "vesselName": "54-11-067 Clean Methylchloride",
+      "inspectionDate": "2025-09-24 00:00:00",
+      "status": "draft"
+    },
+    {
+      "id": "X-A6pjhI--FW6PE8L3Xqs",
+      "vesselTagNumber": "54-11-067",
+      "vesselName": "Process Vessel",
+      "inspectionDate": "2025-10-08 00:00:00",
+      "status": "completed"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tvesselTagNumber\tvesselName\tinspectionDate\tstatus\n0FbIOL_efD78_-B3W6xxl\t54-11-004\tTank Storage Area\tNULL\tdraft\nD0TYRj0TwmUIlPd7Q5Jnj\t54-11-005\t54-11-005\tNULL\tdraft\n-hVQHlzdjeyw4lqUsqKry\t54-11-067\t54-11-067 Clean Methylchloride\t2025-09-24 00:00:00\tdraft\nX-A6pjhI--FW6PE8L3Xqs\t54-11-067\tProcess Vessel\t2025-10-08 00:00:00\tcompleted\n",
+  "stderr": "",
+  "execution_time_ms": 780
+}

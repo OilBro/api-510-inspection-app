@@ -1,0 +1,8 @@
+{
+  "query": "SELECT cc.id, cc.reportId, cc.componentName, cc.actualThickness, cc.minimumThickness, cc.mawp, i.vesselTagNumber FROM componentCalculations cc JOIN professionalReports pr ON cc.reportId = pr.id JOIN inspections i ON pr.inspectionId = i.id WHERE i.vesselTagNumber LIKE '%54-11-005%' ORDER BY cc.componentName;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2vRv1t5JdAedAFZ.807c3fab4c80 --database A4XPjAmiHcgmrps2ZTa96H --execute SELECT cc.id, cc.reportId, cc.componentName, cc.actualThickness, cc.minimumThickness, cc.mawp, i.vesselTagNumber FROM componentCalculations cc JOIN professionalReports pr ON cc.reportId = pr.id JOIN inspections i ON pr.inspectionId = i.id WHERE i.vesselTagNumber LIKE '%54-11-005%' ORDER BY cc.componentName;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'cc.mawp' in 'field list'"
+  ]
+}
