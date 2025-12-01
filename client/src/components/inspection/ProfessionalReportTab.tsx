@@ -634,6 +634,7 @@ export default function ProfessionalReportTab({ inspectionId }: ProfessionalRepo
 function ComponentCalculationsSection({ reportId }: { reportId: string }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [componentType, setComponentType] = useState<"shell" | "head">("shell");
+  const [recalculating, setRecalculating] = useState(false);
   const utils = trpc.useUtils();
 
   const { data: calculations, isLoading } = trpc.professionalReport.componentCalculations.list.useQuery({
@@ -657,6 +658,23 @@ function ComponentCalculationsSection({ reportId }: { reportId: string }) {
       toast.success("Component calculation deleted");
     },
   });
+
+  const recalculate = trpc.professionalReport.recalculate.useMutation({
+    onSuccess: () => {
+      utils.professionalReport.componentCalculations.list.invalidate();
+      toast.success("Component calculations regenerated successfully");
+      setRecalculating(false);
+    },
+    onError: (error) => {
+      toast.error(`Failed to recalculate: ${error.message}`);
+      setRecalculating(false);
+    },
+  });
+
+  const handleRecalculate = () => {
+    setRecalculating(true);
+    recalculate.mutate({ reportId });
+  };
 
   const handleExportTemplate = () => {
     // Create Excel template with component calculation columns

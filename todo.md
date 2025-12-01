@@ -327,3 +327,8 @@
 - [x] Refresh component calculations display after recalculation
 - [x] Analyze user's PDF to identify remaining dash issues
 - [x] Fix any remaining data fields showing dashes - added clientName extraction during import
+
+## P0 - CRITICAL: Fix Recalculate Button Error
+- [x] Fix "handleRecalculate is not defined" error in ComponentCalculationsSection
+- [x] Ensure recalculate mutation and state are properly defined in component scope
+- [ ] Test recalculate button click functionality
