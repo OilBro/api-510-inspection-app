@@ -48,8 +48,41 @@ export const appRouter = router({
   }),
 
   inspections: router({
-    // List all inspections for the current user
-    list: protectedProcedure.query(async ({ ctx }) => {
+      // Get original uploaded PDF for an inspection
+  getOriginalPdf: protectedProcedure
+    .input(z.object({ inspectionId: z.string() }))
+    .query(async ({ input, ctx }) => {
+      const db = await import('./db');
+      
+      // Get inspection to verify ownership
+      const inspection = await db.getInspection(input.inspectionId);
+      if (!inspection) {
+        throw new Error('Inspection not found');
+      }
+      
+      if (inspection.userId !== ctx.user.id) {
+        throw new Error('Unauthorized');
+      }
+      
+      // Get imported files for this inspection
+      const files = await db.getInspectionImportedFiles(input.inspectionId);
+      
+      // Find the first PDF file
+      const pdfFile = files.find((f: any) => f.fileType === 'pdf' || f.fileName?.endsWith('.pdf'));
+      
+      if (!pdfFile) {
+        return null;
+      }
+      
+      return {
+        url: pdfFile.fileUrl,
+        fileName: pdfFile.fileName,
+      };
+    }),
+
+  // Get all inspections for the current user
+  list: protectedProcedure.query(async ({ ctx }) => {
+      const db = await import('./db');
       return await db.getUserInspections(ctx.user.id);
     }),
 

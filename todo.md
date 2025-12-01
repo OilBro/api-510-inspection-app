@@ -337,3 +337,11 @@
 - [x] Fix recalculate mutation - expects inspectionId but receiving reportId
 - [x] Get inspectionId from report data and pass to recalculate mutation
 - [ ] Test recalculate button with correct parameters
+
+## P1 - PDF Comparison View Feature
+- [x] Design side-by-side comparison layout (original PDF on left, generated report on right)
+- [x] Create PDFComparisonView component with split-screen layout
+- [x] Add backend procedure to retrieve original uploaded PDF URL from imported files
+- [x] Integrate comparison view as new tab in Professional Report section
+- [x] Add zoom and sync scroll functionality for easier comparison
+- [ ] Test comparison view with real inspection data

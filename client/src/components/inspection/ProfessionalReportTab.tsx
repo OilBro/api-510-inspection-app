@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
+import PDFComparisonView from "@/components/professionalReport/PDFComparisonView";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
 import { Loader2, Download, Plus, Trash2, Upload, FileText, Mail, Calculator } from "lucide-react";
 import FindingsSection from "../professionalReport/FindingsSection";
 import RecommendationsSection from "../professionalReport/RecommendationsSection";
@@ -219,10 +220,11 @@ export default function ProfessionalReportTab({ inspectionId }: ProfessionalRepo
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-9">
-          <TabsTrigger value="info">Report Info</TabsTrigger>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="calculations">Calculations</TabsTrigger>
-          <TabsTrigger value="nozzles">Nozzles</TabsTrigger>
+          <TabsTrigger value="nozzles">Nozzle Evaluation</TabsTrigger>
           <TabsTrigger value="findings">Findings</TabsTrigger>
+          <TabsTrigger value="comparison">Comparison</TabsTrigger>
           <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
           <TabsTrigger value="photos">Photos</TabsTrigger>
           <TabsTrigger value="checklist">Checklist</TabsTrigger>
@@ -518,6 +520,11 @@ export default function ProfessionalReportTab({ inspectionId }: ProfessionalRepo
         {/* Nozzle Evaluation Tab */}
         <TabsContent value="nozzles">
           <NozzleEvaluationSection inspectionId={inspectionId} />
+        </TabsContent>
+
+        {/* Comparison Tab */}
+        <TabsContent value="comparison">
+          <PDFComparisonView inspectionId={inspectionId} reportId={report.id} />
         </TabsContent>
 
         {/* Findings Tab */}

@@ -257,6 +257,7 @@ export async function createImportedFile(file: InsertImportedFile) {
 export const getUserInspections = getInspections;
 export const getCalculation = getCalculations;
 export const saveCalculation = saveCalculations;
+export const getInspectionImportedFiles = getImportedFiles;
 
 export async function updateCalculation(id: string, data: Partial<InsertCalculation>) {
   const db = await getDb();
