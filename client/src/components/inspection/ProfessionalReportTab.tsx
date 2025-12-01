@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, Download, Plus, Trash2, Upload, FileText, Mail } from "lucide-react";
+import { Loader2, Download, Plus, Trash2, Upload, FileText, Mail, Calculator } from "lucide-react";
 import FindingsSection from "../professionalReport/FindingsSection";
 import RecommendationsSection from "../professionalReport/RecommendationsSection";
 import PhotosSection from "../professionalReport/PhotosSection";
@@ -780,6 +780,19 @@ function ComponentCalculationsSection({ reportId }: { reportId: string }) {
           <Button variant="outline" className="gap-2" onClick={() => document.getElementById('component-import-input')?.click()}>
             <Upload className="h-4 w-4" />
             Import
+          </Button>
+          <Button
+            onClick={handleRecalculate}
+            disabled={recalculating}
+            variant="outline"
+            className="gap-2"
+          >
+            {recalculating ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Calculator className="h-4 w-4" />
+            )}
+            Recalculate
           </Button>
           <input
             id="component-import-input"

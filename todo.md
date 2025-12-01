@@ -318,3 +318,12 @@
 - [ ] Validate TABLE A shows all three components with calculated values (no dashes)
 - [ ] Ensure nozzle table displays properly with calculations
 - [ ] Fix any remaining calculation accuracy issues
+
+## P0 - URGENT: Add Recalculate Button UI
+- [x] Add "Recalculate" button to inspection detail page
+- [x] Wire button to professionalReport.recalculate mutation
+- [x] Show loading state during recalculation
+- [x] Show success/error toast after recalculation
+- [x] Refresh component calculations display after recalculation
+- [x] Analyze user's PDF to identify remaining dash issues
+- [x] Fix any remaining data fields showing dashes - added clientName extraction during import

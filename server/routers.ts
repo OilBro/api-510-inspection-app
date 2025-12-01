@@ -866,10 +866,11 @@ export const appRouter = router({
                 id: reportId,
                 inspectionId: inspection.id,
                 userId: ctx.user.id,
-                reportNumber: `RPT-${Date.now()}`,
-                reportDate: new Date(),
-                inspectorName: ctx.user.name || "",
+                reportNumber: parsedData.reportNumber || `RPT-${Date.now()}`,
+                reportDate: parsedData.reportDate ? new Date(parsedData.reportDate) : new Date(),
+                inspectorName: parsedData.inspectorName || ctx.user.name || "",
                 employerName: "OilPro Consulting LLC",
+                clientName: parsedData.clientName || inspection.clientName || "",
               });
               report = await professionalReportDb.getProfessionalReportByInspection(inspection.id);
               console.log(`[PDF Import] Auto-created professional report ${reportId}`);
