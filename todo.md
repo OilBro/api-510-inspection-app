@@ -351,3 +351,13 @@
 - [x] Add previousThickness field to Zod schema in AI import to prevent data loss
 - [x] Sanitize inputs in addTable toStr helper to prevent crashes from non-ASCII characters
 - [x] Fix t_next calculation logic - currently using 2*Yn*Cr, should be Yn*Cr
+
+## P0 - COMPREHENSIVE FIXES (User Document)
+- [x] Fix data linkage - findings/recommendations saved under inspectionId but PDF looks for reportId
+- [x] Update getInspectionFindings to check both reportId and inspectionId
+- [x] Update getRecommendations to check both reportId and inspectionId
+- [ ] Prevent duplicates on import - clear existing data before inserting new data
+- [x] Auto-generate component calculations after import
+- [x] Add generateDefaultCalculations helper function
+- [ ] Update PDF generator to handle missing data gracefully
+- [ ] Fix nozzle evaluation table generation

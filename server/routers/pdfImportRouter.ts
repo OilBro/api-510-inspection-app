@@ -440,6 +440,39 @@ Do NOT leave fields empty if the information exists anywhere in the document. Se
         await db.insert(inspectionFindings).values(findingRecords);
       }
 
+      // Auto-generate component calculations after import
+      try {
+        const { generateDefaultCalculationsForInspection, createProfessionalReport, getProfessionalReportByInspection } = await import('../professionalReportDb');
+        
+        // Check if professional report exists, create if not
+        let report = await getProfessionalReportByInspection(inspectionId);
+        let reportId: string;
+        
+        if (!report) {
+          reportId = nanoid();
+          await createProfessionalReport({
+            id: reportId,
+            inspectionId: inspectionId,
+            userId: ctx.user.id,
+            reportNumber: input.inspectionData.reportNumber || `RPT-${Date.now()}`,
+            reportDate: new Date(input.inspectionData.inspectionDate),
+            inspectorName: input.inspectionData.inspector || 'Unknown',
+            clientName: input.inspectionData.client || null,
+            employerName: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+        } else {
+          reportId = report.id;
+        }
+        
+        await generateDefaultCalculationsForInspection(inspectionId, reportId);
+        console.log('[PDF Import] Auto-generated component calculations for inspection', inspectionId);
+      } catch (calcError) {
+        console.error('[PDF Import] Failed to auto-generate calculations:', calcError);
+        // Don't fail the entire import if calculation generation fails
+      }
+
       return {
         success: true,
         inspectionId: inspectionId,

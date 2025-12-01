@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, or, and } from "drizzle-orm";
 import { getDb } from "./db";
 import {
   professionalReports,
@@ -10,6 +10,8 @@ import {
   checklistItems,
   ffsAssessments,
   inLieuOfAssessments,
+  inspections,
+  tmlReadings,
   InsertProfessionalReport,
   InsertComponentCalculation,
   InsertInspectionFinding,
@@ -18,6 +20,7 @@ import {
   InsertAppendixDocument,
   InsertChecklistItem,
 } from "../drizzle/schema";
+import { nanoid } from "nanoid";
 
 // ============================================================================
 // Professional Report CRUD
@@ -126,9 +129,23 @@ export async function createInspectionFinding(data: InsertInspectionFinding) {
   return data.id;
 }
 
-export async function getInspectionFindings(reportId: string) {
+/**
+ * Get findings by Report ID OR Inspection ID
+ * This fixes the issue where imported findings (linked to inspectionId) don't show up in the report
+ */
+export async function getInspectionFindings(reportId: string, inspectionId?: string) {
   const db = await getDb();
   if (!db) return [];
+  
+  if (inspectionId) {
+    return await db
+      .select()
+      .from(inspectionFindings)
+      .where(or(
+        eq(inspectionFindings.reportId, reportId),
+        eq(inspectionFindings.reportId, inspectionId) // Check if saved under inspectionId
+      ));
+  }
   
   return await db
     .select()
@@ -161,9 +178,22 @@ export async function createRecommendation(data: InsertRecommendation) {
   return data.id;
 }
 
-export async function getRecommendations(reportId: string) {
+/**
+ * Get recommendations by Report ID OR Inspection ID
+ */
+export async function getRecommendations(reportId: string, inspectionId?: string) {
   const db = await getDb();
   if (!db) return [];
+  
+  if (inspectionId) {
+    return await db
+      .select()
+      .from(recommendations)
+      .where(or(
+        eq(recommendations.reportId, reportId),
+        eq(recommendations.reportId, inspectionId)
+      ));
+  }
   
   return await db
     .select()
@@ -296,6 +326,10 @@ export async function updateChecklistItem(
 // ============================================================================
 
 export async function initializeDefaultChecklist(reportId: string) {
+  // Check if items already exist
+  const existing = await getChecklistItems(reportId);
+  if (existing.length > 0) return;
+
   const defaultItems: Omit<InsertChecklistItem, "id" | "reportId">[] = [
     // Foundation
     { category: "foundation", itemNumber: "3.1.1", itemText: "Vessel foundation supports attached and in satisfactory condition", sequenceNumber: 1, checked: false, status: "not_checked", createdAt: new Date(), updatedAt: new Date() },
@@ -324,7 +358,6 @@ export async function initializeDefaultChecklist(reportId: string) {
   if (!db) throw new Error("Database not available");
   
   for (const item of defaultItems) {
-    const { nanoid } = await import("nanoid");
     await createChecklistItem({
       id: nanoid(),
       reportId,
@@ -354,6 +387,91 @@ export async function deleteRecommendation(recommendationId: string) {
 }
 
 
+// ============================================================================
+// Auto-Generate Calculations (Shared Logic)
+// ============================================================================
+
+export async function generateDefaultCalculationsForInspection(inspectionId: string, reportId: string) {
+  const db = await getDb();
+  if (!db) return;
+
+  // Get inspection details
+  const inspectionResult = await db.select().from(inspections).where(eq(inspections.id, inspectionId)).limit(1);
+  const inspection = inspectionResult[0];
+  if (!inspection) return;
+
+  // Get TML readings
+  const tmlResults = await db.select().from(tmlReadings).where(eq(tmlReadings.inspectionId, inspectionId));
+  
+  // Clear existing calculations to prevent duplicates
+  await db.delete(componentCalculations).where(eq(componentCalculations.reportId, reportId));
+
+  // Helper: Create Calculation
+  const createCalc = async (type: 'shell' | 'head', name: string, keyword: string) => {
+    // Filter TMLs for this component
+    const relevantTMLs = tmlResults.filter(t => 
+      t.componentType?.toLowerCase().includes(keyword) || 
+      t.component?.toLowerCase().includes(keyword)
+    );
+    
+    // Determine thicknesses (average of relevant TMLs or default)
+    const validCurrent = relevantTMLs.map(t => parseFloat(t.tActual || t.currentThickness || '0')).filter(v => v > 0);
+    const validPrev = relevantTMLs.map(t => parseFloat(t.previousThickness || '0')).filter(v => v > 0);
+    
+    const avgCurrent = validCurrent.length ? (validCurrent.reduce((a, b) => a + b, 0) / validCurrent.length) : (type === 'shell' ? 0.652 : 0.555);
+    const avgPrev = validPrev.length ? (validPrev.reduce((a, b) => a + b, 0) / validPrev.length) : (type === 'shell' ? 0.625 : 0.500);
+    
+    // Default design params
+    const P = parseFloat(inspection.designPressure || '250');
+    const D = parseFloat(inspection.insideDiameter || '70.75');
+    const R = D / 2;
+    const S = 20000;
+    const E = 0.85;
+    
+    // Calculate Min Thickness
+    let tMin = 0;
+    if (type === 'shell') {
+      tMin = (P * R) / (S * E - 0.6 * P);
+    } else {
+      // Ellipsoidal Head
+      tMin = (P * D) / (2 * S * E - 0.2 * P);
+    }
+    
+    const tMinStr = tMin.toFixed(4);
+    const CA = (avgCurrent - tMin).toFixed(3);
+    const CR = validPrev.length ? ((avgPrev - avgCurrent) / 10).toFixed(6) : '0.00000'; // Assume 10 years if no dates
+    const RL = parseFloat(CR) > 0 ? (parseFloat(CA) / parseFloat(CR)).toFixed(2) : '>20';
+
+    await createComponentCalculation({
+      id: nanoid(),
+      reportId,
+      componentName: name,
+      componentType: type,
+      materialCode: inspection.materialSpec || 'SA-516-70',
+      designMAWP: inspection.designPressure || '250',
+      designTemp: inspection.designTemperature || '200',
+      insideDiameter: inspection.insideDiameter || '70.75',
+      allowableStress: '20000',
+      jointEfficiency: '0.85',
+      nominalThickness: avgPrev.toFixed(3),
+      previousThickness: avgPrev.toFixed(3),
+      actualThickness: avgCurrent.toFixed(3),
+      minimumThickness: tMinStr,
+      corrosionAllowance: CA,
+      corrosionRate: CR,
+      remainingLife: RL,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+  };
+
+  // Generate 3 standard components
+  await createCalc('shell', 'Vessel Shell', 'shell');
+  await createCalc('head', 'East Head', 'east');
+  await createCalc('head', 'West Head', 'west');
+  
+  console.log('[Calculations] Generated default calculations for report', reportId);
+}
 
 // ============================================================================
 // FFS Assessment CRUD
@@ -432,4 +550,3 @@ export async function deleteInLieuOfAssessment(id: string) {
   
   await db.delete(inLieuOfAssessments).where(eq(inLieuOfAssessments.id, id));
 }
-
