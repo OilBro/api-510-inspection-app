@@ -90,7 +90,7 @@ export function calculateShellMAWP(inputs: ShellCalculationInputs): {
   const { Cr } = calculateShellRemainingLife(inputs);
   
   // Thickness at next inspection
-  const t_next = t_act - (2 * Yn * Cr);
+  const t_next = t_act - (Yn * Cr);
   
   // Pressure at next inspection
   // Formula: P = SEt / (R + 0.6t)
@@ -247,7 +247,7 @@ export function calculateHeadMAWP(inputs: HeadCalculationInputs): {
   const { Cr } = calculateHeadRemainingLife(inputs);
   
   // Thickness at next inspection
-  const t_next = t_act - (2 * Yn * Cr);
+  const t_next = t_act - (Yn * Cr);
   
   let P_next: number;
   let M: number | undefined;

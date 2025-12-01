@@ -711,10 +711,9 @@ async function generateExecutiveSummary(doc: PDFKit.PDFDocument, report: any, co
   
   // Convert all values to strings explicitly to prevent PDFKit pattern errors
   const toStr = (val: any): string => {
-    if (val == null || val === undefined) return '-';
-    if (typeof val === 'string') return val;
-    if (typeof val === 'number') return val.toString();
-    return String(val);
+    if (val === null || val === undefined) return '-';
+    // Ensure we always return a clean string and strip non-ASCII chars to prevent font crashes
+    return String(val).replace(/[^\x00-\x7F]/g, '');
   };
   
   const tableRows = [
@@ -1422,7 +1421,7 @@ async function generateNozzleEvaluation(doc: PDFKit.PDFDocument, inspectionId: s
     ];
   });
   
-  addTable(doc, nozzleRLHeaders, nozzleRLRows, nozzleRLWidths);
+  await addTable(doc, nozzleRLHeaders, nozzleRLRows, '', logoBuffer, nozzleRLWidths);
 }
 
 async function generateThicknessReadings(doc: PDFKit.PDFDocument, readings: any[], logoBuffer?: Buffer) {

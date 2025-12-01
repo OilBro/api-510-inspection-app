@@ -258,6 +258,7 @@ Do NOT leave fields empty if the information exists anywhere in the document. Se
               readings: z.array(z.number()),
               minThickness: z.number(),
               nominalThickness: z.number().optional(),
+              previousThickness: z.number().optional(),
             })
           )
           .optional(),

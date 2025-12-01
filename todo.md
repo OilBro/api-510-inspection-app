@@ -345,3 +345,9 @@
 - [x] Integrate comparison view as new tab in Professional Report section
 - [x] Add zoom and sync scroll functionality for easier comparison
 - [ ] Test comparison view with real inspection data
+
+## P0 - CRITICAL FIXES (User Analysis)
+- [x] Fix PDF generation "String not matching" error - addTable call in generateNozzleEvaluation passing widths array instead of title string
+- [x] Add previousThickness field to Zod schema in AI import to prevent data loss
+- [x] Sanitize inputs in addTable toStr helper to prevent crashes from non-ASCII characters
+- [x] Fix t_next calculation logic - currently using 2*Yn*Cr, should be Yn*Cr
