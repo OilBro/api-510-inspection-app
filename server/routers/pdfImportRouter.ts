@@ -3,7 +3,7 @@ import { z } from "zod";
 import { invokeLLM } from "../_core/llm";
 import { storagePut } from "../storage";
 import { nanoid } from "nanoid";
-import { inspections, tmlReadings, inspectionFindings } from "../../drizzle/schema";
+import { inspections, tmlReadings, inspectionFindings, nozzleEvaluations, professionalReports, componentCalculations } from "../../drizzle/schema";
 import { sql, eq, and } from "drizzle-orm";
 import { getDb } from "../db";
 
@@ -277,6 +277,39 @@ Do NOT leave fields empty if the information exists anywhere in the document. Se
       const db = await getDb();
       if (!db) {
         throw new Error("Database not available");
+      }
+
+      // Check for existing inspection with same vessel tag and report number
+      // If found, delete it and all related data to prevent duplicates
+      if (input.inspectionData.reportNumber) {
+        const existingInspections = await db
+          .select()
+          .from(inspections)
+          .where(
+            and(
+              eq(inspections.vesselTagNumber, input.vesselData.vesselTagNumber),
+              eq(inspections.userId, ctx.user.id)
+            )
+          );
+
+        for (const existing of existingInspections) {
+          console.log('[PDF Import] Found existing inspection', existing.id, 'for vessel', input.vesselData.vesselTagNumber, '- deleting to prevent duplicates');
+          
+          // Delete related data
+          await db.delete(tmlReadings).where(eq(tmlReadings.inspectionId, existing.id));
+          await db.delete(nozzleEvaluations).where(eq(nozzleEvaluations.inspectionId, existing.id));
+          await db.delete(inspectionFindings).where(eq(inspectionFindings.reportId, existing.id));
+          
+          // Find and delete professional reports
+          const reports = await db.select().from(professionalReports).where(eq(professionalReports.inspectionId, existing.id));
+          for (const report of reports) {
+            await db.delete(componentCalculations).where(eq(componentCalculations.reportId, report.id));
+            await db.delete(professionalReports).where(eq(professionalReports.id, report.id));
+          }
+          
+          // Delete the inspection itself
+          await db.delete(inspections).where(eq(inspections.id, existing.id));
+        }
       }
 
       const inspectionId = nanoid();
