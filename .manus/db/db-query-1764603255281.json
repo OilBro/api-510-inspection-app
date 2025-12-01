@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE componentCalculations \nADD COLUMN pdfOriginalActualThickness DECIMAL(10,4),\nADD COLUMN pdfOriginalMinimumThickness DECIMAL(10,4),\nADD COLUMN pdfOriginalCalculatedMAWP DECIMAL(10,2),\nADD COLUMN pdfOriginalCorrosionRate DECIMAL(10,6),\nADD COLUMN pdfOriginalRemainingLife DECIMAL(10,2);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2vRv1t5JdAedAFZ.807c3fab4c80 --database A4XPjAmiHcgmrps2ZTa96H --execute ALTER TABLE componentCalculations \nADD COLUMN pdfOriginalActualThickness DECIMAL(10,4),\nADD COLUMN pdfOriginalMinimumThickness DECIMAL(10,4),\nADD COLUMN pdfOriginalCalculatedMAWP DECIMAL(10,2),\nADD COLUMN pdfOriginalCorrosionRate DECIMAL(10,6),\nADD COLUMN pdfOriginalRemainingLife DECIMAL(10,2);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1471
+}

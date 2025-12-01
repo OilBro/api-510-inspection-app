@@ -737,9 +737,9 @@ export const professionalReportRouter = router({
         const avgCurrent = currentThicknesses.length > 0 ? 
           (currentThicknesses.reduce((a, b) => a + b, 0) / currentThicknesses.length).toFixed(4) : undefined;
         const avgPrevious = previousThicknesses.length > 0 ? 
-          (previousThicknesses.reduce((a, b) => a + b, 0) / previousThicknesses.length).toFixed(4) : undefined;
+          (previousThicknesses.reduce((a: number, b: number) => a + b, 0) / previousThicknesses.length).toFixed(4) : undefined;
         const avgNominal = nominalThicknesses.length > 0 ? 
-          (nominalThicknesses.reduce((a, b) => a + b, 0) / nominalThicknesses.length).toFixed(4) : undefined;
+          (nominalThicknesses.reduce((a: number, b: number) => a + b, 0) / nominalThicknesses.length).toFixed(4) : undefined;
         
         // Calculate minimum thickness
         const P = parseFloat(inspection.designPressure || '0');

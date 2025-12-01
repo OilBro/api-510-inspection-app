@@ -36,6 +36,13 @@
       "when": 1764558769083,
       "tag": "0004_grey_kingpin",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1764603236621,
+      "tag": "0005_wealthy_swarm",
+      "breakpoints": true
     }
   ]
 }

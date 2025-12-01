@@ -75,7 +75,22 @@ Analyze this inspection report PDF and extract ALL the following information in 
       "finding": "string",
       "severity": "acceptable|monitor|critical"
     }
-  ]
+  ],
+  "tableA": {
+    "description": "Executive Summary TABLE A - Component Calculations (if present)",
+    "components": [
+      {
+        "componentName": "string (e.g., 'Vessel Shell', 'East Head', 'West Head')",
+        "nominalThickness": "number (inches)",
+        "actualThickness": "number (inches)",
+        "minimumRequiredThickness": "number (inches)",
+        "designMAWP": "number (psi)",
+        "calculatedMAWP": "number (psi)",
+        "corrosionRate": "number (inches per year)",
+        "remainingLife": "number (years, or 999 if >20 years)"
+      }
+    ]
+  }
 }
 
 IMPORTANT: For thickness measurements:
@@ -195,6 +210,32 @@ Do NOT leave fields empty if the information exists anywhere in the document. Se
                       additionalProperties: false,
                     },
                   },
+                  tableA: {
+                    type: "object",
+                    properties: {
+                      description: { type: "string" },
+                      components: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            componentName: { type: "string" },
+                            nominalThickness: { type: "number" },
+                            actualThickness: { type: "number" },
+                            minimumRequiredThickness: { type: "number" },
+                            designMAWP: { type: "number" },
+                            calculatedMAWP: { type: "number" },
+                            corrosionRate: { type: "number" },
+                            remainingLife: { type: "number" },
+                          },
+                          required: ["componentName"],
+                          additionalProperties: false,
+                        },
+                      },
+                    },
+                    required: ["components"],
+                    additionalProperties: false,
+                  },
                 },
                 required: ["vesselData", "inspectionData"],
                 additionalProperties: false,
@@ -270,6 +311,23 @@ Do NOT leave fields empty if the information exists anywhere in the document. Se
               severity: z.enum(["acceptable", "monitor", "critical"]),
             })
           )
+          .optional(),
+        tableA: z
+          .object({
+            description: z.string().optional(),
+            components: z.array(
+              z.object({
+                componentName: z.string(),
+                nominalThickness: z.number().optional(),
+                actualThickness: z.number().optional(),
+                minimumRequiredThickness: z.number().optional(),
+                designMAWP: z.number().optional(),
+                calculatedMAWP: z.number().optional(),
+                corrosionRate: z.number().optional(),
+                remainingLife: z.number().optional(),
+              })
+            ),
+          })
           .optional(),
       })
     )
@@ -501,6 +559,39 @@ Do NOT leave fields empty if the information exists anywhere in the document. Se
         
         await generateDefaultCalculationsForInspection(inspectionId, reportId);
         console.log('[PDF Import] Auto-generated component calculations for inspection', inspectionId);
+        
+        // If TABLE A data was extracted from PDF, store as PDF original values
+        if (input.tableA && input.tableA.components && input.tableA.components.length > 0) {
+          console.log('[PDF Import] Storing TABLE A original values for validation');
+          
+          for (const tableAComponent of input.tableA.components) {
+            // Find matching component calculation by name
+            const [existingCalc] = await db.select()
+              .from(componentCalculations)
+              .where(
+                and(
+                  eq(componentCalculations.reportId, reportId),
+                  sql`LOWER(${componentCalculations.componentName}) = LOWER(${tableAComponent.componentName})`
+                )
+              )
+              .limit(1);
+            
+            if (existingCalc) {
+              // Update with PDF original values
+              await db.update(componentCalculations)
+                .set({
+                  pdfOriginalActualThickness: tableAComponent.actualThickness?.toString(),
+                  pdfOriginalMinimumThickness: tableAComponent.minimumRequiredThickness?.toString(),
+                  pdfOriginalCalculatedMAWP: tableAComponent.calculatedMAWP?.toString(),
+                  pdfOriginalCorrosionRate: tableAComponent.corrosionRate?.toString(),
+                  pdfOriginalRemainingLife: tableAComponent.remainingLife?.toString(),
+                })
+                .where(eq(componentCalculations.id, existingCalc.id));
+              
+              console.log(`[PDF Import] Stored TABLE A values for ${tableAComponent.componentName}`);
+            }
+          }
+        }
       } catch (calcError) {
         console.error('[PDF Import] Failed to auto-generate calculations:', calcError);
         // Don't fail the entire import if calculation generation fails

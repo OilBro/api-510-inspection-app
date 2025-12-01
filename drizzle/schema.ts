@@ -371,6 +371,13 @@ export const componentCalculations = mysqlTable("componentCalculations", {
   pressureAtNextInspection: decimal("pressureAtNextInspection", { precision: 10, scale: 2 }),
   mawpAtNextInspection: decimal("mawpAtNextInspection", { precision: 10, scale: 2 }),
   
+  // PDF original values for validation (from TABLE A)
+  pdfOriginalActualThickness: decimal("pdfOriginalActualThickness", { precision: 10, scale: 4 }),
+  pdfOriginalMinimumThickness: decimal("pdfOriginalMinimumThickness", { precision: 10, scale: 4 }),
+  pdfOriginalCalculatedMAWP: decimal("pdfOriginalCalculatedMAWP", { precision: 10, scale: 2 }),
+  pdfOriginalCorrosionRate: decimal("pdfOriginalCorrosionRate", { precision: 10, scale: 6 }),
+  pdfOriginalRemainingLife: decimal("pdfOriginalRemainingLife", { precision: 10, scale: 2 }),
+  
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
 });

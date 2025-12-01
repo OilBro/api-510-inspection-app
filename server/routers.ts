@@ -575,7 +575,7 @@ export const appRouter = router({
           };
 
           // Create inspection from pars          // Check for existing field mappings to auto-apply
-          const existingMappings = await fieldMappingDb.getFieldMappings(ctx.user.id);
+          const existingMappings = await fieldMappingDb.getFieldMappings(String(ctx.user.id));
           const mappingLookup = new Map<string, any>();
           existingMappings.forEach((m: any) => {
             mappingLookup.set(m.sourceField, { targetSection: m.targetSection, targetField: m.targetField, id: m.id });

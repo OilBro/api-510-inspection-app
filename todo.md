@@ -381,3 +381,21 @@
 - [x] Add navigation link from Professional Report tab
 - [ ] Test with real inspection data
 - [ ] Add manual PDF value entry interface for inspections without stored PDF data
+
+## P0 - AUDIT FIXES (Critical Issues from Comprehensive Audit)
+- [x] Fix TypeScript error: professionalReportRouters.ts line 742 - add type annotations to sort function parameters
+- [x] Fix TypeScript error: routers.ts line 469 - correct updateInternalInspection function name mismatch
+- [x] Fix TypeScript error: routers.ts line 578 - resolve number vs string type mismatch
+- [x] Implement auto-extraction of PDF original calculation values (TABLE A) during import
+- [x] Add pdfOriginalValues field to componentCalculations table to store PDF values for validation
+- [x] Modify PDF import to parse and store original t_min, MAWP, CR, RL from TABLE A
+- [ ] Update validation dashboard to auto-populate PDF values from database instead of manual entry
+- [ ] Add static head pressure calculation based on vessel orientation (horizontal/vertical)
+- [ ] Include static head in MAWP calculations for horizontal vessels
+- [ ] Verify Shell t_min formula matches ASME: PR/(SE - 0.6P)
+- [ ] Verify Head t_min formula matches ASME: PR/(2SE - 0.2P) for 2:1 ellipsoidal
+- [ ] Verify Shell MAWP formula: (SE × t)/(R + 0.6t)
+- [ ] Verify Head MAWP formula: (2SE × t)/(R + 0.2t)
+- [ ] Add allowable stress (S) lookup table for SA-240 304 SS at various temperatures
+- [ ] Test calculation accuracy against 54-11-067 expected values (Shell: 307.5 psi, East Head: 263.9 psi, West Head: 262.5 psi)
+- [ ] Create unit tests for each calculation formula with known values

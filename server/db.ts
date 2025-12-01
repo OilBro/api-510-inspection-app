@@ -273,6 +273,13 @@ export async function updateExternalInspection(id: string, data: Partial<InsertE
   await db.update(externalInspections).set(data).where(eq(externalInspections.id, id));
 }
 
+export async function updateInternalInspection(id: string, data: Partial<InsertInternalInspection>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(internalInspections).set(data).where(eq(internalInspections.id, id));
+}
+
 export async function updateImportedFile(id: string, data: Partial<InsertImportedFile>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
