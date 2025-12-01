@@ -10,6 +10,36 @@ import { toast } from "sonner";
 import { Link } from "wouter";
 
 export default function CalculationWorksheet() {
+  // Phase 1 Calculators
+  const [minimumThicknessCalc, setMinimumThicknessCalc] = useState({
+    pressure: "",
+    radius: "",
+    stress: "",
+    efficiency: "1.0",
+    corrosionAllowance: "",
+    result: "",
+  });
+
+  const [mawpCalc, setMawpCalc] = useState({
+    thickness: "",
+    radius: "",
+    stress: "",
+    efficiency: "1.0",
+    corrosionAllowance: "",
+    result: "",
+  });
+
+  const [remainingLifeCalc, setRemainingLifeCalc] = useState({
+    current: "",
+    required: "",
+    corrosionRate: "",
+    safetyFactor: "2.0",
+    result: "",
+    nextInspection: "",
+    status: "",
+    recommendation: "",
+  });
+
   // Header Information
   const [reportNo, setReportNo] = useState("");
   const [client, setClient] = useState("");
@@ -68,6 +98,103 @@ export default function CalculationWorksheet() {
   const [headRL, setHeadRL] = useState("0");
   const [headMAPnext, setHeadMAPnext] = useState("0");
   const [headMAWPnext, setHeadMAWPnext] = useState("0");
+
+  const calculateMinimumThickness = () => {
+    const P = parseFloat(minimumThicknessCalc.pressure);
+    const R = parseFloat(minimumThicknessCalc.radius);
+    const S = parseFloat(minimumThicknessCalc.stress);
+    const E = parseFloat(minimumThicknessCalc.efficiency);
+    const CA = parseFloat(minimumThicknessCalc.corrosionAllowance) || 0;
+
+    if ([P, R, S, E].some((v) => isNaN(v) || v <= 0)) {
+      toast.error("Enter positive values for pressure, radius, stress, and efficiency");
+      return;
+    }
+
+    const denominator = S * E - 0.6 * P;
+    if (denominator <= 0) {
+      toast.error("Design pressure is too high for the selected material and joint efficiency");
+      return;
+    }
+
+    const thickness = (P * R) / denominator + CA;
+    setMinimumThicknessCalc((prev) => ({ ...prev, result: thickness.toFixed(3) }));
+    toast.success("Minimum required thickness calculated");
+  };
+
+  const calculateMAWP = () => {
+    const t = parseFloat(mawpCalc.thickness);
+    const R = parseFloat(mawpCalc.radius);
+    const S = parseFloat(mawpCalc.stress);
+    const E = parseFloat(mawpCalc.efficiency);
+    const CA = parseFloat(mawpCalc.corrosionAllowance) || 0;
+
+    if ([t, R, S, E].some((v) => isNaN(v) || v <= 0)) {
+      toast.error("Enter positive values for thickness, radius, stress, and efficiency");
+      return;
+    }
+
+    const effectiveThickness = t - CA;
+    if (effectiveThickness <= 0) {
+      toast.error("Corrosion allowance exceeds available thickness");
+      return;
+    }
+
+    const mawp = (S * E * effectiveThickness) / (R + 0.6 * effectiveThickness);
+    if (mawp <= 0) {
+      toast.error("MAWP calculation returned a non-physical value");
+      return;
+    }
+
+    setMawpCalc((prev) => ({ ...prev, result: mawp.toFixed(2) }));
+    toast.success("MAWP calculated");
+  };
+
+  const calculateRemainingLife = () => {
+    const current = parseFloat(remainingLifeCalc.current);
+    const required = parseFloat(remainingLifeCalc.required);
+    const corrosionRate = parseFloat(remainingLifeCalc.corrosionRate);
+    const safetyFactor = parseFloat(remainingLifeCalc.safetyFactor);
+
+    if ([current, required, corrosionRate, safetyFactor].some((v) => isNaN(v) || v <= 0)) {
+      toast.error("Enter positive values for all remaining life inputs");
+      return;
+    }
+
+    if (current <= required) {
+      toast.error("Current thickness must exceed required thickness");
+      return;
+    }
+
+    const corrosionRatePerYear = corrosionRate / 1000; // convert mpy to in/year
+    const life = (current - required) / corrosionRatePerYear / safetyFactor;
+
+    let status = "Good";
+    let recommendation = "Standard monitoring recommended.";
+
+    if (life < 2) {
+      status = "Critical";
+      recommendation = "Schedule immediate inspection and evaluate mitigation actions.";
+    } else if (life < 5) {
+      status = "Poor";
+      recommendation = "Increase monitoring frequency and plan repairs.";
+    } else if (life < 10) {
+      status = "Fair";
+      recommendation = "Maintain current inspection schedule with closer review.";
+    }
+
+    const nextInspection = Math.max(0.5, Math.min(life / 2, 10));
+
+    setRemainingLifeCalc((prev) => ({
+      ...prev,
+      result: life.toFixed(1),
+      status,
+      recommendation,
+      nextInspection: nextInspection.toFixed(1),
+    }));
+
+    toast.success("Remaining life calculated");
+  };
 
   // Calculate Shell Results
   useEffect(() => {
@@ -227,7 +354,7 @@ export default function CalculationWorksheet() {
       `Corrosion Allowance: ${shellCa} in`,
       `Corrosion Rate: ${shellCr} mpy`,
       `Remaining Life: ${shellRL} years`,
-      `Thickness at Next Inspection: ${shellNextInspection} in`,
+      `Next Inspection Interval: ${shellNextInspection} years`,
       `MAP at Next Inspection: ${shellMAPnext} psig`,
       `MAWP at Next Inspection: ${shellMAWPnext} psig`,
       ``,
@@ -331,6 +458,240 @@ export default function CalculationWorksheet() {
             </div>
           </CardContent>
         </Card>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card className="border-green-200">
+            <CardHeader className="bg-green-50">
+              <CardTitle>Minimum Thickness Calculator</CardTitle>
+              <CardDescription>t = PR/(SE-0.6P) + CA</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 pt-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label htmlFor="minPressure">Pressure (P)</Label>
+                  <Input
+                    id="minPressure"
+                    type="number"
+                    value={minimumThicknessCalc.pressure}
+                    onChange={(e) => setMinimumThicknessCalc({ ...minimumThicknessCalc, pressure: e.target.value })}
+                    placeholder="psig"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="minRadius">Inside Radius (R)</Label>
+                  <Input
+                    id="minRadius"
+                    type="number"
+                    value={minimumThicknessCalc.radius}
+                    onChange={(e) => setMinimumThicknessCalc({ ...minimumThicknessCalc, radius: e.target.value })}
+                    placeholder="inches"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="minStress">Allowable Stress (S)</Label>
+                  <Input
+                    id="minStress"
+                    type="number"
+                    value={minimumThicknessCalc.stress}
+                    onChange={(e) => setMinimumThicknessCalc({ ...minimumThicknessCalc, stress: e.target.value })}
+                    placeholder="psi"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="minEfficiency">Joint Efficiency (E)</Label>
+                  <Select
+                    value={minimumThicknessCalc.efficiency}
+                    onValueChange={(value) => setMinimumThicknessCalc({ ...minimumThicknessCalc, efficiency: value })}
+                  >
+                    <SelectTrigger id="minEfficiency">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1.0">1.0</SelectItem>
+                      <SelectItem value="0.85">0.85</SelectItem>
+                      <SelectItem value="0.70">0.70</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="minCA">Corrosion Allowance (CA)</Label>
+                  <Input
+                    id="minCA"
+                    type="number"
+                    value={minimumThicknessCalc.corrosionAllowance}
+                    onChange={(e) => setMinimumThicknessCalc({ ...minimumThicknessCalc, corrosionAllowance: e.target.value })}
+                    placeholder="inches"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Result (in)</Label>
+                  <div className="p-3 bg-green-50 border border-green-200 rounded">
+                    <p className="text-xl font-semibold text-green-700">
+                      {minimumThicknessCalc.result || "—"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <Button onClick={calculateMinimumThickness} className="w-full">
+                Calculate Minimum Thickness
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="border-blue-200">
+            <CardHeader className="bg-blue-50">
+              <CardTitle>MAWP Calculator</CardTitle>
+              <CardDescription>MAWP = SE(t-CA)/(R+0.6(t-CA))</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 pt-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label htmlFor="mawpThickness">Actual Thickness (t)</Label>
+                  <Input
+                    id="mawpThickness"
+                    type="number"
+                    value={mawpCalc.thickness}
+                    onChange={(e) => setMawpCalc({ ...mawpCalc, thickness: e.target.value })}
+                    placeholder="inches"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="mawpRadius">Inside Radius (R)</Label>
+                  <Input
+                    id="mawpRadius"
+                    type="number"
+                    value={mawpCalc.radius}
+                    onChange={(e) => setMawpCalc({ ...mawpCalc, radius: e.target.value })}
+                    placeholder="inches"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="mawpStress">Allowable Stress (S)</Label>
+                  <Input
+                    id="mawpStress"
+                    type="number"
+                    value={mawpCalc.stress}
+                    onChange={(e) => setMawpCalc({ ...mawpCalc, stress: e.target.value })}
+                    placeholder="psi"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="mawpEfficiency">Joint Efficiency (E)</Label>
+                  <Select value={mawpCalc.efficiency} onValueChange={(value) => setMawpCalc({ ...mawpCalc, efficiency: value })}>
+                    <SelectTrigger id="mawpEfficiency">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1.0">1.0</SelectItem>
+                      <SelectItem value="0.85">0.85</SelectItem>
+                      <SelectItem value="0.70">0.70</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="mawpCA">Corrosion Allowance (CA)</Label>
+                  <Input
+                    id="mawpCA"
+                    type="number"
+                    value={mawpCalc.corrosionAllowance}
+                    onChange={(e) => setMawpCalc({ ...mawpCalc, corrosionAllowance: e.target.value })}
+                    placeholder="inches"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Result (psig)</Label>
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded">
+                    <p className="text-xl font-semibold text-blue-700">{mawpCalc.result || "—"}</p>
+                  </div>
+                </div>
+              </div>
+              <Button onClick={calculateMAWP} className="w-full">
+                Calculate MAWP
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="border-orange-200">
+            <CardHeader className="bg-orange-50">
+              <CardTitle>Remaining Life Assessment</CardTitle>
+              <CardDescription>Life = (Current-Required)/(CR/1000)/SF</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 pt-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label htmlFor="lifeCurrent">Current Thickness</Label>
+                  <Input
+                    id="lifeCurrent"
+                    type="number"
+                    value={remainingLifeCalc.current}
+                    onChange={(e) => setRemainingLifeCalc({ ...remainingLifeCalc, current: e.target.value })}
+                    placeholder="inches"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="lifeRequired">Required Thickness</Label>
+                  <Input
+                    id="lifeRequired"
+                    type="number"
+                    value={remainingLifeCalc.required}
+                    onChange={(e) => setRemainingLifeCalc({ ...remainingLifeCalc, required: e.target.value })}
+                    placeholder="inches"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="lifeCR">Corrosion Rate (mpy)</Label>
+                  <Input
+                    id="lifeCR"
+                    type="number"
+                    value={remainingLifeCalc.corrosionRate}
+                    onChange={(e) => setRemainingLifeCalc({ ...remainingLifeCalc, corrosionRate: e.target.value })}
+                    placeholder="mils/year"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="lifeSF">Safety Factor</Label>
+                  <Select
+                    value={remainingLifeCalc.safetyFactor}
+                    onValueChange={(value) => setRemainingLifeCalc({ ...remainingLifeCalc, safetyFactor: value })}
+                  >
+                    <SelectTrigger id="lifeSF">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1.5">1.5</SelectItem>
+                      <SelectItem value="2.0">2.0</SelectItem>
+                      <SelectItem value="2.5">2.5</SelectItem>
+                      <SelectItem value="3.0">3.0</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label>Remaining Life (years)</Label>
+                  <div className="p-3 bg-orange-50 border border-orange-200 rounded">
+                    <p className="text-xl font-semibold text-orange-700">{remainingLifeCalc.result || "—"}</p>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label>Next Inspection (years)</Label>
+                  <div className="p-3 bg-orange-50 border border-orange-200 rounded">
+                    <p className="text-xl font-semibold text-orange-700">{remainingLifeCalc.nextInspection || "—"}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-gray-700">Status: {remainingLifeCalc.status || "—"}</p>
+                <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+                  {remainingLifeCalc.recommendation || "Enter data to see recommendations."}
+                </p>
+              </div>
+
+              <Button onClick={calculateRemainingLife} className="w-full">
+                Calculate Remaining Life
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
 
         <Tabs defaultValue="shell" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
