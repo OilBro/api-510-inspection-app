@@ -512,7 +512,7 @@ export default function ProfessionalReportTab({ inspectionId }: ProfessionalRepo
 
         {/* Calculations Tab */}
         <TabsContent value="calculations">
-          <ComponentCalculationsSection reportId={report.id} />
+          <ComponentCalculationsSection reportId={report.id} inspectionId={inspectionId} />
         </TabsContent>
 
         {/* Nozzle Evaluation Tab */}
@@ -631,7 +631,7 @@ export default function ProfessionalReportTab({ inspectionId }: ProfessionalRepo
 }
 
 // Component Calculations Section
-function ComponentCalculationsSection({ reportId }: { reportId: string }) {
+function ComponentCalculationsSection({ reportId, inspectionId }: { reportId: string; inspectionId: string }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [componentType, setComponentType] = useState<"shell" | "head">("shell");
   const [recalculating, setRecalculating] = useState(false);
@@ -673,7 +673,7 @@ function ComponentCalculationsSection({ reportId }: { reportId: string }) {
 
   const handleRecalculate = () => {
     setRecalculating(true);
-    recalculate.mutate({ reportId });
+    recalculate.mutate({ inspectionId });
   };
 
   const handleExportTemplate = () => {

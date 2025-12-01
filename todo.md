@@ -332,3 +332,8 @@
 - [x] Fix "handleRecalculate is not defined" error in ComponentCalculationsSection
 - [x] Ensure recalculate mutation and state are properly defined in component scope
 - [ ] Test recalculate button click functionality
+
+## P0 - CRITICAL: Fix Recalculate Parameter Mismatch
+- [x] Fix recalculate mutation - expects inspectionId but receiving reportId
+- [x] Get inspectionId from report data and pass to recalculate mutation
+- [ ] Test recalculate button with correct parameters
