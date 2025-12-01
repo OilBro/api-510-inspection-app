@@ -399,3 +399,17 @@
 - [ ] Add allowable stress (S) lookup table for SA-240 304 SS at various temperatures
 - [ ] Test calculation accuracy against 54-11-067 expected values (Shell: 307.5 psi, East Head: 263.9 psi, West Head: 262.5 psi)
 - [ ] Create unit tests for each calculation formula with known values
+
+## P0 - REMAINING AUDIT FIXES (User Requested)
+- [x] Update ValidationDashboard.tsx to fetch PDF original values from database
+- [x] Remove manual PDF value entry form from validation dashboard
+- [x] Display auto-populated PDF values in comparison tables
+- [x] Calculate static head pressure: P_static = (ρ × g × h) / 144 for horizontal vessels
+- [x] Add static head to design pressure in MAWP calculations
+- [x] Review Shell t_min formula: t = PR/(SE - 0.6P) + CA
+- [x] Review Head t_min formula: t = PR/(2SE - 0.2P) + CA for 2:1 ellipsoidal
+- [x] Review Shell MAWP formula: MAWP = (SE × t)/(R + 0.6t)
+- [x] Review Head MAWP formula: MAWP = (2SE × t)/(D + 0.2t)
+- [x] Test calculations against 54-11-067 expected: Shell 307.5 psi, East Head 263.9 psi, West Head 262.5 psi
+- [x] Add allowable stress lookup for SA-240 304 SS at 200°F
+- [x] Verify joint efficiency E = 0.85 is correctly applied

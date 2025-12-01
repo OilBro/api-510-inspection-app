@@ -26,16 +26,25 @@ export const validationRouter = router({
         throw new Error('Professional report not found for this inspection');
       }
       
-      // Get component calculations (app-calculated values)
+      // Get component calculations (app-calculated values + PDF original values)
       const componentCalculations = await getComponentCalculations(professionalReport.id) as any[];
       
       // Get TML readings to calculate averages
       const tmlReadings = await getTmlReadings(input.inspectionId) as any[];
 
-      // Note: PDF original values would need to be stored in a separate table
-      // For now, we'll compare against component calculations
-      // User can manually enter PDF values for comparison
+      // Build PDF original values from component calculations table
       const pdfOriginalValues: Record<string, any> = {};
+      componentCalculations.forEach((calc: any) => {
+        if (calc.componentName) {
+          pdfOriginalValues[calc.componentName] = {
+            actualThickness: calc.pdfOriginalActualThickness ? parseFloat(calc.pdfOriginalActualThickness) : null,
+            minimumThickness: calc.pdfOriginalMinimumThickness ? parseFloat(calc.pdfOriginalMinimumThickness) : null,
+            mawp: calc.pdfOriginalCalculatedMAWP ? parseFloat(calc.pdfOriginalCalculatedMAWP) : null,
+            corrosionRate: calc.pdfOriginalCorrosionRate ? parseFloat(calc.pdfOriginalCorrosionRate) : null,
+            remainingLife: calc.pdfOriginalRemainingLife ? parseFloat(calc.pdfOriginalRemainingLife) : null,
+          };
+        }
+      });
 
       // Build comparison data structure
       const components = ['Shell', 'East Head', 'West Head'];
@@ -91,12 +100,19 @@ export const validationRouter = router({
         };
       });
 
+      // Check if any PDF original values exist
+      const hasPdfOriginalValues = Object.values(pdfOriginalValues).some((values: any) => 
+        values.actualThickness !== null || 
+        values.minimumThickness !== null || 
+        values.mawp !== null
+      );
+
       return {
         inspectionId: input.inspectionId,
         vesselTag: inspection.vesselTagNumber,
         inspectionDate: inspection.inspectionDate,
         comparisonData,
-        hasPdfOriginalValues: !!pdfOriginalValues,
+        hasPdfOriginalValues,
       };
     }),
 });

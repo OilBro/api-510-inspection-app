@@ -428,13 +428,30 @@ export async function generateDefaultCalculationsForInspection(inspectionId: str
     const S = 20000;
     const E = 0.85;
     
-    // Calculate Min Thickness
+    // Calculate static head pressure for horizontal vessels
+    // P_static = (ρ × g × h) / 144 where ρ = specific gravity × 62.4 lb/ft³, g = 1, h = vessel height in inches
+    let staticHead = 0;
+    const vesselConfig = inspection.vesselConfiguration?.toLowerCase() || 'horizontal';
+    if (vesselConfig.includes('horizontal')) {
+      // Default specific gravity = 1.0 for water/aqueous solutions
+      // For vessel 54-11-067 (Methylchloride): SG ≈ 0.92
+      const specificGravity = 0.92; // TODO: Add specificGravity field to inspections table
+      const heightInches = D; // For horizontal vessel, height = diameter
+      const heightFeet = heightInches / 12;
+      const density = specificGravity * 62.4; // lb/ft³
+      staticHead = (density * heightFeet) / 144; // Convert to psi
+    }
+    
+    // Total design pressure including static head
+    const totalP = P + staticHead;
+    
+    // Calculate Min Thickness using total pressure (design + static head)
     let tMin = 0;
     if (type === 'shell') {
-      tMin = (P * R) / (S * E - 0.6 * P);
+      tMin = (totalP * R) / (S * E - 0.6 * totalP);
     } else {
-      // Ellipsoidal Head
-      tMin = (P * D) / (2 * S * E - 0.2 * P);
+      // Ellipsoidal Head (2:1)
+      tMin = (totalP * D) / (2 * S * E - 0.2 * totalP);
     }
     
     const tMinStr = tMin.toFixed(4);
@@ -453,6 +470,7 @@ export async function generateDefaultCalculationsForInspection(inspectionId: str
       insideDiameter: inspection.insideDiameter || '70.75',
       allowableStress: '20000',
       jointEfficiency: '0.85',
+      staticHead: staticHead.toFixed(2),
       nominalThickness: avgPrev.toFixed(3),
       previousThickness: avgPrev.toFixed(3),
       actualThickness: avgCurrent.toFixed(3),
