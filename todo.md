@@ -307,3 +307,14 @@
 - [x] Verify vessel metadata (MDMT, Operating Temp, Product, etc.) displays correctly
 - [x] Check component calculations populate properly in executive summary - added East Head and West Head calculations
 - [x] Validate nozzle table shows all extracted nozzle data
+
+## P0 - COMPREHENSIVE FIXES (All Remaining Issues)
+- [x] Add "Recalculate" button to regenerate component calculations for existing inspections
+- [x] Fix Shell Evaluation header table - populate Report No., Client, Inspector, Date from inspection data
+- [x] Fix Nozzle Evaluation header table - populate Report No., Client, Inspector, Vessel, Date
+- [x] Fix all PDF header tables to use actual inspection data instead of dashes
+- [ ] Verify all vessel metadata fields display correctly in PDF (MDMT, Operating Temp, Product, etc.)
+- [ ] Test complete import → generate PDF workflow with user's actual PDF
+- [ ] Validate TABLE A shows all three components with calculated values (no dashes)
+- [ ] Ensure nozzle table displays properly with calculations
+- [ ] Fix any remaining calculation accuracy issues

@@ -469,7 +469,7 @@ export async function generateProfessionalPDF(data: ProfessionalReportData): Pro
   
   if (config.componentCalculations !== false) {
     console.log('[PDF DEBUG] Generating component calculations...');
-    await generateComponentCalculations(doc, components, logoBuffer, inspection, tmlReadings);
+    await generateComponentCalculations(doc, components, logoBuffer, inspection, tmlReadings, report);
     console.log('[PDF DEBUG] Page count after components:', doc.bufferedPageRange().count);
   }
   
@@ -493,7 +493,7 @@ export async function generateProfessionalPDF(data: ProfessionalReportData): Pro
   
   // Nozzle evaluation section
   console.log('[PDF DEBUG] Generating nozzle evaluation...');
-  await generateNozzleEvaluation(doc, inspectionId, logoBuffer);
+  await generateNozzleEvaluation(doc, inspectionId, logoBuffer, report, inspection);
   console.log('[PDF DEBUG] Page count after nozzles:', doc.bufferedPageRange().count);
   
   if (config.checklist !== false) {
@@ -894,16 +894,16 @@ async function generateVesselData(doc: PDFKit.PDFDocument, inspection: any, logo
   doc.y = leftY + 20;
 }
 
-async function generateComponentCalculations(doc: PDFKit.PDFDocument, components: any[], logoBuffer?: Buffer, inspection?: any, tmlReadings?: any[]) {
+async function generateComponentCalculations(doc: PDFKit.PDFDocument, components: any[], logoBuffer?: Buffer, inspection?: any, tmlReadings?: any[], report?: any) {
   // Prepare header data once for reuse across all pages
   const headerData = [
     ['Report No.', 'Client', 'Inspector', 'Vessel', 'Date'],
     [
-      inspection?.reportNumber || '-',
-      inspection?.clientName || '-',
-      inspection?.inspector || '-',
+      report?.reportNumber || '-',
+      report?.clientName || inspection?.clientName || '-',
+      report?.inspectorName || inspection?.inspector || '-',
       inspection?.vesselTagNumber || '-',
-      inspection?.inspectionDate ? new Date(inspection.inspectionDate).toLocaleDateString() : '-'
+      report?.reportDate ? new Date(report.reportDate).toLocaleDateString() : (inspection?.inspectionDate ? new Date(inspection.inspectionDate).toLocaleDateString() : '-')
     ]
   ];
   
@@ -1251,7 +1251,7 @@ async function generateRecommendationsSection(doc: PDFKit.PDFDocument, recommend
   });
 }
 
-async function generateNozzleEvaluation(doc: PDFKit.PDFDocument, inspectionId: string, logoBuffer?: Buffer) {
+async function generateNozzleEvaluation(doc: PDFKit.PDFDocument, inspectionId: string, logoBuffer?: Buffer, report?: any, inspection?: any) {
   // Import nozzle standards and database functions
   const { NOZZLE_MIN_THICKNESS_TABLE, calculateNozzleRL } = await import('../shared/nozzleStandards.js');
   const { getNozzlesByInspection } = await import('./nozzleDb.js');
@@ -1261,6 +1261,28 @@ async function generateNozzleEvaluation(doc: PDFKit.PDFDocument, inspectionId: s
   const tmlReadings = await getTmlReadings(inspectionId);
   
   await conditionalPageBreak(doc, 'NOZZLE EVALUATION', logoBuffer, 300);
+  
+  // Add header with title
+  doc.font('Helvetica-Bold').fontSize(12).fillColor(COLORS.text);
+  doc.text('API-510 PRESSURE VESSEL NOZZLE EVALUATION', { align: 'center' });
+  doc.fontSize(10);
+  doc.text('MINIMUM THICKNESS, REMAINING LIFE, PRESSURE CALCULATIONS', { align: 'center' });
+  doc.moveDown(1);
+  
+  // Add header info table
+  const headerData = [
+    ['Report No.', 'Client', 'Inspector', 'Vessel', 'Date'],
+    [
+      report?.reportNumber || '-',
+      report?.clientName || inspection?.clientName || '-',
+      report?.inspectorName || inspection?.inspector || '-',
+      inspection?.vesselTagNumber || '-',
+      report?.reportDate ? new Date(report.reportDate).toLocaleDateString() : (inspection?.inspectionDate ? new Date(inspection.inspectionDate).toLocaleDateString() : '-')
+    ]
+  ];
+  await addTable(doc, headerData[0], [headerData[1]], '', logoBuffer);
+  doc.moveDown(1);
+  
   addSectionTitle(doc, '7.0 NOZZLE MINIMUM THICKNESS EVALUATION (ASME UG-45)');
   
   if (!nozzles || nozzles.length === 0) {

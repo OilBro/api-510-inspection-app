@@ -667,5 +667,172 @@ export const professionalReportRouter = router({
         return { success: true };
       }),
   }),
+  
+  // Recalculate component calculations from TML readings
+  recalculate: protectedProcedure
+    .input(z.object({ inspectionId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await import('./db');
+      const professionalReportDb = await import('./professionalReportDb');
+      
+      // Get inspection data
+      const inspection = await db.getInspection(input.inspectionId);
+      if (!inspection) {
+        throw new Error('Inspection not found');
+      }
+      
+      // Verify ownership
+      if (inspection.userId !== ctx.user.id) {
+        throw new Error('Unauthorized');
+      }
+      
+      // Get or create professional report
+      let report = await professionalReportDb.getProfessionalReportByInspection(input.inspectionId);
+      if (!report) {
+        const reportId = nanoid();
+        await professionalReportDb.createProfessionalReport({
+          id: reportId,
+          inspectionId: input.inspectionId,
+          userId: ctx.user.id,
+          reportNumber: `RPT-${Date.now()}`,
+          reportDate: new Date(),
+          inspectorName: ctx.user.name || '',
+          employerName: 'OilPro Consulting LLC',
+        });
+        report = await professionalReportDb.getProfessionalReport(reportId);
+      }
+      
+      if (!report) {
+        throw new Error('Failed to create professional report');
+      }
+      
+      // Delete existing component calculations
+      const existingCalcs = await professionalReportDb.getComponentCalculations(report.id);
+      for (const calc of existingCalcs) {
+        await professionalReportDb.deleteComponentCalculation(calc.id);
+      }
+      
+      // Get TML readings
+      const tmlReadings = await db.getTMLReadings(input.inspectionId);
+      
+      // Helper function to create component calculation
+      const createComponentCalc = async (componentType: 'shell' | 'head', componentName: string, filter: (tml: any) => boolean) => {
+        const componentTMLs = tmlReadings.filter(filter);
+        
+        if (componentTMLs.length === 0) {
+          console.log(`[Recalculate] No TMLs found for ${componentName}`);
+          return;
+        }
+        
+        const currentThicknesses = componentTMLs
+          .map((t: any) => parseFloat(t.currentThickness))
+          .filter((v: number) => !isNaN(v));
+        const previousThicknesses = componentTMLs
+          .map((t: any) => parseFloat(t.previousThickness))
+          .filter((v: number) => !isNaN(v));
+        const nominalThicknesses = componentTMLs
+          .map((t: any) => parseFloat(t.nominalThickness))
+          .filter((v: number) => !isNaN(v));
+        
+        const avgCurrent = currentThicknesses.length > 0 ? 
+          (currentThicknesses.reduce((a, b) => a + b, 0) / currentThicknesses.length).toFixed(4) : undefined;
+        const avgPrevious = previousThicknesses.length > 0 ? 
+          (previousThicknesses.reduce((a, b) => a + b, 0) / previousThicknesses.length).toFixed(4) : undefined;
+        const avgNominal = nominalThicknesses.length > 0 ? 
+          (nominalThicknesses.reduce((a, b) => a + b, 0) / nominalThicknesses.length).toFixed(4) : undefined;
+        
+        // Calculate minimum thickness
+        const P = parseFloat(inspection.designPressure || '0');
+        const R = inspection.insideDiameter ? parseFloat(inspection.insideDiameter) / 2 : 0;
+        const S = 20000; // Allowable stress
+        const E = 0.85; // Joint efficiency
+        const CA = 0.125; // Corrosion allowance
+        
+        let minThickness;
+        if (P && R && S && E) {
+          if (componentType === 'shell') {
+            // Shell: t_min = PR/(SE - 0.6P)
+            const denominator = S * E - 0.6 * P;
+            if (denominator > 0) {
+              minThickness = ((P * R) / denominator).toFixed(4);
+            }
+          } else {
+            // Head (2:1 ellipsoidal): t_min = PR/(2SE - 0.2P)
+            const denominator = 2 * S * E - 0.2 * P;
+            if (denominator > 0) {
+              minThickness = ((P * R) / denominator).toFixed(4);
+            }
+          }
+        }
+        
+        // Calculate corrosion rate and remaining life
+        let corrosionRate, remainingLife, corrosionAllowance;
+        if (avgPrevious && avgCurrent && minThickness) {
+          const prevThick = parseFloat(avgPrevious);
+          const currThick = parseFloat(avgCurrent);
+          const minThick = parseFloat(minThickness);
+          const timeSpan = 10; // Default
+          
+          corrosionRate = ((prevThick - currThick) / timeSpan).toFixed(6);
+          corrosionAllowance = (currThick - minThick).toFixed(4);
+          
+          const cr = parseFloat(corrosionRate);
+          const ca = parseFloat(corrosionAllowance);
+          if (cr > 0 && ca > 0) {
+            remainingLife = (ca / cr).toFixed(2);
+          } else if (ca <= 0) {
+            remainingLife = '0.00';
+          }
+        }
+        
+        await professionalReportDb.createComponentCalculation({
+          id: nanoid(),
+          reportId: report.id,
+          componentName,
+          componentType,
+          materialCode: inspection.materialSpec,
+          materialName: inspection.materialSpec,
+          designTemp: inspection.designTemperature ? inspection.designTemperature.toString() : undefined,
+          designMAWP: inspection.designPressure ? inspection.designPressure.toString() : undefined,
+          insideDiameter: inspection.insideDiameter ? inspection.insideDiameter.toString() : undefined,
+          nominalThickness: avgNominal,
+          previousThickness: avgPrevious,
+          actualThickness: avgCurrent,
+          minimumThickness: minThickness,
+          corrosionRate,
+          remainingLife,
+          timeSpan: '10',
+          nextInspectionYears: remainingLife ? (parseFloat(remainingLife) * 0.5).toFixed(2) : '5',
+          allowableStress: '15000',
+          jointEfficiency: '1.0',
+          corrosionAllowance: CA.toString(),
+        });
+        
+        console.log(`[Recalculate] Created ${componentName} calculation`);
+      };
+      
+      // Create Shell calculation
+      await createComponentCalc(
+        'shell',
+        'Shell',
+        (tml: any) => tml.component && tml.component.toLowerCase().includes('shell')
+      );
+      
+      // Create East Head calculation
+      await createComponentCalc(
+        'head',
+        'East Head',
+        (tml: any) => tml.component && tml.component.toLowerCase().includes('east') && tml.component.toLowerCase().includes('head')
+      );
+      
+      // Create West Head calculation
+      await createComponentCalc(
+        'head',
+        'West Head',
+        (tml: any) => tml.component && tml.component.toLowerCase().includes('west') && tml.component.toLowerCase().includes('head')
+      );
+      
+      return { success: true, message: 'Component calculations regenerated successfully' };
+    }),
 });
 
