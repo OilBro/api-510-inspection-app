@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Download, Plus, Trash2, Upload, FileText, Mail, Calculator } from "lucide-react";
+import { Loader2, Download, Plus, Trash2, Upload, FileText, Mail, Calculator, CheckSquare } from "lucide-react";
 import FindingsSection from "../professionalReport/FindingsSection";
 import RecommendationsSection from "../professionalReport/RecommendationsSection";
 import PhotosSection from "../professionalReport/PhotosSection";
@@ -213,6 +213,15 @@ export default function ProfessionalReportTab({ inspectionId }: ProfessionalRepo
           >
             <Mail className="h-4 w-4" />
             Generate & Email
+          </Button>
+          <Button
+            onClick={() => window.location.href = `/validation/${inspectionId}`}
+            size="lg"
+            variant="outline"
+            className="gap-2"
+          >
+            <CheckSquare className="h-4 w-4" />
+            Validate Calculations
           </Button>
         </div>
       </div>

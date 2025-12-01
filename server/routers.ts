@@ -12,6 +12,7 @@ import { professionalReportRouter } from "./professionalReportRouters";
 import { nozzleRouter } from "./nozzleRouters";
 import { reportComparisonRouter } from "./routers/reportComparisonRouter";
 import { pdfImportRouter } from "./routers/pdfImportRouter";
+import { validationRouter } from "./validationRouter";
 import { convertToJpeg } from "./_core/freeconvert";
 import * as fieldMappingDb from "./fieldMappingDb";
 import * as professionalReportDb from "./professionalReportDb";
@@ -1296,6 +1297,9 @@ export const appRouter = router({
   
   // Report comparison
   reportComparison: reportComparisonRouter,
+  
+  // Calculation validation
+  validation: validationRouter,
 });
 
 export type AppRouter = typeof appRouter;

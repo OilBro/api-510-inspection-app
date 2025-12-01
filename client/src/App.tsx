@@ -14,6 +14,7 @@ import ReportComparison from "./pages/ReportComparison";
 import ImportPDF from "./pages/ImportPDF";
 import ConvertImages from "./pages/ConvertImages";
 import UploadUTResults from "./pages/UploadUTResults";
+import ValidationDashboard from "./pages/ValidationDashboard";
 
 function Router() {
   return (
@@ -28,6 +29,7 @@ function Router() {
       <Route path={"import-pdf"} component={ImportPDF} />
       <Route path={"convert-images"} component={ConvertImages} />
       <Route path={"upload-ut-results"} component={UploadUTResults} />
+      <Route path={"/validation/:inspectionId"} component={ValidationDashboard} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

@@ -369,3 +369,15 @@
 - [ ] Validate findings appear in reports
 - [ ] Validate component calculations auto-generate
 - [ ] Validate all data displays correctly in generated PDFs
+
+## P0 - CALCULATION VALIDATION DASHBOARD
+- [x] Create backend procedure to extract PDF original values
+- [x] Create backend procedure to get app-calculated values
+- [x] Create comparison logic with discrepancy detection
+- [x] Build ValidationDashboard page component
+- [x] Add side-by-side comparison tables for Shell, East Head, West Head
+- [x] Add color-coded indicators for discrepancies (green=match, yellow=minor, red=major)
+- [x] Display comparison for: t_min, MAWP, corrosion rate, remaining life
+- [x] Add navigation link from Professional Report tab
+- [ ] Test with real inspection data
+- [ ] Add manual PDF value entry interface for inspections without stored PDF data
