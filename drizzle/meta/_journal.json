@@ -43,6 +43,13 @@
       "when": 1764603236621,
       "tag": "0005_wealthy_swarm",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1764686005809,
+      "tag": "0006_slim_old_lace",
+      "breakpoints": true
     }
   ]
 }

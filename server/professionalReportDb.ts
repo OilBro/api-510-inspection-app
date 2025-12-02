@@ -433,9 +433,9 @@ export async function generateDefaultCalculationsForInspection(inspectionId: str
     let staticHead = 0;
     const vesselConfig = inspection.vesselConfiguration?.toLowerCase() || 'horizontal';
     if (vesselConfig.includes('horizontal')) {
-      // Default specific gravity = 1.0 for water/aqueous solutions
-      // For vessel 54-11-067 (Methylchloride): SG ≈ 0.92
-      const specificGravity = 0.92; // TODO: Add specificGravity field to inspections table
+      // Use inspection-specific gravity if available, otherwise default to 0.92 (methylchloride)
+      // Common values: Water = 1.0, Methylchloride = 0.92, Gasoline = 0.72
+      const specificGravity = inspection.specificGravity ? parseFloat(inspection.specificGravity.toString()) : 0.92;
       const heightInches = D; // For horizontal vessel, height = diameter
       const heightFeet = heightInches / 12;
       const density = specificGravity * 62.4; // lb/ft³
@@ -458,6 +458,14 @@ export async function generateDefaultCalculationsForInspection(inspectionId: str
     const CA = (avgCurrent - tMin).toFixed(3);
     const CR = validPrev.length ? ((avgPrev - avgCurrent) / 10).toFixed(6) : '0.00000'; // Assume 10 years if no dates
     const RL = parseFloat(CR) > 0 ? (parseFloat(CA) / parseFloat(CR)).toFixed(2) : '>20';
+    
+    // API 510 requirement: Next inspection at lesser of 10 years OR 1/2 remaining life
+    let nextInspectionYears = '10.00';
+    if (RL !== '>20') {
+      const remainingLifeNum = parseFloat(RL);
+      const halfLife = remainingLifeNum / 2;
+      nextInspectionYears = Math.min(10, halfLife).toFixed(2);
+    }
 
     await createComponentCalculation({
       id: nanoid(),
@@ -478,6 +486,7 @@ export async function generateDefaultCalculationsForInspection(inspectionId: str
       corrosionAllowance: CA,
       corrosionRate: CR,
       remainingLife: RL,
+      nextInspectionYears: nextInspectionYears,
       createdAt: new Date(),
       updatedAt: new Date(),
     });

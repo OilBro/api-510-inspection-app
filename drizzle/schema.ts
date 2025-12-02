@@ -29,6 +29,7 @@ export const inspections = mysqlTable("inspections", {
   vesselTagNumber: varchar("vesselTagNumber", { length: 255 }).notNull(),
   vesselName: text("vesselName"),
   manufacturer: text("manufacturer"),
+  serialNumber: varchar("serialNumber", { length: 255 }),
   yearBuilt: int("yearBuilt"),
   
   // Design specifications
@@ -38,6 +39,10 @@ export const inspections = mysqlTable("inspections", {
   operatingTemperature: decimal("operatingTemperature", { precision: 10, scale: 2 }),
   mdmt: decimal("mdmt", { precision: 10, scale: 2 }),
   materialSpec: varchar("materialSpec", { length: 255 }),
+  allowableStress: decimal("allowableStress", { precision: 10, scale: 2 }),
+  jointEfficiency: decimal("jointEfficiency", { precision: 4, scale: 2 }),
+  radiographyType: varchar("radiographyType", { length: 50 }), // RT-1, RT-2, RT-3, RT-4
+  specificGravity: decimal("specificGravity", { precision: 10, scale: 4 }),
   vesselType: varchar("vesselType", { length: 255 }),
   product: text("product"),
   constructionCode: varchar("constructionCode", { length: 255 }),

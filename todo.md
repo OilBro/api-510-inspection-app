@@ -422,3 +422,15 @@
 - [ ] Test with multiple vessels to verify data isolation
 
 **Root Cause:** Component calculations were not being automatically generated when creating professional reports. Added generateDefaultCalculationsForInspection() calls to both report creation paths.
+
+## P0 - API 510 COMPLIANCE REVIEW (Based on Diagnostic Guide)
+- [x] Fix Next Inspection Date calculation: lesser of 10 years OR 1/2 remaining life
+- [ ] Verify component type detection (shell vs head) before applying formulas
+- [x] Add missing nameplate fields: Manufacturer, Serial Number, Year Built
+- [x] Ensure Material Specification field exists and determines Allowable Stress (S)
+- [x] Verify Joint Efficiency (E) field exists with range 0.6-1.0 based on radiography
+- [ ] Check database field types: ensure t_min, corrosion_rate use DECIMAL not INT
+- [ ] Verify short-term vs long-term corrosion rate logic
+- [ ] Ensure t_required calculation uses MAWP not arbitrary limits
+- [ ] Add all required API 510 reporting fields to inspection form
+- [ ] Verify head type formulas: Ellipsoidal, Torispherical, Hemispherical
