@@ -20,18 +20,47 @@ export default function VesselDataTab({ inspection }: VesselDataTabProps) {
     vesselTagNumber: inspection.vesselTagNumber || "",
     vesselName: inspection.vesselName || "",
     manufacturer: inspection.manufacturer || "",
+    serialNumber: inspection.serialNumber || "",
     yearBuilt: inspection.yearBuilt?.toString() || "",
     designPressure: inspection.designPressure || "",
     designTemperature: inspection.designTemperature || "",
     operatingPressure: inspection.operatingPressure || "",
     materialSpec: inspection.materialSpec || "",
+    allowableStress: inspection.allowableStress || "",
+    jointEfficiency: inspection.jointEfficiency || "",
+    radiographyType: inspection.radiographyType || "",
+    specificGravity: inspection.specificGravity || "",
     vesselType: inspection.vesselType || "",
     insideDiameter: inspection.insideDiameter || "",
     overallLength: inspection.overallLength || "",
   });
 
   const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      const updated = { ...prev, [field]: value };
+      
+      // Auto-populate joint efficiency based on radiography type
+      if (field === 'radiographyType') {
+        switch (value) {
+          case 'RT-1':
+            updated.jointEfficiency = '1.00';
+            break;
+          case 'RT-2':
+            updated.jointEfficiency = '0.85';
+            break;
+          case 'RT-3':
+            updated.jointEfficiency = '0.70';
+            break;
+          case 'RT-4':
+            updated.jointEfficiency = '0.60';
+            break;
+          default:
+            break;
+        }
+      }
+      
+      return updated;
+    });
   };
 
   const handleSave = async () => {
@@ -41,11 +70,16 @@ export default function VesselDataTab({ inspection }: VesselDataTabProps) {
         vesselTagNumber: formData.vesselTagNumber,
         vesselName: formData.vesselName || undefined,
         manufacturer: formData.manufacturer || undefined,
+        serialNumber: formData.serialNumber || undefined,
         yearBuilt: formData.yearBuilt ? parseInt(formData.yearBuilt) : undefined,
         designPressure: formData.designPressure || undefined,
         designTemperature: formData.designTemperature || undefined,
         operatingPressure: formData.operatingPressure || undefined,
         materialSpec: formData.materialSpec || undefined,
+        allowableStress: formData.allowableStress || undefined,
+        jointEfficiency: formData.jointEfficiency || undefined,
+        radiographyType: formData.radiographyType || undefined,
+        specificGravity: formData.specificGravity || undefined,
         vesselType: formData.vesselType || undefined,
         insideDiameter: formData.insideDiameter || undefined,
         overallLength: formData.overallLength || undefined,
@@ -95,6 +129,15 @@ export default function VesselDataTab({ inspection }: VesselDataTabProps) {
                 id="manufacturer"
                 value={formData.manufacturer}
                 onChange={(e) => handleChange("manufacturer", e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="serialNumber">Serial Number</Label>
+              <Input
+                id="serialNumber"
+                value={formData.serialNumber}
+                onChange={(e) => handleChange("serialNumber", e.target.value)}
               />
             </div>
 
@@ -185,6 +228,62 @@ export default function VesselDataTab({ inspection }: VesselDataTabProps) {
                   <SelectItem value="SA-203 Grade E">SA-203 Grade E (Ni Alloy Steel)</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="allowableStress">Allowable Stress (psi)</Label>
+              <Input
+                id="allowableStress"
+                type="number"
+                step="1"
+                value={formData.allowableStress}
+                onChange={(e) => handleChange("allowableStress", e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Allowable stress at design temperature per ASME Section II Part D</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="radiographyType">Radiography Type</Label>
+              <Select
+                value={formData.radiographyType}
+                onValueChange={(value) => handleChange("radiographyType", value)}
+              >
+                <SelectTrigger id="radiographyType">
+                  <SelectValue placeholder="Select RT type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="RT-1">RT-1 (Full RT, E=1.0)</SelectItem>
+                  <SelectItem value="RT-2">RT-2 (Spot RT, E=0.85)</SelectItem>
+                  <SelectItem value="RT-3">RT-3 (Limited RT, E=0.70)</SelectItem>
+                  <SelectItem value="RT-4">RT-4 (No RT, E=0.60)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="jointEfficiency">Joint Efficiency (E)</Label>
+              <Input
+                id="jointEfficiency"
+                type="number"
+                step="0.01"
+                min="0.6"
+                max="1.0"
+                value={formData.jointEfficiency}
+                onChange={(e) => handleChange("jointEfficiency", e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Auto-populated from Radiography Type (0.6-1.0)</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="specificGravity">Specific Gravity</Label>
+              <Input
+                id="specificGravity"
+                type="number"
+                step="0.01"
+                value={formData.specificGravity}
+                onChange={(e) => handleChange("specificGravity", e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Common: Water=1.0, Methylchloride=0.92, Gasoline=0.72</p>
             </div>
 
             <div className="space-y-2">

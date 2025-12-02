@@ -445,5 +445,5 @@
 - [x] Add Radiography Type dropdown to New Inspection form (RT-1, RT-2, RT-3, RT-4)
 - [x] Add auto-population logic: RT-1→E=1.0, RT-2→E=0.85, RT-3→E=0.70, RT-4→E=0.60
 - [x] Add Specific Gravity input field to New Inspection form (with common values reference)
-- [ ] Add all new fields to Edit Inspection form
+- [x] Add all new fields to Edit Inspection form (IN PROGRESS)
 - [ ] Test form validation and auto-population
