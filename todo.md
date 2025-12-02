@@ -447,3 +447,15 @@
 - [x] Add Specific Gravity input field to New Inspection form (with common values reference)
 - [x] Add all new fields to Edit Inspection form (IN PROGRESS)
 - [ ] Test form validation and auto-population
+
+## P1 - CLOUDFLARE INTEGRATION (User Requested)
+- [x] Check Cloudflare MCP server availability and authentication
+- [x] Create comprehensive Cloudflare R2 setup guide (CLOUDFLARE_SETUP_GUIDE.md)
+- [x] Update storage helper to support both S3 and Cloudflare R2
+- [x] Install AWS SDK dependencies for R2 compatibility
+- [x] Document cost savings vs AWS S3 (96% reduction)
+- [ ] User action: Create R2 bucket via Cloudflare dashboard
+- [ ] User action: Add R2 credentials to Manus Settings → Secrets
+- [ ] User action: Set STORAGE_PROVIDER=r2 to enable R2
+- [ ] User action: Test file upload/download with R2
+- [ ] User action: Configure custom domain (optional)

@@ -1,11 +1,24 @@
-// Preconfigured storage helpers for Manus WebDev templates
-// Uses the Biz-provided storage proxy (Authorization: Bearer <token>)
+// Storage helpers supporting both Manus S3 proxy and Cloudflare R2
+// Set STORAGE_PROVIDER=r2 to use Cloudflare R2, defaults to Manus S3
 
 import { ENV } from './_core/env';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
+type StorageProvider = 's3' | 'r2';
 type StorageConfig = { baseUrl: string; apiKey: string };
 
-function getStorageConfig(): StorageConfig {
+// Get storage provider from environment (defaults to s3)
+function getStorageProvider(): StorageProvider {
+  const provider = process.env.STORAGE_PROVIDER?.toLowerCase();
+  return provider === 'r2' ? 'r2' : 's3';
+}
+
+// ============================================================================
+// MANUS S3 PROXY (Default)
+// ============================================================================
+
+function getS3Config(): StorageConfig {
   const baseUrl = ENV.forgeApiUrl;
   const apiKey = ENV.forgeApiKey;
 
@@ -67,12 +80,12 @@ function buildAuthHeaders(apiKey: string): HeadersInit {
   return { Authorization: `Bearer ${apiKey}` };
 }
 
-export async function storagePut(
+async function s3Put(
   relKey: string,
   data: Buffer | Uint8Array | string,
   contentType = "application/octet-stream"
 ): Promise<{ key: string; url: string }> {
-  const { baseUrl, apiKey } = getStorageConfig();
+  const { baseUrl, apiKey } = getS3Config();
   const key = normalizeKey(relKey);
   const uploadUrl = buildUploadUrl(baseUrl, key);
   const formData = toFormData(data, contentType, key.split("/").pop() ?? key);
@@ -92,14 +105,170 @@ export async function storagePut(
   return { key, url };
 }
 
-export async function storageGet(
+async function s3Get(
   relKey: string,
   _expiresIn = 300
 ): Promise<{ key: string; url: string; }> {
-  const { baseUrl, apiKey } = getStorageConfig();
+  const { baseUrl, apiKey } = getS3Config();
   const key = normalizeKey(relKey);
   return {
     key,
     url: await buildDownloadUrl(baseUrl, key, apiKey),
   };
+}
+
+// ============================================================================
+// CLOUDFLARE R2
+// ============================================================================
+
+let r2Client: S3Client | null = null;
+
+function getR2Client(): S3Client {
+  if (r2Client) return r2Client;
+
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+  const endpoint = process.env.R2_ENDPOINT;
+
+  if (!accessKeyId || !secretAccessKey || !endpoint) {
+    throw new Error(
+      "Cloudflare R2 credentials missing: set R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and R2_ENDPOINT"
+    );
+  }
+
+  r2Client = new S3Client({
+    region: 'auto',
+    endpoint,
+    credentials: {
+      accessKeyId,
+      secretAccessKey,
+    },
+  });
+
+  return r2Client;
+}
+
+function getR2BucketName(): string {
+  const bucketName = process.env.R2_BUCKET_NAME;
+  if (!bucketName) {
+    throw new Error("R2_BUCKET_NAME environment variable not set");
+  }
+  return bucketName;
+}
+
+function getR2PublicUrl(): string | null {
+  return process.env.R2_PUBLIC_URL || null;
+}
+
+async function r2Put(
+  relKey: string,
+  data: Buffer | Uint8Array | string,
+  contentType = "application/octet-stream"
+): Promise<{ key: string; url: string }> {
+  const client = getR2Client();
+  const bucketName = getR2BucketName();
+  const key = normalizeKey(relKey);
+
+  // Convert string to Buffer if needed
+  const bodyData = typeof data === 'string' ? Buffer.from(data) : data;
+
+  const command = new PutObjectCommand({
+    Bucket: bucketName,
+    Key: key,
+    Body: bodyData,
+    ContentType: contentType,
+  });
+
+  await client.send(command);
+
+  // Return public URL if configured, otherwise presigned URL
+  const publicUrl = getR2PublicUrl();
+  const url = publicUrl 
+    ? `${publicUrl}/${key}`
+    : await getR2PresignedUrl(client, bucketName, key);
+
+  return { key, url };
+}
+
+async function r2Get(
+  relKey: string,
+  expiresIn = 300
+): Promise<{ key: string; url: string }> {
+  const client = getR2Client();
+  const bucketName = getR2BucketName();
+  const key = normalizeKey(relKey);
+
+  // Return public URL if configured, otherwise presigned URL
+  const publicUrl = getR2PublicUrl();
+  const url = publicUrl
+    ? `${publicUrl}/${key}`
+    : await getR2PresignedUrl(client, bucketName, key, expiresIn);
+
+  return { key, url };
+}
+
+async function getR2PresignedUrl(
+  client: S3Client,
+  bucketName: string,
+  key: string,
+  expiresIn = 300
+): Promise<string> {
+  const command = new GetObjectCommand({
+    Bucket: bucketName,
+    Key: key,
+  });
+
+  return await getSignedUrl(client, command, { expiresIn });
+}
+
+// ============================================================================
+// PUBLIC API (Auto-selects provider)
+// ============================================================================
+
+export async function storagePut(
+  relKey: string,
+  data: Buffer | Uint8Array | string,
+  contentType = "application/octet-stream"
+): Promise<{ key: string; url: string }> {
+  const provider = getStorageProvider();
+  
+  if (provider === 'r2') {
+    return r2Put(relKey, data, contentType);
+  } else {
+    return s3Put(relKey, data, contentType);
+  }
+}
+
+export async function storageGet(
+  relKey: string,
+  expiresIn = 300
+): Promise<{ key: string; url: string }> {
+  const provider = getStorageProvider();
+  
+  if (provider === 'r2') {
+    return r2Get(relKey, expiresIn);
+  } else {
+    return s3Get(relKey, expiresIn);
+  }
+}
+
+// Export provider info for debugging
+export function getStorageInfo(): { provider: StorageProvider; configured: boolean } {
+  const provider = getStorageProvider();
+  let configured = false;
+
+  try {
+    if (provider === 'r2') {
+      getR2Client();
+      getR2BucketName();
+      configured = true;
+    } else {
+      getS3Config();
+      configured = true;
+    }
+  } catch (error) {
+    configured = false;
+  }
+
+  return { provider, configured };
 }
