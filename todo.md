@@ -434,3 +434,16 @@
 - [ ] Ensure t_required calculation uses MAWP not arbitrary limits
 - [ ] Add all required API 510 reporting fields to inspection form
 - [ ] Verify head type formulas: Ellipsoidal, Torispherical, Hemispherical
+
+## P0 - ADD API 510 FORM FIELDS (User Requested)
+- [x] Update PDF extraction prompt to capture serialNumber, allowableStress, jointEfficiency, radiographyType, specificGravity
+- [x] Add new fields to PDF extraction JSON schema
+- [x] Update saveExtractedData input schema to accept new fields
+- [x] Add Serial Number input field to New Inspection form
+- [x] Add Allowable Stress input field to New Inspection form
+- [x] Add Joint Efficiency input field to New Inspection form (with validation 0.6-1.0)
+- [x] Add Radiography Type dropdown to New Inspection form (RT-1, RT-2, RT-3, RT-4)
+- [x] Add auto-population logic: RT-1→E=1.0, RT-2→E=0.85, RT-3→E=0.70, RT-4→E=0.60
+- [x] Add Specific Gravity input field to New Inspection form (with common values reference)
+- [ ] Add all new fields to Edit Inspection form
+- [ ] Test form validation and auto-population
