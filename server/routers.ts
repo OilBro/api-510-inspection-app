@@ -13,6 +13,7 @@ import { nozzleRouter } from "./nozzleRouters";
 import { reportComparisonRouter } from "./routers/reportComparisonRouter";
 import { pdfImportRouter } from "./routers/pdfImportRouter";
 import { validationRouter } from "./validationRouter";
+import { materialStressRouter } from "./materialStressRouter";
 import { convertToJpeg } from "./_core/freeconvert";
 import * as fieldMappingDb from "./fieldMappingDb";
 import * as professionalReportDb from "./professionalReportDb";
@@ -45,6 +46,7 @@ function calculateTimeSpanYears(
 export const appRouter = router({
   system: systemRouter,
   pdfImport: pdfImportRouter,
+  materialStress: materialStressRouter,
 
   images: router({
     convertToJpeg: protectedProcedure

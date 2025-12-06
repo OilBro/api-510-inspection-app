@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE materialStressValues (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  materialSpec VARCHAR(255) NOT NULL,\n  materialGrade VARCHAR(100),\n  materialCategory VARCHAR(100),\n  temperatureF INT NOT NULL,\n  allowableStress INT NOT NULL,\n  asmeTable VARCHAR(50),\n  asmeEdition VARCHAR(50),\n  notes TEXT,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2vRv1t5JdAedAFZ.807c3fab4c80 --database A4XPjAmiHcgmrps2ZTa96H --execute CREATE TABLE materialStressValues (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  materialSpec VARCHAR(255) NOT NULL,\n  materialGrade VARCHAR(100),\n  materialCategory VARCHAR(100),\n  temperatureF INT NOT NULL,\n  allowableStress INT NOT NULL,\n  asmeTable VARCHAR(50),\n  asmeEdition VARCHAR(50),\n  notes TEXT,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 162
+}

@@ -13,6 +13,35 @@ import { toast } from "sonner";
 export default function NewInspection() {
   const [, setLocation] = useLocation();
   const createMutation = trpc.inspections.create.useMutation();
+  
+  // Fetch all available materials
+  const { data: materials } = trpc.materialStress.getAllMaterials.useQuery();
+  
+  // Function to fetch and auto-fill allowable stress
+  const fetchAllowableStress = async (materialSpec: string, temperatureF: number) => {
+    try {
+      const utils = trpc.useUtils();
+      const result = await utils.client.materialStress.getMaterialStressValue.query({
+        materialSpec,
+        temperatureF,
+      });
+      
+      if (result && result.allowableStress) {
+        setFormData((prev) => ({
+          ...prev,
+          allowableStress: result.allowableStress.toString(),
+        }));
+        
+        if (result.interpolated) {
+          toast.info(`Allowable stress interpolated from ${result.lowerBound?.temperatureF}°F and ${result.upperBound?.temperatureF}°F`);
+        } else {
+          toast.success(`Allowable stress auto-filled: ${result.allowableStress} psi`);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch allowable stress:', error);
+    }
+  };
 
   const [formData, setFormData] = useState({
     vesselTagNumber: "",
@@ -37,6 +66,12 @@ export default function NewInspection() {
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => {
       const updated = { ...prev, [field]: value };
+      
+      // Auto-populate allowable stress when material or temperature changes
+      if ((field === 'materialSpec' || field === 'designTemperature') && updated.materialSpec && updated.designTemperature) {
+        // Trigger allowable stress lookup
+        fetchAllowableStress(updated.materialSpec, parseFloat(updated.designTemperature));
+      }
       
       // Auto-populate joint efficiency based on radiography type
       if (field === 'radiographyType') {
@@ -247,14 +282,23 @@ export default function NewInspection() {
                         <SelectValue placeholder="Select material" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="SA-516 Grade 70">SA-516 Grade 70 (Carbon Steel)</SelectItem>
-                        <SelectItem value="SA-515 Grade 70">SA-515 Grade 70 (Carbon Steel)</SelectItem>
-                        <SelectItem value="SA-387 Grade 22">SA-387 Grade 22 (Cr-Mo Steel)</SelectItem>
-                        <SelectItem value="SA-387 Grade 11">SA-387 Grade 11 (Cr-Mo Steel)</SelectItem>
-                        <SelectItem value="SA-240 Type 304">SA-240 Type 304 (Stainless Steel)</SelectItem>
-                        <SelectItem value="SA-240 Type 316">SA-240 Type 316 (Stainless Steel)</SelectItem>
+                        {materials && materials.length > 0 ? (
+                          materials.map((material) => (
+                            <SelectItem key={material.materialSpec} value={material.materialSpec}>
+                              {material.materialSpec} ({material.materialCategory})
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <>
+                            <SelectItem value="SA-516 Grade 70">SA-516 Grade 70 (Carbon Steel)</SelectItem>
+                            <SelectItem value="SA-240 Type 304">SA-240 Type 304 (Stainless Steel)</SelectItem>
+                            <SelectItem value="SA-240 Type 316">SA-240 Type 316 (Stainless Steel)</SelectItem>
+                            <SelectItem value="SA-285 Grade C">SA-285 Grade C (Carbon Steel)</SelectItem>
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
+                    <p className="text-xs text-muted-foreground">Select material to auto-fill allowable stress based on design temperature</p>
                   </div>
 
                   <div className="space-y-2">

@@ -635,3 +635,31 @@ export const nozzleEvaluations = mysqlTable("nozzleEvaluations", {
 export type NozzleEvaluation = typeof nozzleEvaluations.$inferSelect;
 export type InsertNozzleEvaluation = typeof nozzleEvaluations.$inferInsert;
 
+/**
+ * Material Stress Values - ASME Section II Part D
+ * Allowable stress values for common pressure vessel materials at various temperatures
+ */
+export const materialStressValues = mysqlTable("materialStressValues", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Material identification
+  materialSpec: varchar("materialSpec", { length: 255 }).notNull(), // e.g., "SA-240 Type 304"
+  materialGrade: varchar("materialGrade", { length: 100 }), // e.g., "Type 304", "Grade 70"
+  materialCategory: varchar("materialCategory", { length: 100 }), // e.g., "Stainless Steel", "Carbon Steel"
+  
+  // Temperature and stress
+  temperatureF: int("temperatureF").notNull(), // Temperature in Fahrenheit
+  allowableStress: int("allowableStress").notNull(), // Allowable stress in psi
+  
+  // ASME reference
+  asmeTable: varchar("asmeTable", { length: 50 }), // e.g., "1A", "1B"
+  asmeEdition: varchar("asmeEdition", { length: 50 }), // e.g., "2021"
+  
+  // Metadata
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+});
+
+export type MaterialStressValue = typeof materialStressValues.$inferSelect;
+export type InsertMaterialStressValue = typeof materialStressValues.$inferInsert;

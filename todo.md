@@ -496,3 +496,16 @@
 - [ ] Test with vessel 54-11-067 PDFs to verify calculation consistency
 - [ ] Verify validation dashboard shows <1% discrepancy after fixes
 - [x] Ensure TypeScript compilation passes after all changes
+
+
+## P1 - MATERIAL STRESS LOOKUP TABLE (Dec 6, 2025)
+- [x] Create materialStressValues database table schema
+- [x] Add material types: SA-240 Type 304/316, SA-516 Grade 70, SA-285 Grade C
+- [x] Populate allowable stress values from ASME Section II Part D
+- [x] Add temperature ranges: -20°F to 800°F
+- [x] Create getMaterialStressValue tRPC procedure with linear interpolation
+- [x] Create getAllMaterials tRPC procedure
+- [x] Add material dropdown to New Inspection form
+- [x] Auto-fill allowable stress when material and design temperature selected
+- [x] Write and pass 7 vitest tests for material stress router
+- [x] Test auto-fill functionality with common materials
