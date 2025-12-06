@@ -17,6 +17,31 @@ import { convertToJpeg } from "./_core/freeconvert";
 import * as fieldMappingDb from "./fieldMappingDb";
 import * as professionalReportDb from "./professionalReportDb";
 
+/**
+ * Calculate time span in years between two dates
+ * @param previousDate - Previous inspection date
+ * @param currentDate - Current inspection date
+ * @param defaultYears - Default value if dates are invalid
+ * @returns Time span in years
+ */
+function calculateTimeSpanYears(
+  previousDate: Date | string | null | undefined,
+  currentDate: Date | string | null | undefined,
+  defaultYears: number = 10
+): number {
+  if (!previousDate || !currentDate) return defaultYears;
+  
+  const prev = new Date(previousDate);
+  const curr = new Date(currentDate);
+  
+  if (isNaN(prev.getTime()) || isNaN(curr.getTime())) return defaultYears;
+  
+  const diffMs = curr.getTime() - prev.getTime();
+  const diffYears = diffMs / (1000 * 60 * 60 * 24 * 365.25);
+  
+  return diffYears > 0 ? diffYears : defaultYears;
+}
+
 export const appRouter = router({
   system: systemRouter,
   pdfImport: pdfImportRouter,
@@ -273,14 +298,9 @@ export const appRouter = router({
         // Calculate corrosion rate in mpy (mils per year)
         // Use actual time interval from inspection dates
         if (previous && current) {
-          let timeSpanYears = 1; // Default fallback
-          
-          // TODO: Calculate actual time span from inspection dates
-          // For now, use default 1 year
-          const monthsDiff = 12;
-          if (monthsDiff > 0) {
-            timeSpanYears = monthsDiff / 12;
-          }
+          // Note: TML readings don't have inspection dates in input
+          // Time span calculation happens at inspection level
+          const timeSpanYears = 1; // Default for TML-level calculations
           
           const thicknessLoss = previous - current;
           const corrosionRateMpy = (thicknessLoss / timeSpanYears) * 1000; // Convert inches to mils
@@ -953,8 +973,8 @@ export const appRouter = router({
               // Calculate derived values
               const P = parseFloat(inspection.designPressure || "0");
               const R = inspection.insideDiameter ? parseFloat(inspection.insideDiameter) / 2 : 0;
-              const S = 20000; // Allowable stress for stainless steel (psi)
-              const E = 0.85; // Joint efficiency for RT-3
+              const S = parseFloat(inspection.allowableStress || '20000'); // Allowable stress from inspection or default
+              const E = parseFloat(inspection.jointEfficiency || '0.85'); // Joint efficiency from inspection or default
               const CA = 0.125; // Default corrosion allowance (1/8 inch)
               
               // Minimum thickness calculation (ASME Section VIII Div 1, UG-27)
@@ -974,9 +994,12 @@ export const appRouter = router({
                 const currThick = parseFloat(avgCurrentThickness);
                 const minThick = parseFloat(minimumThickness);
                 
-                // TODO: Get actual time between inspections from inspection dates
-                // For now, use 10 years as default
-                const timeSpan = 10;
+                // Calculate actual time between inspections from inspection date
+                const timeSpan = calculateTimeSpanYears(
+                  inspection.inspectionDate,
+                  new Date(),
+                  10 // Default to 10 years if inspection date not available
+                );
                 
                 // Corrosion rate: Cr = (t_prev - t_act) / Years
                 corrosionRate = ((prevThick - currThick) / timeSpan).toFixed(6);
@@ -1013,8 +1036,8 @@ export const appRouter = router({
                 remainingLife: remainingLife,
                 timeSpan: "10", // Default time span
                 nextInspectionYears: remainingLife ? (parseFloat(remainingLife) * 0.5).toFixed(2) : "5", // Half of remaining life or 5 years
-                allowableStress: "15000", // Default
-                jointEfficiency: "1.0", // Default
+                allowableStress: inspection.allowableStress || '20000',
+                jointEfficiency: inspection.jointEfficiency || '0.85',
                 corrosionAllowance: CA.toString(),
               });
               console.log(`[PDF Import] Auto-created shell component calculation for report ${report.id}`);

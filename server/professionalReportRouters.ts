@@ -2,6 +2,31 @@ import { z } from "zod";
 import { nanoid } from "nanoid";
 import { protectedProcedure, router } from "./_core/trpc";
 import { storagePut } from "./storage";
+
+/**
+ * Calculate time span in years between two dates
+ * @param previousDate - Previous inspection date
+ * @param currentDate - Current inspection date
+ * @param defaultYears - Default value if dates are invalid
+ * @returns Time span in years
+ */
+function calculateTimeSpanYears(
+  previousDate: Date | string | null | undefined,
+  currentDate: Date | string | null | undefined,
+  defaultYears: number = 10
+): number {
+  if (!previousDate || !currentDate) return defaultYears;
+  
+  const prev = new Date(previousDate);
+  const curr = new Date(currentDate);
+  
+  if (isNaN(prev.getTime()) || isNaN(curr.getTime())) return defaultYears;
+  
+  const diffMs = curr.getTime() - prev.getTime();
+  const diffYears = diffMs / (1000 * 60 * 60 * 24 * 365.25);
+  
+  return diffYears > 0 ? diffYears : defaultYears;
+}
 import {
   createProfessionalReport,
   getProfessionalReport,
@@ -779,7 +804,11 @@ export const professionalReportRouter = router({
           const prevThick = parseFloat(avgPrevious);
           const currThick = parseFloat(avgCurrent);
           const minThick = parseFloat(minThickness);
-          const timeSpan = 10; // Default
+          const timeSpan = calculateTimeSpanYears(
+            inspection.inspectionDate,
+            new Date(),
+            10 // Default to 10 years if inspection date not available
+          );
           
           corrosionRate = ((prevThick - currThick) / timeSpan).toFixed(6);
           corrosionAllowance = (currThick - minThick).toFixed(4);

@@ -478,3 +478,21 @@
 - [x] Verify component calculations are populated before PDF generation
 
 **Note:** TABLE A correctly pulls actualThickness from componentCalculations (line 690). The generateDefaultCalculationsForInspection function properly calculates actualThickness from TML readings (line 484). Component calculations are automatically generated when creating professional reports (added in previous checkpoint).
+
+## P0 - CODE REVIEW FOLLOW-UP (Dec 6, 2025)
+- [x] Fix hardcoded allowableStress in PDF import auto-generation (server/routers.ts line 956)
+- [x] Fix hardcoded jointEfficiency in PDF import auto-generation (server/routers.ts line 957)
+- [x] Fix stored allowableStress value in Shell component creation (server/routers.ts line 1016)
+- [x] Fix stored jointEfficiency value in Shell component creation (server/routers.ts line 1017)
+- [x] Fix stored allowableStress value in East Head component creation (server/routers.ts line 1092)
+- [x] Fix stored jointEfficiency value in East Head component creation (server/routers.ts line 1093)
+- [x] Fix stored allowableStress value in West Head component creation (server/routers.ts line 1169)
+- [x] Fix stored jointEfficiency value in West Head component creation (server/routers.ts line 1170)
+- [x] Create calculateTimeSpanYears helper function for accurate time span calculations
+- [x] Update TML create procedure - Note: TML readings don't have inspection dates in schema, calculation happens at inspection level
+- [x] Update TML update procedure - Note: TML readings don't have inspection dates in schema, calculation happens at inspection level
+- [x] Update PDF import auto-generation to use actual time span (server/routers.ts line 998-1002)
+- [x] Update recalculate procedure to use actual time span (server/professionalReportRouters.ts line 807-811)
+- [ ] Test with vessel 54-11-067 PDFs to verify calculation consistency
+- [ ] Verify validation dashboard shows <1% discrepancy after fixes
+- [x] Ensure TypeScript compilation passes after all changes
