@@ -382,7 +382,7 @@ export default function UnmatchedDataTab({ inspectionId }: UnmatchedDataTabProps
                         <div>
                           <span className="text-sm font-medium text-blue-900">Smart Suggestion: </span>
                           <span className="text-sm text-blue-700">
-                            {FIELD_MAPPINGS[match.section as keyof typeof FIELD_MAPPINGS].label} → {FIELD_MAPPINGS[match.section as keyof typeof FIELD_MAPPINGS].fields[match.field as keyof typeof FIELD_MAPPINGS[typeof match.section]['fields']]}
+                            {(FIELD_MAPPINGS as any)[match.section]?.label} → {(FIELD_MAPPINGS as any)[match.section]?.fields?.[match.field] || match.field}
                           </span>
                         </div>
                         <Badge className={getConfidenceColor(match.confidence)}>

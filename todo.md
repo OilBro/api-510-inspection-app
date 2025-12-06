@@ -470,6 +470,11 @@
 - [x] Fix server-side errors: docupipe.ts (docupipeApiKey, standardizationIds), fieldMappingRouters.ts (userId type), nozzleRouters.ts (schedule null), professionalPdfGenerator.ts (material property)
 - [x] Fix client-side errors: PDFComparisonView.tsx (inspection/generatePdf), calendar.tsx (IconLeft), ConvertImages.tsx (ConvertToJpegResult)
 - [x] Fix parser errors: fileParser.ts (parserType, component optional), flexiblePdfParser.ts (message type)
-- [ ] Fix remaining 8 non-critical errors (CalculationsTab setState, UnmatchedDataTab indexing, PDFComparisonView type mismatches)
-- [ ] Fix executive summary TABLE A generation to display actual thickness values instead of dashes
-- [ ] Verify component calculations are populated before PDF generation
+- [x] Fix CalculationsTab setState type error
+- [x] Fix UnmatchedDataTab indexing type errors
+- [x] Fix PDFComparisonView type mismatches (onSuccess, onError, mutation input)
+- [x] Fix fileParser previousThickness type (string | number)
+- [x] Fix executive summary TABLE A generation to display actual thickness values instead of dashes
+- [x] Verify component calculations are populated before PDF generation
+
+**Note:** TABLE A correctly pulls actualThickness from componentCalculations (line 690). The generateDefaultCalculationsForInspection function properly calculates actualThickness from TML readings (line 484). Component calculations are automatically generated when creating professional reports (added in previous checkpoint).

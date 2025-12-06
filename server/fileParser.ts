@@ -44,7 +44,7 @@ interface ParsedVesselData {
     location?: string;
     component?: string;
     currentThickness?: string | number;
-    previousThickness?: string;
+    previousThickness?: string | number;
     nominalThickness?: string | number;
     minimumRequired?: number;
     calculatedMAWP?: number;

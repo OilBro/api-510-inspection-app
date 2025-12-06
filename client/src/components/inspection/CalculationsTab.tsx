@@ -155,9 +155,9 @@ export default function CalculationsTab({ inspectionId }: CalculationsTabProps) 
       if (calculations.mawpInsideRadius) {
         setShellMAWP(prev => ({
           ...prev,
-          insideRadius: calculations.mawpInsideRadius,
-          allowableStress: calculations.mawpAllowableStress || "15000",
-          jointEfficiency: calculations.mawpJointEfficiency || "1.0",
+          insideRadius: String(calculations.mawpInsideRadius || ''),
+          allowableStress: String(calculations.mawpAllowableStress || "15000"),
+          jointEfficiency: String(calculations.mawpJointEfficiency || "1.0"),
         }));
       }
 

@@ -22,12 +22,15 @@ export default function PDFComparisonView({ inspectionId, reportId }: PDFCompari
 
   // Generate professional report PDF
   const generatePdf = trpc.professionalReport.generatePDF.useMutation({
-    onSuccess: (data: { url: string }) => {
-      setGeneratedPdfUrl(data.url);
+    onSuccess: (data) => {
+      // Convert base64 PDF to blob URL
+      const pdfBlob = new Blob([Uint8Array.from(atob(data.pdf), c => c.charCodeAt(0))], { type: 'application/pdf' });
+      const url = URL.createObjectURL(pdfBlob);
+      setGeneratedPdfUrl(url);
       setIsGenerating(false);
       toast.success("Report generated successfully");
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       toast.error(`Failed to generate report: ${error.message}`);
       setIsGenerating(false);
     },
@@ -35,7 +38,7 @@ export default function PDFComparisonView({ inspectionId, reportId }: PDFCompari
 
   const handleGenerateReport = () => {
     setIsGenerating(true);
-    generatePdf.mutate({ reportId });
+    generatePdf.mutate({ reportId, inspectionId });
   };
 
   const handleZoomIn = () => {
@@ -173,7 +176,7 @@ export default function PDFComparisonView({ inspectionId, reportId }: PDFCompari
           <CardContent>
             <div className="border rounded-lg overflow-hidden bg-gray-50">
               <iframe
-                src={originalPdf.url}
+                src={originalPdf?.url || ''}
                 className="w-full"
                 style={{ height: "800px", transform: `scale(${zoom / 100})`, transformOrigin: "top left" }}
                 title="Original PDF"
