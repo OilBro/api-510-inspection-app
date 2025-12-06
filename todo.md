@@ -454,8 +454,9 @@
 - [x] Update storage helper to support both S3 and Cloudflare R2
 - [x] Install AWS SDK dependencies for R2 compatibility
 - [x] Document cost savings vs AWS S3 (96% reduction)
-- [ ] User action: Create R2 bucket via Cloudflare dashboard
-- [ ] User action: Add R2 credentials to Manus Settings → Secrets
-- [ ] User action: Set STORAGE_PROVIDER=r2 to enable R2
-- [ ] User action: Test file upload/download with R2
+- [x] Create R2 bucket via Cloudflare MCP: api-510-inspection-files
+- [x] Add R2 credentials to Manus Settings → Secrets
+- [x] Set STORAGE_PROVIDER=r2 to enable R2
+- [x] Test file upload/download with R2 (all 5 tests passed)
+- [x] Enable public access on R2 bucket
 - [ ] User action: Configure custom domain (optional)
