@@ -752,8 +752,8 @@ export const professionalReportRouter = router({
         // Calculate minimum thickness
         const P = parseFloat(inspection.designPressure || '0');
         const R = inspection.insideDiameter ? parseFloat(inspection.insideDiameter) / 2 : 0;
-        const S = 20000; // Allowable stress
-        const E = 0.85; // Joint efficiency
+        const S = parseFloat(inspection.allowableStress || '20000'); // Allowable stress from inspection or default
+        const E = parseFloat(inspection.jointEfficiency || '0.85'); // Joint efficiency from inspection or default
         const CA = 0.125; // Corrosion allowance
         
         let minThickness;
@@ -811,8 +811,8 @@ export const professionalReportRouter = router({
           remainingLife,
           timeSpan: '10',
           nextInspectionYears: remainingLife ? (parseFloat(remainingLife) * 0.5).toFixed(2) : '5',
-          allowableStress: '15000',
-          jointEfficiency: '1.0',
+          allowableStress: inspection.allowableStress || '20000',
+          jointEfficiency: inspection.jointEfficiency || '0.85',
           corrosionAllowance: CA.toString(),
         });
         
