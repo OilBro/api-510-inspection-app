@@ -1658,11 +1658,7 @@ async function generateFfsAssessment(doc: PDFKit.PDFDocument, inspectionId: stri
       doc.moveDown();
     }
     
-    if (assessment.warnings) {
-      addSubsectionTitle(doc, 'Warnings');
-      addText(doc, assessment.warnings, { fontSize: 10 });
-      doc.moveDown();
-    }
+    // Note: warnings field removed - not in schema
   }
 }
 

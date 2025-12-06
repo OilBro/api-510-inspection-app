@@ -460,3 +460,13 @@
 - [x] Test file upload/download with R2 (all 5 tests passed)
 - [x] Enable public access on R2 bucket
 - [ ] User action: Configure custom domain (optional)
+
+## P0 - TYPESCRIPT ERROR FIXES (From Analysis Document)
+- [x] Fix professionalReportRouters.ts line 724: getTMLReadings → getTmlReadings
+- [x] Fix professionalReportRouters.ts lines 746: Add type annotations to sort function parameters
+- [x] Fix professionalPdfGenerator.ts line 1663: Remove 'warnings' property access from ffsAssessments
+- [x] Fix NewInspection.tsx: Add serialNumber and API 510 fields to create schema
+- [x] Fix VesselDataTab.tsx: Add serialNumber and API 510 fields to update schema
+- [ ] Fix remaining 26 TypeScript errors (mostly client-side type mismatches)
+- [ ] Fix executive summary TABLE A generation to display actual thickness values instead of dashes
+- [ ] Verify component calculations are populated before PDF generation

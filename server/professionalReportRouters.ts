@@ -721,7 +721,7 @@ export const professionalReportRouter = router({
       }
       
       // Get TML readings
-      const tmlReadings = await db.getTMLReadings(input.inspectionId);
+      const tmlReadings = await db.getTmlReadings(input.inspectionId);
       
       // Helper function to create component calculation
       const createComponentCalc = async (componentType: 'shell' | 'head', componentName: string, filter: (tml: any) => boolean) => {
@@ -743,7 +743,7 @@ export const professionalReportRouter = router({
           .filter((v: number) => !isNaN(v));
         
         const avgCurrent = currentThicknesses.length > 0 ? 
-          (currentThicknesses.reduce((a, b) => a + b, 0) / currentThicknesses.length).toFixed(4) : undefined;
+          (currentThicknesses.reduce((a: number, b: number) => a + b, 0) / currentThicknesses.length).toFixed(4) : undefined;
         const avgPrevious = previousThicknesses.length > 0 ? 
           (previousThicknesses.reduce((a: number, b: number) => a + b, 0) / previousThicknesses.length).toFixed(4) : undefined;
         const avgNominal = nominalThicknesses.length > 0 ? 
