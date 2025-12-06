@@ -141,6 +141,10 @@ export const nozzleRouter = router({
           ? updates.shellHeadRequiredThickness
           : parseFloat(existing.shellHeadRequiredThickness || '0');
         
+        if (!schedule) {
+          throw new Error('Schedule is required for nozzle calculations');
+        }
+        
         // Get pipe schedule data
         const pipeScheduleData = await getPipeSchedule(nominalSize, schedule);
         
@@ -362,7 +366,7 @@ export const nozzleRouter = router({
         return {
           nozzleNumber: n.nozzleNumber,
           size: n.nominalSize,
-          schedule: n.schedule,
+          schedule: n.schedule || '',
           location: n.location || '',
           nominalThickness: parseFloat(n.pipeNominalThickness || '0'),
           minusManufacturingTolerance: parseFloat(n.pipeMinusManufacturingTolerance || '0'),

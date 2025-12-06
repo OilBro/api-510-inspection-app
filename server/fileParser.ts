@@ -42,7 +42,7 @@ interface ParsedVesselData {
     cmlNumber?: string;
     tmlId?: string;
     location?: string;
-    component: string;
+    component?: string;
     currentThickness?: string | number;
     previousThickness?: string;
     nominalThickness?: string | number;
@@ -171,8 +171,8 @@ export async function parseExcelFile(buffer: Buffer): Promise<ParsedVesselData> 
  * Parse PDF file using Docupipe standardized extraction
  */
 export async function parsePDFFile(buffer: Buffer, parserType?: "docupipe" | "manus" | "vision"): Promise<ParsedVesselData> {
-  // Use provided parser type or fall back to ENV configuration
-  const selectedParser = parserType || ENV.parserType;
+  // Use provided parser type or fall back to default
+  const selectedParser = parserType || "docupipe";
   console.log(`[PDF Parser] Using parser: ${selectedParser}`);
   
   try {
@@ -259,7 +259,7 @@ export async function parsePDFFile(buffer: Buffer, parserType?: "docupipe" | "ma
                       tml3: { type: "string" },
                       tml4: { type: "string" },
                     },
-                    required: ["location", "component"],
+                    required: ["location"],
                     additionalProperties: false,
                   },
                 },

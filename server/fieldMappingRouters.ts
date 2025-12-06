@@ -6,7 +6,7 @@ import * as db from "./fieldMappingDb";
 export const fieldMappingRouter = router({
   // Get all field mappings for current user
   list: protectedProcedure.query(async ({ ctx }) => {
-    return await db.getFieldMappings(ctx.user.id);
+    return await db.getFieldMappings(ctx.user.id.toString());
   }),
 
   // Create a new field mapping
@@ -22,7 +22,7 @@ export const fieldMappingRouter = router({
     .mutation(async ({ ctx, input }) => {
       await db.createFieldMapping({
         id: nanoid(),
-        userId: ctx.user.id,
+        userId: ctx.user.id.toString(),
         ...input,
       });
       return { success: true };
@@ -38,7 +38,7 @@ export const fieldMappingRouter = router({
     )
     .query(async ({ ctx, input }) => {
       return await db.suggestMapping(
-        ctx.user.id,
+        ctx.user.id.toString(),
         input.sourceField,
         input.sourceValue
       );
@@ -75,7 +75,7 @@ export const unmatchedDataRouter = router({
       if (input.learnMapping) {
         // Check if mapping already exists
         const existing = await db.findSimilarMapping(
-          ctx.user.id,
+          ctx.user.id.toString(),
           input.sourceField
         );
         
@@ -86,7 +86,7 @@ export const unmatchedDataRouter = router({
           // Create new mapping
           await db.createFieldMapping({
             id: nanoid(),
-            userId: ctx.user.id,
+            userId: ctx.user.id.toString(),
             sourceField: input.sourceField,
             sourceValue: input.sourceValue,
             targetSection: input.targetSection,

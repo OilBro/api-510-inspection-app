@@ -66,7 +66,6 @@ export async function uploadDocument(
   filename: string
 ): Promise<DocupipeUploadResponse> {
   console.log("[Docupipe uploadDocument] API key check:", DOCUPIPE_API_KEY ? "PRESENT (" + DOCUPIPE_API_KEY.substring(0, 10) + "...)" : "MISSING");
-  console.log("[Docupipe uploadDocument] ENV.docupipeApiKey:", ENV.docupipeApiKey ? "PRESENT (" + ENV.docupipeApiKey.substring(0, 10) + "...)" : "MISSING");
   
   console.log("[Docupipe] API key check - value:", DOCUPIPE_API_KEY ? "PRESENT (" + DOCUPIPE_API_KEY.substring(0, 10) + "...)" : "MISSING/EMPTY", "| length:", DOCUPIPE_API_KEY ? DOCUPIPE_API_KEY.length : 0);
   if (!DOCUPIPE_API_KEY) {
@@ -325,7 +324,7 @@ export async function parseAndStandardizeDocument(
   console.log("[Docupipe] Standardization response:", JSON.stringify(standardizationResponse));
   
   // Extract standardization ID from response (could be standardizationId or id)
-  const standardizationId = standardizationResponse.standardizationId || standardizationResponse.id || standardizationResponse.standardizationIds?.[0];
+  const standardizationId = standardizationResponse.standardizationId || (standardizationResponse as any).id || (standardizationResponse as any).standardizationIds?.[0];
   
   if (!standardizationId) {
     console.error("[Docupipe] No standardization ID found in response:", standardizationResponse);

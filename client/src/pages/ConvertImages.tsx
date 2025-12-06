@@ -112,14 +112,14 @@ export default function ConvertImages() {
           outputFilename: file.name.replace(/\.[^.]+$/, ".jpg"),
         });
 
-        if (result.status === "completed" && result.downloadUrl) {
+        if (result.url) {
           updateJob(jobId, {
             status: "completed",
             progress: 100,
-            downloadUrl: result.downloadUrl,
+            downloadUrl: result.url,
           });
         } else {
-          throw new Error(result.error || "Conversion failed");
+          throw new Error("Conversion failed");
         }
       } catch (error: any) {
         updateJob(jobId, {

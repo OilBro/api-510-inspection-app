@@ -1410,7 +1410,7 @@ async function generateNozzleEvaluation(doc: PDFKit.PDFDocument, inspectionId: s
       cml.toString(),
       nozzle.nozzleNumber || `N${index + 1}`,
       nozzle.nominalSize ? nozzle.nominalSize.toString() : '-',
-      nozzle.material || 'SS A - 304',
+      'SS A - 304', // material field not in schema, using default
       age.toFixed(1),
       tPrev ? tPrev.toFixed(3) : '-',
       tAct ? tAct.toFixed(3) : '-',

@@ -16,18 +16,18 @@ export default function PDFComparisonView({ inspectionId, reportId }: PDFCompari
   const [isGenerating, setIsGenerating] = useState(false);
 
   // Get original uploaded PDF
-  const { data: originalPdf, isLoading: loadingOriginal } = trpc.inspection.getOriginalPdf.useQuery({
+  const { data: originalPdf, isLoading: loadingOriginal } = trpc.inspections.getOriginalPdf.useQuery({
     inspectionId,
   });
 
   // Generate professional report PDF
-  const generatePdf = trpc.professionalReport.generatePdf.useMutation({
-    onSuccess: (data) => {
+  const generatePdf = trpc.professionalReport.generatePDF.useMutation({
+    onSuccess: (data: { url: string }) => {
       setGeneratedPdfUrl(data.url);
       setIsGenerating(false);
       toast.success("Report generated successfully");
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast.error(`Failed to generate report: ${error.message}`);
       setIsGenerating(false);
     },

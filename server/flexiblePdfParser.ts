@@ -106,7 +106,8 @@ Be comprehensive - extract EVERYTHING, even if you're not sure what it means.`;
   }
 
   // Parse the JSON response
-  const extracted = JSON.parse(content);
+  const contentStr = typeof content === 'string' ? content : JSON.stringify(content);
+  const extracted = JSON.parse(contentStr);
   return extracted;
 }
 
@@ -201,7 +202,8 @@ Return the mapped data as JSON.`;
     throw new Error("No response from LLM for mapping");
   }
 
-  const mapped = JSON.parse(content);
+  const contentStr = typeof content === 'string' ? content : JSON.stringify(content);
+  const mapped = JSON.parse(contentStr);
   return mapped;
 }
 
