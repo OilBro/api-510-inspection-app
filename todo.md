@@ -509,3 +509,11 @@
 - [x] Auto-fill allowable stress when material and design temperature selected
 - [x] Write and pass 7 vitest tests for material stress router
 - [x] Test auto-fill functionality with common materials
+
+
+## P0 - FIX HARDCODED VALUES IN PROFESSIONALREPORTDB.TS (Dec 6, 2025)
+- [x] Fix hardcoded allowableStress in generateDefaultCalculationsForInspection (line 428)
+- [x] Fix hardcoded jointEfficiency in generateDefaultCalculationsForInspection (line 429)
+- [x] Fix stored allowableStress value in component creation (line 479)
+- [x] Fix stored jointEfficiency value in component creation (line 480)
+- [x] Test calculation consistency after fixes

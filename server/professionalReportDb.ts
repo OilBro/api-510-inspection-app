@@ -425,8 +425,8 @@ export async function generateDefaultCalculationsForInspection(inspectionId: str
     const P = parseFloat(inspection.designPressure || '250');
     const D = parseFloat(inspection.insideDiameter || '70.75');
     const R = D / 2;
-    const S = 20000;
-    const E = 0.85;
+    const S = parseFloat(inspection.allowableStress || '20000');
+    const E = parseFloat(inspection.jointEfficiency || '0.85');
     
     // Calculate static head pressure for horizontal vessels
     // P_static = (ρ × g × h) / 144 where ρ = specific gravity × 62.4 lb/ft³, g = 1, h = vessel height in inches
@@ -476,8 +476,8 @@ export async function generateDefaultCalculationsForInspection(inspectionId: str
       designMAWP: inspection.designPressure || '250',
       designTemp: inspection.designTemperature || '200',
       insideDiameter: inspection.insideDiameter || '70.75',
-      allowableStress: '20000',
-      jointEfficiency: '0.85',
+      allowableStress: inspection.allowableStress || '20000',
+      jointEfficiency: inspection.jointEfficiency || '0.85',
       staticHead: staticHead.toFixed(2),
       nominalThickness: avgPrev.toFixed(3),
       previousThickness: avgPrev.toFixed(3),
