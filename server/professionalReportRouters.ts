@@ -798,28 +798,47 @@ export const professionalReportRouter = router({
           }
         }
         
-        // Calculate corrosion rate and remaining life
-        let corrosionRate, remainingLife, corrosionAllowance;
-        if (avgPrevious && avgCurrent && minThickness) {
-          const prevThick = parseFloat(avgPrevious);
+        // Calculate corrosion rate and remaining life using enhanced dual-rate system
+        let corrosionRate, corrosionRateLT, corrosionRateST, remainingLife, corrosionAllowance;
+        let governingRateType, governingRateReason, dataQualityStatus, dataQualityNotes;
+        
+        if (avgCurrent && minThickness) {
           const currThick = parseFloat(avgCurrent);
           const minThick = parseFloat(minThickness);
-          const timeSpan = calculateTimeSpanYears(
-            inspection.inspectionDate,
-            new Date(),
-            10 // Default to 10 years if inspection date not available
-          );
+          const prevThick = avgPrevious ? parseFloat(avgPrevious) : undefined;
+          const nomThick = avgNominal ? parseFloat(avgNominal) : undefined;
           
-          corrosionRate = ((prevThick - currThick) / timeSpan).toFixed(6);
+          // Import enhanced calculation engine
+          const { calculateDualCorrosionRates, calculateRemainingLife, calculateInspectionInterval } = 
+            await import('./enhancedCalculations');
+          
+          // Prepare thickness data for dual corrosion rate calculation
+          const thicknessData = {
+            initialThickness: nomThick, // Use nominal as baseline if available
+            previousThickness: prevThick,
+            actualThickness: currThick,
+            minimumThickness: minThick,
+            initialDate: inspection.createdAt ? new Date(inspection.createdAt) : undefined,
+            previousDate: inspection.inspectionDate ? new Date(inspection.inspectionDate) : undefined,
+            currentDate: new Date()
+          };
+          
+          // Calculate dual corrosion rates with anomaly detection
+          const rateResult = calculateDualCorrosionRates(thicknessData);
+          
+          corrosionRateLT = rateResult.corrosionRateLongTerm.toFixed(6);
+          corrosionRateST = rateResult.corrosionRateShortTerm.toFixed(6);
+          corrosionRate = rateResult.governingRate.toFixed(6);
+          governingRateType = rateResult.governingRateType;
+          governingRateReason = rateResult.governingRateReason;
+          dataQualityStatus = rateResult.dataQualityStatus;
+          dataQualityNotes = rateResult.dataQualityNotes;
+          
           corrosionAllowance = (currThick - minThick).toFixed(4);
           
-          const cr = parseFloat(corrosionRate);
-          const ca = parseFloat(corrosionAllowance);
-          if (cr > 0 && ca > 0) {
-            remainingLife = (ca / cr).toFixed(2);
-          } else if (ca <= 0) {
-            remainingLife = '0.00';
-          }
+          // Calculate remaining life using governing rate
+          const rl = calculateRemainingLife(currThick, minThick, rateResult.governingRate);
+          remainingLife = rl.toFixed(2);
         }
         
         await professionalReportDb.createComponentCalculation({
@@ -836,7 +855,18 @@ export const professionalReportRouter = router({
           previousThickness: avgPrevious,
           actualThickness: avgCurrent,
           minimumThickness: minThickness,
+          
+          // Enhanced dual corrosion rate system
+          corrosionRateLongTerm: corrosionRateLT,
+          corrosionRateShortTerm: corrosionRateST,
           corrosionRate,
+          governingRateType,
+          governingRateReason,
+          
+          // Data quality indicators
+          dataQualityStatus,
+          dataQualityNotes,
+          
           remainingLife,
           timeSpan: '10',
           nextInspectionYears: remainingLife ? (parseFloat(remainingLife) * 0.5).toFixed(2) : '5',

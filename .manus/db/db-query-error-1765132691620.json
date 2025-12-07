@@ -1,0 +1,8 @@
+{
+  "query": "ALTER TABLE componentCalculations \nADD COLUMN corrosionRateLongTerm DECIMAL(10, 6) AFTER corrosionAllowance,\nADD COLUMN corrosionRateShortTerm DECIMAL(10, 6) AFTER corrosionRateLongTerm,\nADD COLUMN governingRateType ENUM('long_term', 'short_term', 'nominal') AFTER corrosionRate,\nADD COLUMN governingRateReason TEXT AFTER governingRateType,\nADD COLUMN dataQualityStatus ENUM('good', 'anomaly', 'growth_error', 'below_minimum', 'confirmed') DEFAULT 'good' AFTER remainingLife,\nADD COLUMN dataQualityNotes TEXT AFTER dataQualityStatus,\nADD COLUMN excludeFromCalculation BOOLEAN DEFAULT FALSE AFTER dataQualityNotes;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2vRv1t5JdAedAFZ.807c3fab4c80 --database A4XPjAmiHcgmrps2ZTa96H --execute ALTER TABLE componentCalculations \nADD COLUMN corrosionRateLongTerm DECIMAL(10, 6) AFTER corrosionAllowance,\nADD COLUMN corrosionRateShortTerm DECIMAL(10, 6) AFTER corrosionRateLongTerm,\nADD COLUMN governingRateType ENUM('long_term', 'short_term', 'nominal') AFTER corrosionRate,\nADD COLUMN governingRateReason TEXT AFTER governingRateType,\nADD COLUMN dataQualityStatus ENUM('good', 'anomaly', 'growth_error', 'below_minimum', 'confirmed') DEFAULT 'good' AFTER remainingLife,\nADD COLUMN dataQualityNotes TEXT AFTER dataQualityStatus,\nADD COLUMN excludeFromCalculation BOOLEAN DEFAULT FALSE AFTER dataQualityNotes;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'corrosionratelongterm' in 'componentCalculations'"
+  ]
+}

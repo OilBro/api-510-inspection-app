@@ -57,6 +57,13 @@
       "when": 1765050151386,
       "tag": "0007_fine_stick",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1765132682437,
+      "tag": "0008_rare_blindfold",
+      "breakpoints": true
     }
   ]
 }

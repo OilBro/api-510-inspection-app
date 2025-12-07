@@ -525,3 +525,41 @@
 - [x] Restart dev server to apply changes
 - [ ] Test PDF extraction functionality
 - [ ] Verify extraction works end-to-end
+
+
+## P0 - PHASE 1: MATHEMATICAL CORE EXCELLENCE (Industry Leader Roadmap) ✅ COMPLETE
+### 1.1 Dual Corrosion Rate System
+- [x] Add Long-Term Corrosion Rate calculation: CR_LT = (t_initial - t_actual) / ΔT_total
+- [x] Add Short-Term Corrosion Rate calculation: CR_ST = (t_previous - t_actual) / ΔT_recent
+- [x] Implement "Governing Rate" logic: CR_governing = max(CR_LT, CR_ST)
+- [x] Update remaining life calculation to use governing rate
+- [x] Add UI indicators showing which rate is governing and why
+- [x] Add database fields: corrosionRateLT, corrosionRateST, governingRate, governingRateReason
+
+### 1.2 Statistical Anomaly Detection
+- [x] Add data validation for negative corrosion rates (metal growth)
+- [x] Flag readings >20% different from previous as "Anomaly - Confirm Reading"
+- [x] Implement statistical outlier detection using standard deviation
+- [x] Create DataQualityIndicator UI component showing flagged readings
+- [x] Add "Exclude from Calculation" flag for confirmed bad data
+- [ ] Add inspector confirmation workflow for anomalies (Phase 2)
+
+### 1.3 Negative Remaining Life Handling
+- [x] Add strict exception handling for t_actual < t_min
+- [x] Display status as "UNSAFE - BELOW MINIMUM THICKNESS" (not negative years)
+- [x] Calculate de-rated MAWP when below minimum thickness
+- [ ] Auto-trigger API 579 Level 1 assessment workflow (Phase 5)
+- [ ] Generate automatic work order for repair or retirement (Phase 5)
+
+### 1.4 Joint Efficiency Validation Enhancement
+- [ ] Make Joint Efficiency validation more prominent (Phase 2)
+- [ ] Add validation prompt: "Confirm E value matches vessel U-1 data report" (Phase 2)
+- [ ] Store E validation source (U-1 report, nameplate, drawing number) (Phase 2)
+- [ ] Add warning if E changes from previous inspection (Phase 2)
+
+### 1.5 Corrosion Rate Singularity Handling
+- [x] Add zero corrosion rate exception handling (t_actual = t_previous)
+- [x] Default to minimum nominal rate: 0.001 ipy (1 mpy)
+- [x] Display "No measurable corrosion - using nominal rate" message
+- [x] Cap inspection interval at 10 years per API 510
+- [ ] Add manual override for truly non-corroding services (Phase 2)

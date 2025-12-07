@@ -368,8 +368,20 @@ export const componentCalculations = mysqlTable("componentCalculations", {
   
   // Calculated results
   corrosionAllowance: decimal("corrosionAllowance", { precision: 10, scale: 4 }), // Ca
-  corrosionRate: decimal("corrosionRate", { precision: 10, scale: 6 }), // Cr (in/year)
+  
+  // Dual corrosion rate system (Industry Leader Feature)
+  corrosionRateLongTerm: decimal("corrosionRateLongTerm", { precision: 10, scale: 6 }), // CR_LT (in/year) - from initial to current
+  corrosionRateShortTerm: decimal("corrosionRateShortTerm", { precision: 10, scale: 6 }), // CR_ST (in/year) - from previous to current
+  corrosionRate: decimal("corrosionRate", { precision: 10, scale: 6 }), // Governing rate: max(CR_LT, CR_ST)
+  governingRateType: mysqlEnum("governingRateType", ["long_term", "short_term", "nominal"]),
+  governingRateReason: text("governingRateReason"), // Explanation of why this rate was selected
+  
   remainingLife: decimal("remainingLife", { precision: 10, scale: 2 }), // RL (years)
+  
+  // Data quality flags (Industry Leader Feature)
+  dataQualityStatus: mysqlEnum("dataQualityStatus", ["good", "anomaly", "growth_error", "below_minimum", "confirmed"]).default("good"),
+  dataQualityNotes: text("dataQualityNotes"), // Explanation of data quality issues
+  excludeFromCalculation: boolean("excludeFromCalculation").default(false), // Flag to exclude bad data
   
   // MAWP at next inspection
   thicknessAtNextInspection: decimal("thicknessAtNextInspection", { precision: 10, scale: 4 }),
