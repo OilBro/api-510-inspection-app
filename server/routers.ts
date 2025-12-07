@@ -846,7 +846,7 @@ export const appRouter = router({
             fileType: input.fileType,
             fileUrl,
             fileSize: buffer.length,
-            parserType: input.parserType || "docupipe",
+            parserType: input.parserType || "manus",
             extractedData: JSON.stringify(parsedData),
             processingStatus: "completed",
           });

@@ -517,3 +517,11 @@
 - [x] Fix stored allowableStress value in component creation (line 479)
 - [x] Fix stored jointEfficiency value in component creation (line 480)
 - [x] Test calculation consistency after fixes
+
+
+## P0 - SWITCH BACK TO MANUS PARSER (Dec 6, 2025)
+- [x] Investigate current extraction service configuration
+- [x] Switch from Docupipe to Manus Parser (fileParser.ts line 175, routers.ts line 849)
+- [x] Restart dev server to apply changes
+- [ ] Test PDF extraction functionality
+- [ ] Verify extraction works end-to-end

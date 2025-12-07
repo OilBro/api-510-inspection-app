@@ -172,7 +172,7 @@ export async function parseExcelFile(buffer: Buffer): Promise<ParsedVesselData> 
  */
 export async function parsePDFFile(buffer: Buffer, parserType?: "docupipe" | "manus" | "vision"): Promise<ParsedVesselData> {
   // Use provided parser type or fall back to default
-  const selectedParser = parserType || "docupipe";
+  const selectedParser = parserType || "manus";
   console.log(`[PDF Parser] Using parser: ${selectedParser}`);
   
   try {
