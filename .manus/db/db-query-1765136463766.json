@@ -1,0 +1,38 @@
+{
+  "query": "SELECT materialCategory, COUNT(*) as count FROM materialStressValues GROUP BY materialCategory ORDER BY materialCategory",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2vRv1t5JdAedAFZ.807c3fab4c80 --database A4XPjAmiHcgmrps2ZTa96H --execute SELECT materialCategory, COUNT(*) as count FROM materialStressValues GROUP BY materialCategory ORDER BY materialCategory",
+  "rows": [
+    {
+      "materialCategory": "Alloy Pipe",
+      "count": "21"
+    },
+    {
+      "materialCategory": "Alloy Steel",
+      "count": "24"
+    },
+    {
+      "materialCategory": "Carbon Steel",
+      "count": "56"
+    },
+    {
+      "materialCategory": "Forgings",
+      "count": "26"
+    },
+    {
+      "materialCategory": "Low-Temp Steel",
+      "count": "15"
+    },
+    {
+      "materialCategory": "Pipe",
+      "count": "9"
+    },
+    {
+      "materialCategory": "Stainless Steel",
+      "count": "36"
+    }
+  ],
+  "messages": [],
+  "stdout": "materialCategory\tcount\nAlloy Pipe\t21\nAlloy Steel\t24\nCarbon Steel\t56\nForgings\t26\nLow-Temp Steel\t15\nPipe\t9\nStainless Steel\t36\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}

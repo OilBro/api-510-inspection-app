@@ -1,0 +1,28 @@
+{
+  "query": "SHOW CREATE TABLE materialStressValues",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2vRv1t5JdAedAFZ.807c3fab4c80 --database A4XPjAmiHcgmrps2ZTa96H --execute SHOW CREATE TABLE materialStressValues",
+  "rows": [
+    {
+      "Table": "materialStressValues",
+      "Create Table": "CREATE TABLE `materialStressValues` ("
+    }
+  ],
+  "messages": [
+    "  `id` int(11) NOT NULL AUTO_INCREMENT,",
+    "  `materialSpec` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,",
+    "  `materialGrade` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,",
+    "  `materialCategory` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,",
+    "  `temperatureF` int(11) NOT NULL,",
+    "  `allowableStress` int(11) NOT NULL,",
+    "  `asmeTable` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,",
+    "  `asmeEdition` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,",
+    "  `notes` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,",
+    "  `createdAt` timestamp DEFAULT CURRENT_TIMESTAMP,",
+    "  `updatedAt` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,",
+    "  PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */",
+    ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci AUTO_INCREMENT=30001"
+  ],
+  "stdout": "Table\tCreate Table\nmaterialStressValues\tCREATE TABLE `materialStressValues` (\n  `id` int(11) NOT NULL AUTO_INCREMENT,\n  `materialSpec` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `materialGrade` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `materialCategory` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `temperatureF` int(11) NOT NULL,\n  `allowableStress` int(11) NOT NULL,\n  `asmeTable` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `asmeEdition` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `notes` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `createdAt` timestamp DEFAULT CURRENT_TIMESTAMP,\n  `updatedAt` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci AUTO_INCREMENT=30001\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

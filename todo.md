@@ -563,3 +563,56 @@
 - [x] Display "No measurable corrosion - using nominal rate" message
 - [x] Cap inspection interval at 10 years per API 510
 - [ ] Add manual override for truly non-corroding services (Phase 2)
+
+
+## P1 - PHASE 2: COMPREHENSIVE MATERIAL LIBRARY (Industry Leader Roadmap) ✅ COMPLETE
+### 2.1 Carbon Steel Materials
+- [x] Add SA-515 Grade 60 (common older vessels) - 9 temperature points
+- [x] Add SA-515 Grade 70 (common older vessels) - 9 temperature points
+- [x] Add SA-516 Grade 55 (low-pressure applications) - 8 temperature points
+- [x] Add SA-516 Grade 60 (moderate-pressure applications) - 8 temperature points
+- [x] Add SA-516 Grade 65 (moderate-pressure applications) - 8 temperature points
+- [x] Add SA-285 Grade A (low-pressure applications) - 7 temperature points
+- [x] Add SA-285 Grade B (low-pressure applications) - 7 temperature points
+
+### 2.2 Stainless Steel Materials
+- [x] Add SA-240 Type 304L (low-carbon variant) - 9 temperature points
+- [x] Add SA-240 Type 316L (low-carbon variant) - 9 temperature points
+- [x] Add SA-240 Type 321 (stabilized for high-temp) - 9 temperature points
+- [x] Add SA-240 Type 347 (stabilized for high-temp) - 9 temperature points
+- [ ] Add SA-240 Type 410 (martensitic stainless) - Future enhancement
+- [ ] Add SA-240 Type 430 (ferritic stainless) - Future enhancement
+
+### 2.3 Chrome-Moly Alloy Materials
+- [x] Add SA-387 Grade 11 Class 2 (1.25Cr-0.5Mo normalized) - 11 temperature points
+- [x] Add SA-387 Grade 22 Class 2 (2.25Cr-1Mo normalized) - 13 temperature points
+- [x] Add SA-335 P11 (1.25Cr-0.5Mo pipe) - 10 temperature points
+- [x] Add SA-335 P22 (2.25Cr-1Mo pipe) - 11 temperature points
+- [ ] Add SA-387 Grade 11 Class 1 - Future enhancement
+- [ ] Add SA-387 Grade 12 Class 1/2 - Future enhancement
+- [ ] Add SA-387 Grade 22 Class 1 - Future enhancement
+- [ ] Add SA-335 P5/P9 - Future enhancement
+
+### 2.4 Low-Temperature Materials
+- [x] Add SA-333 Grade 6 (low-temp carbon steel pipe) - 8 temperature points
+- [x] Add SA-203 Grade D (3.5% Ni low-temp plate) - 7 temperature points
+- [ ] Add SA-333 Grade 1/3 - Future enhancement
+- [ ] Add SA-353 (9% Ni cryogenic) - Future enhancement
+- [ ] Add SA-203 Grade A - Future enhancement
+
+### 2.5 Pipe and Forged Materials
+- [x] Add SA-106 Grade B (seamless carbon steel pipe) - 9 temperature points
+- [x] Add SA-105 (carbon steel forgings) - 8 temperature points
+- [x] Add SA-182 F304 (stainless steel forgings) - 9 temperature points
+- [x] Add SA-182 F316 (stainless steel forgings) - 9 temperature points
+- [ ] Add SA-106 Grade A/C - Future enhancement
+- [ ] Add SA-182 F11/F22 - Future enhancement
+
+### 2.6 Material Categories and Database
+- [x] Add materialCategory field to database (7 categories implemented)
+- [x] Add material description field with common applications
+- [x] Create bulk insert script for material data
+- [x] Load 187 material stress data points covering -325°F to 1100°F
+- [ ] Add material search/filter by category in UI - Phase 3
+- [ ] Add ASME specification reference links - Phase 3
+- [ ] Create material selection wizard for new users - Phase 3
