@@ -648,3 +648,55 @@
 - [ ] Display data quality history
 - [ ] Add manual override controls for data quality flags
 - [ ] Include calculation methodology explanation
+
+
+## P0 - PHASE 4: CORROSION RATE TREND CHARTS (Industry Leader Roadmap) 🚧 IN PROGRESS
+### 4.1 Multi-Inspection Comparison
+- [x] Add previousInspectionId field to inspections table for chronological linking
+- [ ] Create trend analysis page showing all inspections for a vessel
+- [ ] Add inspection timeline visualization
+- [ ] Link inspections by vessel tag number
+- [ ] Display inspection history table with key metrics
+
+### 4.2 Thickness Degradation Charts
+- [ ] Implement Chart.js line charts for thickness over time
+- [ ] Show actual thickness trend for each component
+- [ ] Display minimum thickness threshold line
+- [ ] Add corrosion allowance visualization
+
+### 4.3 Corrosion Rate Visualization
+- [ ] Create dual-axis chart showing LT vs ST rates over time
+- [ ] Highlight governing rate changes between inspections
+- [ ] Show corrosion rate acceleration/deceleration
+- [ ] Add rate comparison table
+
+### 4.4 Acceleration Detection
+- [ ] Calculate rate-of-change for corrosion rates
+- [ ] Flag >50% acceleration as critical alert
+- [ ] Show acceleration percentage and trend
+- [ ] Generate automatic recommendations for accelerated corrosion
+
+## P0 - PHASE 5: COMPONENT HIERARCHY (Industry Leader Roadmap) 🚧 IN PROGRESS
+### 5.1 Database Schema
+- [x] Add parentComponentId field to componentCalculations table
+- [x] Add componentPath for hierarchical queries
+- [x] Add hierarchyLevel field for tree depth tracking
+- [ ] Create indexes for hierarchy traversal (Future optimization)
+
+### 5.2 Component Tree Navigation
+- [ ] Build tree view component with expand/collapse
+- [ ] Show component hierarchy: Vessel → Shells/Heads → CMLs
+- [ ] Add component icons and status indicators
+- [ ] Implement search/filter within tree
+
+### 5.3 Life Limiting Analysis
+- [ ] Identify component with shortest remaining life
+- [ ] Highlight critical components in tree
+- [ ] Show rollup statistics at parent levels
+- [ ] Generate component-specific recommendations
+
+### 5.4 CML Management
+- [ ] Group TML readings by CML location
+- [ ] Show CML-level trend charts
+- [ ] Add CML metadata (location, accessibility, NDE method)
+- [ ] Link CML to parent component in hierarchy

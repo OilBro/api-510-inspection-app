@@ -64,6 +64,20 @@
       "when": 1765132682437,
       "tag": "0008_rare_blindfold",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1765171162080,
+      "tag": "0009_tough_natasha_romanoff",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1765171388598,
+      "tag": "0010_blue_mongu",
+      "breakpoints": true
     }
   ]
 }

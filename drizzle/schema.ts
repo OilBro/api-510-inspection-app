@@ -25,6 +25,9 @@ export const inspections = mysqlTable("inspections", {
   id: varchar("id", { length: 64 }).primaryKey(),
   userId: int("userId").notNull(),
   
+  // Inspection linking for trend analysis
+  previousInspectionId: varchar("previousInspectionId", { length: 64 }),
+  
   // Vessel identification
   vesselTagNumber: varchar("vesselTagNumber", { length: 255 }).notNull(),
   vesselName: text("vesselName"),
@@ -331,6 +334,11 @@ export type InsertProfessionalReport = typeof professionalReports.$inferInsert;
 export const componentCalculations = mysqlTable("componentCalculations", {
   id: varchar("id", { length: 64 }).primaryKey(),
   reportId: varchar("reportId", { length: 64 }).notNull(),
+  
+  // Component hierarchy (Industry Leader Feature - Phase 5)
+  parentComponentId: varchar("parentComponentId", { length: 64 }), // Link to parent component
+  componentPath: varchar("componentPath", { length: 500 }), // Hierarchical path: "vessel/shell1/cml-a"
+  hierarchyLevel: int("hierarchyLevel").default(0), // 0=vessel, 1=shell/head, 2=cml
   
   componentName: varchar("componentName", { length: 255 }).notNull(), // e.g., "Shell 1", "North Head", "South Head"
   componentType: mysqlEnum("componentType", ["shell", "head"]).notNull(),
