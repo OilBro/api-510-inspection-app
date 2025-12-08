@@ -1060,7 +1060,11 @@ export const appRouter = router({
                 minimumThickness: minimumThickness,
                 corrosionRate: corrosionRate,
                 remainingLife: remainingLife,
-                timeSpan: "10", // Default time span
+                timeSpan: calculateTimeSpanYears(
+                  inspection.inspectionDate,
+                  new Date(),
+                  10
+                ).toFixed(2),
                 nextInspectionYears: remainingLife ? (parseFloat(remainingLife) * 0.5).toFixed(2) : "5", // Half of remaining life or 5 years
                 allowableStress: inspection.allowableStress || '20000',
                 jointEfficiency: inspection.jointEfficiency || '0.85',
@@ -1136,10 +1140,14 @@ export const appRouter = router({
                   minimumThickness: eastMinThickness,
                   corrosionRate: eastCorrosionRate,
                   remainingLife: eastRemainingLife,
-                  timeSpan: "10",
+                  timeSpan: calculateTimeSpanYears(
+                    inspection.inspectionDate,
+                    new Date(),
+                    10
+                  ).toFixed(2),
                   nextInspectionYears: eastRemainingLife ? (parseFloat(eastRemainingLife) * 0.5).toFixed(2) : "5",
-                  allowableStress: "15000",
-                  jointEfficiency: "1.0",
+                  allowableStress: inspection.allowableStress || '20000',
+                  jointEfficiency: inspection.jointEfficiency || '0.85',
                   corrosionAllowance: CA.toString(),
                 });
                 console.log(`[PDF Import] Auto-created East Head component calculation for report ${report.id}`);
@@ -1213,10 +1221,14 @@ export const appRouter = router({
                   minimumThickness: westMinThickness,
                   corrosionRate: westCorrosionRate,
                   remainingLife: westRemainingLife,
-                  timeSpan: "10",
+                  timeSpan: calculateTimeSpanYears(
+                    inspection.inspectionDate,
+                    new Date(),
+                    10
+                  ).toFixed(2),
                   nextInspectionYears: westRemainingLife ? (parseFloat(westRemainingLife) * 0.5).toFixed(2) : "5",
-                  allowableStress: "15000",
-                  jointEfficiency: "1.0",
+                  allowableStress: inspection.allowableStress || '20000',
+                  jointEfficiency: inspection.jointEfficiency || '0.85',
                   corrosionAllowance: CA.toString(),
                 });
                 console.log(`[PDF Import] Auto-created West Head component calculation for report ${report.id}`);

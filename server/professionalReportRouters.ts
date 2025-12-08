@@ -868,7 +868,11 @@ export const professionalReportRouter = router({
           dataQualityNotes,
           
           remainingLife,
-          timeSpan: '10',
+          timeSpan: calculateTimeSpanYears(
+            inspection.inspectionDate,
+            new Date(),
+            10
+          ).toFixed(2),
           nextInspectionYears: remainingLife ? (parseFloat(remainingLife) * 0.5).toFixed(2) : '5',
           allowableStress: inspection.allowableStress || '20000',
           jointEfficiency: inspection.jointEfficiency || '0.85',
