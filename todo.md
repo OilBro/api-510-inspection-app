@@ -796,3 +796,14 @@
 - [ ] Test Scenario 3: Recalculate feature with inspection-specific values
 - [ ] Verify discrepancies < 5% after fixes
 - [ ] Confirm no hardcoded values in generated calculations
+
+
+## P0 - REAL PDF TESTING (Dec 8, 2025) 🚧 IN PROGRESS
+- [ ] Import 54-11-004 2016 external inspection report PDF
+- [ ] Verify vessel data extraction (tag, MAWP, material, allowableStress, jointEfficiency)
+- [ ] Verify component calculations auto-generated (Shell, East Head, West Head)
+- [ ] Confirm calculations use inspection-specific values (not hardcoded 15000, 1.0)
+- [ ] Verify timeSpan calculated from inspection date (not hardcoded 10)
+- [ ] Check validation dashboard shows PDF original values
+- [ ] Verify discrepancies < 5% after fixes
+- [ ] Confirm TABLE A displays complete data (no dashes)
