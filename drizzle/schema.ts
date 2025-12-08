@@ -131,6 +131,11 @@ export const tmlReadings = mysqlTable("tmlReadings", {
   location: varchar("location", { length: 50 }).notNull(), // "7-0", "7-45", "11B-C", "N1"
   service: varchar("service", { length: 255 }), // For nozzles: "Manhole", "Relief", "Vap Out"
   
+  // Reading metadata for deduplication
+  readingType: varchar("readingType", { length: 50 }), // "nozzle", "seam", "spot", "general"
+  nozzleSize: varchar("nozzleSize", { length: 20 }), // "24\"", "3\"", "2\"", "1\"" (for nozzles only)
+  angle: varchar("angle", { length: 20 }), // "0°", "90°", "180°", "270°" (for multi-angle readings)
+  
   // Multiple readings at same location
   tml1: decimal("tml1", { precision: 10, scale: 4 }),
   tml2: decimal("tml2", { precision: 10, scale: 4 }),

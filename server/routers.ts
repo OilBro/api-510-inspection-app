@@ -17,6 +17,7 @@ import { materialStressRouter } from "./materialStressRouter";
 import { convertToJpeg } from "./_core/freeconvert";
 import * as fieldMappingDb from "./fieldMappingDb";
 import * as professionalReportDb from "./professionalReportDb";
+import { consolidateTMLReadings } from "./cmlDeduplication";
 
 /**
  * Calculate time span in years between two dates
@@ -773,40 +774,63 @@ export const appRouter = router({
             }
           }
 
-          // Create TML readings if available
+          // Create TML readings if available - with deduplication
           const createdTMLs: any[] = [];
           if (parsedData.tmlReadings && parsedData.tmlReadings.length > 0) {
-            for (const reading of parsedData.tmlReadings) {
+            console.log(`[PDF Import] Processing ${parsedData.tmlReadings.length} TML readings with deduplication`);
+            
+            // Consolidate duplicate readings into single records
+            const consolidatedReadings = consolidateTMLReadings(parsedData.tmlReadings);
+            console.log(`[PDF Import] Consolidated to ${consolidatedReadings.length} unique CML records`);
+            
+            for (const consolidated of consolidatedReadings) {
               const tmlRecord: any = {
                 id: nanoid(),
                 inspectionId: inspection.id,
-                // Required fields (with length limits)
-                cmlNumber: String(reading.cmlNumber || reading.tmlId || reading.location || 'N/A').substring(0, 10),
-                componentType: String(reading.component || 'Unknown').substring(0, 255),
-                location: String(reading.location || reading.cmlNumber || 'N/A').substring(0, 50),
+                // Required fields
+                cmlNumber: consolidated.cmlNumber,
+                componentType: consolidated.componentType,
+                location: consolidated.location,
                 status: 'good' as const,
                 // Legacy fields for backward compatibility
-                tmlId: reading.tmlId || `TML-${nanoid()}`,
-                component: reading.component || "Unknown",
+                tmlId: `TML-${nanoid()}`,
+                component: consolidated.componentType,
               };
               
-              // Only add optional fields if they exist
-              if (reading.nominalThickness) {
-                const val = typeof reading.nominalThickness === 'number' ? reading.nominalThickness : parseFloat(String(reading.nominalThickness));
-                if (!isNaN(val)) tmlRecord.nominalThickness = val.toString();
+              // Add metadata fields
+              if (consolidated.readingType) tmlRecord.readingType = consolidated.readingType;
+              if (consolidated.nozzleSize) tmlRecord.nozzleSize = consolidated.nozzleSize;
+              if (consolidated.service) tmlRecord.service = consolidated.service;
+              if (consolidated.angles.length > 0) {
+                // Store first angle as representative (or "Multi" if multiple)
+                tmlRecord.angle = consolidated.angles.length === 1 ? consolidated.angles[0] : 'Multi';
               }
-              if (reading.previousThickness) {
-                const val = parseFloat(String(reading.previousThickness));
-                if (!isNaN(val)) tmlRecord.previousThickness = val.toString();
+              
+              // Add thickness readings (tml1-4)
+              if (consolidated.tml1 !== undefined) tmlRecord.tml1 = consolidated.tml1.toString();
+              if (consolidated.tml2 !== undefined) tmlRecord.tml2 = consolidated.tml2.toString();
+              if (consolidated.tml3 !== undefined) tmlRecord.tml3 = consolidated.tml3.toString();
+              if (consolidated.tml4 !== undefined) tmlRecord.tml4 = consolidated.tml4.toString();
+              if (consolidated.tActual !== undefined) tmlRecord.tActual = consolidated.tActual.toString();
+              
+              // Add historical data
+              if (consolidated.nominalThickness !== undefined) {
+                tmlRecord.nominalThickness = consolidated.nominalThickness.toString();
               }
-              if (reading.currentThickness) {
-                const val = typeof reading.currentThickness === 'number' ? reading.currentThickness : parseFloat(String(reading.currentThickness));
-                if (!isNaN(val)) tmlRecord.currentThickness = val.toString();
+              if (consolidated.previousThickness !== undefined) {
+                tmlRecord.previousThickness = consolidated.previousThickness.toString();
+              }
+              
+              // Legacy currentThickness field (use tActual)
+              if (consolidated.tActual !== undefined) {
+                tmlRecord.currentThickness = consolidated.tActual.toString();
               }
               
               await db.createTmlReading(tmlRecord);
               createdTMLs.push(tmlRecord);
             }
+            
+            console.log(`[PDF Import] Created ${createdTMLs.length} TML records (eliminated ${parsedData.tmlReadings.length - createdTMLs.length} duplicates)`);
           }
 
           // Prepare checklist items for review (don't create yet)

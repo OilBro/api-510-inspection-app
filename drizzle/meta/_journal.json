@@ -78,6 +78,13 @@
       "when": 1765171388598,
       "tag": "0010_blue_mongu",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1765174356981,
+      "tag": "0011_magical_jack_power",
+      "breakpoints": true
     }
   ]
 }

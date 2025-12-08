@@ -721,3 +721,15 @@
 - [x] Serial Number field already exists in database schema (line 35)
 - [x] Update extraction prompts to capture all fields (Manus parser enhanced)
 - [ ] Update professional report generation to include new fields (Future enhancement)
+
+## P1 - CML DEDUPLICATION (Dec 8, 2025) ✅ COMPLETE
+- [x] Add readingType, nozzleSize, angle fields to database schema
+- [x] Create consolidateTMLReadings() helper function
+- [x] Implement grouping logic by cmlNumber + componentType + location
+- [x] Sort multi-angle readings (0°, 90°, 180°, 270°)
+- [x] Consolidate into tml1-4 fields
+- [x] Calculate tActual as minimum of all readings
+- [x] Auto-detect nozzle service types (Manway, Relief, Vapor Out, etc.)
+- [x] Integrate deduplication into PDF import router
+- [x] Write comprehensive vitest test suite (10 tests, all passing)
+- [x] Verify field truncation to database limits
