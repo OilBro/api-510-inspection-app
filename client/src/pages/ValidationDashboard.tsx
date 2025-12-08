@@ -250,6 +250,72 @@ export default function ValidationDashboard() {
                   </TableCell>
                 </TableRow>
                 
+                {/* Enhanced Dual Corrosion Rate Display */}
+                {component.appValues.corrosionRateLongTerm !== null && (
+                  <TableRow className="bg-blue-50">
+                    <TableCell className="font-medium pl-8 text-sm">
+                      ↳ Long-Term Rate (mpy)
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-sm">
+                      {formatValue(component.appValues.corrosionRateLongTerm, 3)}
+                    </TableCell>
+                    <TableCell className="text-right text-muted-foreground text-sm">
+                      —
+                    </TableCell>
+                    <TableCell className="text-right text-sm text-muted-foreground">
+                      Enhanced
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {component.appValues.governingRateType === 'long_term' && (
+                        <Badge variant="outline" className="bg-green-100 text-green-800">Governing</Badge>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                )}
+                
+                {component.appValues.corrosionRateShortTerm !== null && (
+                  <TableRow className="bg-blue-50">
+                    <TableCell className="font-medium pl-8 text-sm">
+                      ↳ Short-Term Rate (mpy)
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-sm">
+                      {formatValue(component.appValues.corrosionRateShortTerm, 3)}
+                    </TableCell>
+                    <TableCell className="text-right text-muted-foreground text-sm">
+                      —
+                    </TableCell>
+                    <TableCell className="text-right text-sm text-muted-foreground">
+                      Enhanced
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {component.appValues.governingRateType === 'short_term' && (
+                        <Badge variant="outline" className="bg-green-100 text-green-800">Governing</Badge>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                )}
+                
+                {component.appValues.dataQualityStatus && component.appValues.dataQualityStatus !== 'ok' && (
+                  <TableRow className="bg-yellow-50">
+                    <TableCell className="font-medium pl-8 text-sm">
+                      ↳ Data Quality Alert
+                    </TableCell>
+                    <TableCell colSpan={4} className="text-sm">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                        <span className="font-medium text-yellow-800">
+                          {component.appValues.dataQualityStatus === 'anomaly' && 'Anomaly Detected'}
+                          {component.appValues.dataQualityStatus === 'growth_error' && 'Metal Growth Detected'}
+                          {component.appValues.dataQualityStatus === 'below_minimum' && 'Below Minimum Thickness'}
+                        </span>
+                        {component.appValues.dataQualityNotes && (
+                          <span className="text-muted-foreground">— {component.appValues.dataQualityNotes}</span>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+                
                 <TableRow>
                   <TableCell className="font-medium">Remaining Life (years)</TableCell>
                   <TableCell className="text-right font-mono">

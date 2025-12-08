@@ -17,6 +17,27 @@ export default function NewInspection() {
   // Fetch all available materials
   const { data: materials } = trpc.materialStress.getAllMaterials.useQuery();
   
+  // Material category filter state
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  
+  // Group materials by category
+  const materialsByCategory = materials?.reduce((acc, material) => {
+    const category = material.materialCategory || 'Other';
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(material);
+    return acc;
+  }, {} as Record<string, typeof materials>);
+  
+  // Get unique categories
+  const categories = materialsByCategory ? Object.keys(materialsByCategory).sort() : [];
+  
+  // Filter materials by selected category
+  const filteredMaterials = selectedCategory === 'all' 
+    ? materials 
+    : materials?.filter(m => m.materialCategory === selectedCategory);
+  
   // Function to fetch and auto-fill allowable stress
   const fetchAllowableStress = async (materialSpec: string, temperatureF: number) => {
     try {
@@ -274,6 +295,32 @@ export default function NewInspection() {
 
                   <div className="space-y-2">
                     <Label htmlFor="materialSpec">Material Specification</Label>
+                    
+                    {/* Material Category Filter */}
+                    {categories.length > 0 && (
+                      <div className="flex gap-2 mb-2">
+                        <Button
+                          type="button"
+                          variant={selectedCategory === 'all' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setSelectedCategory('all')}
+                        >
+                          All ({materials?.length || 0})
+                        </Button>
+                        {categories.map((category) => (
+                          <Button
+                            key={category}
+                            type="button"
+                            variant={selectedCategory === category ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setSelectedCategory(category)}
+                          >
+                            {category} ({materialsByCategory?.[category]?.length || 0})
+                          </Button>
+                        ))}
+                      </div>
+                    )}
+                    
                     <Select
                       value={formData.materialSpec}
                       onValueChange={(value) => handleChange("materialSpec", value)}
@@ -282,10 +329,10 @@ export default function NewInspection() {
                         <SelectValue placeholder="Select material" />
                       </SelectTrigger>
                       <SelectContent>
-                        {materials && materials.length > 0 ? (
-                          materials.map((material) => (
+                        {filteredMaterials && filteredMaterials.length > 0 ? (
+                          filteredMaterials.map((material) => (
                             <SelectItem key={material.materialSpec} value={material.materialSpec}>
-                              {material.materialSpec} ({material.materialCategory})
+                              {material.materialSpec}
                             </SelectItem>
                           ))
                         ) : (
@@ -298,7 +345,10 @@ export default function NewInspection() {
                         )}
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-muted-foreground">Select material to auto-fill allowable stress based on design temperature</p>
+                    <p className="text-xs text-muted-foreground">
+                      {selectedCategory !== 'all' && `Showing ${filteredMaterials?.length || 0} ${selectedCategory} materials. `}
+                      Select material to auto-fill allowable stress based on design temperature
+                    </p>
                   </div>
 
                   <div className="space-y-2">

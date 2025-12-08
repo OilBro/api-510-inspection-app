@@ -71,13 +71,19 @@ export const validationRouter = router({
         // Get PDF original values for this component
         const pdfValues = pdfOriginalValues?.[componentName] || {};
 
-        // App calculated values
+        // App calculated values (including enhanced dual corrosion rate fields)
         const appValues = {
           componentName,
           actualThickness: calc?.actualThickness || actualThicknessAvg,
           minimumThickness: calc?.minimumThickness || 0,
           mawp: calc?.mawp || 0,
           corrosionRate: calc?.corrosionRate || 0,
+          corrosionRateLongTerm: calc?.corrosionRateLongTerm || null,
+          corrosionRateShortTerm: calc?.corrosionRateShortTerm || null,
+          governingRateType: calc?.governingRateType || null,
+          governingRateReason: calc?.governingRateReason || null,
+          dataQualityStatus: calc?.dataQualityStatus || null,
+          dataQualityNotes: calc?.dataQualityNotes || null,
           remainingLife: calc?.remainingLife || 0,
           nextInspectionDate: calc?.nextInspectionDate,
         };
