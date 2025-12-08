@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Download, Plus, Trash2, Upload, FileText, Mail, Calculator, CheckSquare } from "lucide-react";
+import { Loader2, Download, Plus, Trash2, Upload, FileText, Mail, Calculator, CheckSquare, FileSpreadsheet } from "lucide-react";
 import FindingsSection from "../professionalReport/FindingsSection";
 import RecommendationsSection from "../professionalReport/RecommendationsSection";
 import PhotosSection from "../professionalReport/PhotosSection";
@@ -47,6 +47,7 @@ export default function ProfessionalReportTab({ inspectionId }: ProfessionalRepo
   const [emailSubject, setEmailSubject] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
   const [sendingEmail, setSendingEmail] = useState(false);
+  const [exportingCSV, setExportingCSV] = useState(false);
 
   // Get or create professional report
   const { data: report, isLoading } = trpc.professionalReport.getOrCreate.useQuery({
@@ -63,6 +64,45 @@ export default function ProfessionalReportTab({ inspectionId }: ProfessionalRepo
       toast.error(`Failed to update report: ${error.message}`);
     },
   });
+
+  // Export CSV query
+  const exportCSV = trpc.professionalReport.exportCSV.useQuery(
+    {
+      reportId: report?.id || '',
+      inspectionId,
+    },
+    {
+      enabled: false, // Don't auto-fetch
+    }
+  );
+
+  const handleExportCSV = async () => {
+    if (!report) return;
+    setExportingCSV(true);
+    
+    try {
+      const result = await exportCSV.refetch();
+      
+      if (result.data) {
+        // Create blob and download
+        const blob = new Blob([result.data.csvContent], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = result.data.filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        toast.success('CSV exported successfully!');
+      }
+    } catch (error: any) {
+      toast.error(`Failed to export CSV: ${error.message}`);
+    } finally {
+      setExportingCSV(false);
+    }
+  };
 
   // Generate PDF mutation
   const generatePDF = trpc.professionalReport.generatePDF.useMutation({
@@ -213,6 +253,25 @@ export default function ProfessionalReportTab({ inspectionId }: ProfessionalRepo
           >
             <Mail className="h-4 w-4" />
             Generate & Email
+          </Button>
+          <Button
+            onClick={handleExportCSV}
+            disabled={exportingCSV}
+            size="lg"
+            variant="outline"
+            className="gap-2"
+          >
+            {exportingCSV ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Exporting...
+              </>
+            ) : (
+              <>
+                <FileSpreadsheet className="h-4 w-4" />
+                Export CSV
+              </>
+            )}
           </Button>
           <Button
             onClick={() => window.location.href = `/validation/${inspectionId}`}

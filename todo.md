@@ -831,3 +831,24 @@
 - RL (remaining life) → Now from eastHead.remainingLife / westHead.remainingLife
 - Next Inspection (Yn) → Now from nextInspectionYears field
 - MAWP values → Now from calculatedMAWP field
+
+
+## P1 - CSV EXPORT FEATURE (Dec 8, 2025) ✅ COMPLETE
+- [x] Design CSV export structure (component calculations, TML readings, nozzle evaluations)
+- [x] Create backend tRPC procedure for CSV generation (professionalReportRouters.ts exportCSV)
+- [x] Format component calculations as CSV rows (22 fields)
+- [x] Format TML readings as CSV rows (18 fields)
+- [x] Format nozzle evaluations as CSV rows (placeholder for future)
+- [x] Add inspection metadata header to CSV (17 fields)
+- [x] Add frontend "Export CSV" button in Professional Report tab
+- [x] Implement CSV download functionality in UI (blob download)
+- [x] Write comprehensive vitest test suite (8 tests, all passing)
+- [x] Verify CSV format handles commas, quotes, null values correctly
+
+**Features:**
+- Exports inspection metadata (vessel tag, manufacturer, design parameters)
+- Exports component calculations (thickness, MAWP, corrosion rate, remaining life)
+- Exports TML readings with multi-angle data (tml1-4)
+- Proper CSV escaping for commas, quotes, newlines
+- Filename includes vessel tag and date
+- Download button with loading state in Professional Report tab

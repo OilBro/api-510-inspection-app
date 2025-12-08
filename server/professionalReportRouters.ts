@@ -905,5 +905,42 @@ export const professionalReportRouter = router({
       
       return { success: true, message: 'Component calculations regenerated successfully' };
     }),
+  
+  // Export inspection data as CSV
+  exportCSV: protectedProcedure
+    .input(z.object({ 
+      reportId: z.string(),
+      inspectionId: z.string(),
+    }))
+    .query(async ({ input }) => {
+      const { reportId, inspectionId } = input;
+      
+      // Import CSV export helper
+      const { generateInspectionCSV } = await import('./csvExport');
+      const { getInspection, getTmlReadings } = await import('./db');
+      
+      // Fetch all data
+      const inspection = await getInspection(inspectionId);
+      if (!inspection) throw new Error('Inspection not found');
+      
+      const components = await getComponentCalculations(reportId);
+      const tmlReadings = await getTmlReadings(inspectionId);
+      
+      // TODO: Add nozzle evaluations when getNozzlesByInspection is implemented
+      const nozzles: any[] = [];
+      
+      // Generate CSV content
+      const csvContent = generateInspectionCSV({
+        inspection,
+        components,
+        tmlReadings,
+        nozzles,
+      });
+      
+      return {
+        csvContent,
+        filename: `inspection-${inspection.vesselTagNumber || inspectionId}-${new Date().toISOString().split('T')[0]}.csv`,
+      };
+    }),
 });
 
