@@ -616,3 +616,33 @@
 - [ ] Add material search/filter by category in UI - Phase 3
 - [ ] Add ASME specification reference links - Phase 3
 - [ ] Create material selection wizard for new users - Phase 3
+
+
+## P0 - PHASE 3: UI INTEGRATION (Industry Leader Roadmap)
+### 3.1 Professional Report Enhancement
+- [ ] Display dual corrosion rates (LT/ST) in component calculations table
+- [ ] Show governing rate with visual indicator (badge/highlight)
+- [ ] Add data quality status column with color-coded alerts
+- [ ] Include governing rate reason tooltip/popover
+- [ ] Update TABLE A to show governing rate instead of nominal rate
+
+### 3.2 Validation Dashboard Enhancement
+- [ ] Add dual corrosion rate comparison columns
+- [ ] Show governing rate type for each component
+- [ ] Display data quality indicators with icons
+- [ ] Add filter to show only components with anomalies
+- [ ] Include data quality summary statistics
+
+### 3.3 Material Selection Enhancement
+- [ ] Add material category dropdown filter to New Inspection form
+- [ ] Group materials by category in dropdown
+- [ ] Add material description tooltip on hover
+- [ ] Show temperature range for selected material
+- [ ] Auto-populate allowable stress based on material + temperature
+
+### 3.4 Component Calculations UI
+- [ ] Create enhanced component calculations detail page
+- [ ] Show corrosion rate trend chart (if multiple inspections)
+- [ ] Display data quality history
+- [ ] Add manual override controls for data quality flags
+- [ ] Include calculation methodology explanation
