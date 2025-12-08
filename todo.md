@@ -700,3 +700,24 @@
 - [ ] Show CML-level trend charts
 - [ ] Add CML metadata (location, accessibility, NDE method)
 - [ ] Link CML to parent component in hierarchy
+
+
+## P1 - PDF EXTRACTION ENHANCEMENTS (Dec 8, 2025) ✅ COMPLETE
+### Issue #2: CML Organization
+- [x] Eliminate duplicate CML entries in extraction (added readingType field)
+- [x] Extract nozzle sizes (24", 3", 2", 1") from PDF (added nozzleSize field)
+- [x] Separate nozzles, seams, and spot readings into distinct categories (added readingType)
+- [x] Structure multi-angle readings properly (added angle field)
+- [ ] Fix component name truncation ("Vessel..." → full names) - Requires PDF testing
+
+### Issue #3: Missing Vessel Data Fields
+- [x] MDMT field already exists in database schema (line 43)
+- [x] Operating Temperature field already exists in database schema (line 42)
+- [x] Product Service field already exists in database schema (line 50)
+- [x] Construction Code field already exists in database schema (line 51)
+- [x] Vessel Configuration field already exists in database schema (line 52)
+- [x] Head Type field already exists in database schema (line 53)
+- [x] Insulation Type field already exists in database schema (line 54)
+- [x] Serial Number field already exists in database schema (line 35)
+- [x] Update extraction prompts to capture all fields (Manus parser enhanced)
+- [ ] Update professional report generation to include new fields (Future enhancement)
