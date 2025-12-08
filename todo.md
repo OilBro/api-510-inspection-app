@@ -852,3 +852,23 @@
 - Proper CSV escaping for commas, quotes, newlines
 - Filename includes vessel tag and date
 - Download button with loading state in Professional Report tab
+
+
+## P0 - IDENTICAL VALUES BUG - ROOT CAUSE IDENTIFIED (Dec 8, 2025) ✅ FIXED
+**Issue:** Shell/Head Evaluation sections show identical values for different vessels (54-11-067 and 54-11-005)
+**Root Cause:** Old professional reports generated BEFORE hardcoded value fixes were applied
+**Fix Applied:** All hardcoded values removed from PDF import (routers.ts) and recalculate procedure (professionalReportRouters.ts)
+
+### Verification Steps (User Action Required):
+- [ ] Delete existing professional reports for 54-11-067 and 54-11-005
+- [ ] Re-import PDFs or click Recalculate button
+- [ ] Generate new professional reports
+- [ ] Verify Shell Evaluation shows different t prev, t act, t min, y values
+- [ ] Verify Head Evaluation shows different thickness and remaining life values
+- [ ] Confirm values match vessel-specific design parameters
+
+### Technical Details:
+- PDF generator correctly fetches components from database (line 407 in professionalPdfGenerator.ts)
+- Component calculations now use inspection-specific values (fixed in routers.ts lines 1063, 1143-1150, 1224-1231)
+- Head Evaluation PDF section uses vessel-specific data with fallbacks (lines 1101-1200 in professionalPdfGenerator.ts)
+- Shell Evaluation PDF section uses shellComp data (line 1037 in professionalPdfGenerator.ts)
