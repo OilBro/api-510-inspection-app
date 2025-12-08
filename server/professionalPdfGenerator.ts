@@ -1442,23 +1442,33 @@ async function generateThicknessReadings(doc: PDFKit.PDFDocument, readings: any[
   
   // First TML reading structure verified
   
-  // New grid-based format matching original OilPro reports
-  const headers = ['CML', 'Comp ID', 'Location', 'Service', 'tml-1', 'tml-2', 'tml-3', 'tml-4', 't act'];
+  // Enhanced grid-based format with angle labels and metadata
+  const headers = ['CML', 'Comp ID', 'Location', 'Type', 'Size', 'Service', 't prev', '0°', '90°', '180°', '270°', 't act*'];
   const rows = readings.map(r => [
     r.cmlNumber || r.tmlId || '-',
     r.componentType || r.component || '-',
     r.location || '-',
-    r.service || '',
-    r.tml1 ? parseFloat(r.tml1).toFixed(3) : '',
-    r.tml2 ? parseFloat(r.tml2).toFixed(3) : '',
-    r.tml3 ? parseFloat(r.tml3).toFixed(3) : '',
-    r.tml4 ? parseFloat(r.tml4).toFixed(3) : '',
+    r.readingType || '-',
+    r.nozzleSize || '-',
+    r.service || '-',
+    r.previousThickness ? parseFloat(r.previousThickness).toFixed(3) : '-',
+    r.tml1 ? parseFloat(r.tml1).toFixed(3) : '-',
+    r.tml2 ? parseFloat(r.tml2).toFixed(3) : '-',
+    r.tml3 ? parseFloat(r.tml3).toFixed(3) : '-',
+    r.tml4 ? parseFloat(r.tml4).toFixed(3) : '-',
     r.tActual ? parseFloat(r.tActual).toFixed(3) : (r.currentThickness ? parseFloat(r.currentThickness).toFixed(3) : '-'),
   ]);
   
   // TML table rows created: ${rows.length}
   
   await addTable(doc, headers, rows, 'ULTRASONIC THICKNESS MEASUREMENTS', logoBuffer);
+  
+  // Add explanatory note about t act*
+  doc.moveDown(0.5);
+  doc.fontSize(9).fillColor('#666666');
+  doc.text('* t act (actual thickness) = minimum of all angle readings (0°, 90°, 180°, 270°)', { align: 'left' });
+  doc.fillColor('#000000'); // Reset to black
+  doc.fontSize(10); // Reset font size
 }
 
 async function generateChecklist(doc: PDFKit.PDFDocument, items: any[], logoBuffer?: Buffer) {

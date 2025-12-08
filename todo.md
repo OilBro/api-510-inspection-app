@@ -733,3 +733,16 @@
 - [x] Integrate deduplication into PDF import router
 - [x] Write comprehensive vitest test suite (10 tests, all passing)
 - [x] Verify field truncation to database limits
+
+
+## P1 - PROFESSIONAL REPORT TEMPLATE UPDATE (Dec 8, 2025) ✅ COMPLETE
+- [x] Analyze current thickness table generation in professionalPdfGenerator.ts
+- [x] Update thickness table to show tml1-4 columns (already present)
+- [x] Add angle labels (0°, 90°, 180°, 270°) to column headers
+- [x] Add Type column for readingType (nozzle/seam/spot/general)
+- [x] Add Size column for nozzleSize (24", 3", 2", 1")
+- [x] Add t prev column for previous thickness comparison
+- [x] Highlight tActual column with asterisk notation (t act*)
+- [x] Add explanatory footer note about minimum value calculation
+- [x] Write comprehensive vitest test suite (5 tests, all passing)
+- [x] Verify enhanced table format handles all edge cases
