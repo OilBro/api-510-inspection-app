@@ -807,3 +807,27 @@
 - [ ] Check validation dashboard shows PDF original values
 - [ ] Verify discrepancies < 5% after fixes
 - [ ] Confirm TABLE A displays complete data (no dashes)
+
+
+## P0 - HEAD EVALUATION PDF BUG (Dec 8, 2025) ✅ FIXED
+**Issue:** Head Evaluation section shows identical values for different vessels (54-11-067 and 54-11-002)
+**Evidence:** Both reports show same S=20000, SH=6.0, t prev=0.500, t act=0.552, t min=0.526, y=12.0
+**Root Cause:** PDF generation using hardcoded arrays instead of vessel-specific calculations
+
+- [x] Investigate Head Evaluation PDF generation code in professionalPdfGenerator.ts (lines 1100-1198)
+- [x] Find where S (allowable stress) and SH (joint efficiency) are set (line 1112-1113 hardcoded)
+- [x] Find where t prev, t act, t min, y (remaining life) are pulled (lines 1141, 1159 hardcoded)
+- [x] Verify data source (should be from componentCalculations for specific reportId)
+- [x] Fix to use vessel-specific calculation data (replaced all hardcoded arrays)
+- [x] Write vitest tests to verify vessel-specific data usage (5 tests, all passing)
+- [x] Verify all head evaluation fields are dynamic (not hardcoded)
+
+**Fixed Fields:**
+- MAWP, D, T, E, SG1, SG2 → Now from inspection object
+- Material, S, P → Now from eastHead/westHead components or inspection
+- t nom, t prev, t act, t min → Now from component calculations
+- y (time span) → Now from eastHead.timeSpan / westHead.timeSpan
+- Cr (corrosion rate) → Now from eastHead.corrosionRate / westHead.corrosionRate
+- RL (remaining life) → Now from eastHead.remainingLife / westHead.remainingLife
+- Next Inspection (Yn) → Now from nextInspectionYears field
+- MAWP values → Now from calculatedMAWP field

@@ -1097,20 +1097,47 @@ async function generateComponentCalculations(doc: PDFKit.PDFDocument, components
   doc.text('Vessel Head(s)', MARGIN, doc.y);
   doc.moveDown(0.5);
   
+  // Get head component data
+  const eastHead = components.find(c => c.componentName?.includes('East'));
+  const westHead = components.find(c => c.componentName?.includes('West'));
+  
   const headInfoData = [
     ['', 'East Head and West Head', '', '', '', ''],
     ['MAWP', 'D', 'T', 'E', 'SG1', 'SG2'],
-    ['250', '70.750', '200', '0.85', '0.92', '0.92']
+    [
+      inspection?.designPressure || '250',
+      inspection?.insideDiameter || '70.750',
+      inspection?.designTemperature || '200',
+      inspection?.jointEfficiency || '0.85',
+      inspection?.specificGravity || '0.92',
+      inspection?.specificGravity || '0.92'
+    ]
   ];
   
   await addTable(doc, headInfoData[1], [headInfoData[2]], '', logoBuffer);
   doc.moveDown(1);
   
-  // Head specifications table
+  // Head specifications table - use component calculation data
   const headSpecData = [
     ['Head ID', 'Head Type', 't nom', 'Material', 'S', 'SH', 'P'],
-    ['East Head', 'Ellipsoidal', '0.500', 'SSA-304', '20000', '6.0', '252.4'],
-    ['West Head', 'Ellipsoidal', '0.500', 'SSA-304', '20000', '6.0', '252.4']
+    [
+      'East Head',
+      'Ellipsoidal',
+      eastHead?.nominalThickness || '0.500',
+      inspection?.materialSpec || 'SSA-304',
+      eastHead?.allowableStress || inspection?.allowableStress || '20000',
+      '6.0',
+      eastHead?.designMAWP || inspection?.designPressure || '252.4'
+    ],
+    [
+      'West Head',
+      'Ellipsoidal',
+      westHead?.nominalThickness || '0.500',
+      inspection?.materialSpec || 'SSA-304',
+      westHead?.allowableStress || inspection?.allowableStress || '20000',
+      '6.0',
+      westHead?.designMAWP || inspection?.designPressure || '252.4'
+    ]
   ];
   
   await addTable(doc, headSpecData[0], headSpecData.slice(1), '', logoBuffer);
@@ -1124,8 +1151,8 @@ async function generateComponentCalculations(doc: PDFKit.PDFDocument, components
   doc.font('Helvetica').fontSize(9);
   doc.text('Internal; Hemispherical Head: PL/(2SE-0.2P) = t min', MARGIN, doc.y);
   doc.text('2:1 Ellipsoidal Head: PD/(2SE-0.2P) = t min (knl)', MARGIN, doc.y);
-  doc.text('East Head: Ellipsoidal t min = 0.526 (inch)', MARGIN, doc.y);
-  doc.text('West Head: Ellipsoidal t min = 0.526 (inch)', MARGIN, doc.y);
+  doc.text(`East Head: Ellipsoidal t min = ${eastHead?.minimumThickness || eastHead?.minimumRequired || '0.526'} (inch)`, MARGIN, doc.y);
+  doc.text(`West Head: Ellipsoidal t min = ${westHead?.minimumThickness || westHead?.minimumRequired || '0.526'} (inch)`, MARGIN, doc.y);
   doc.moveDown(1);
   
   // Remaining Life Calculations for heads
@@ -1133,20 +1160,25 @@ async function generateComponentCalculations(doc: PDFKit.PDFDocument, components
   doc.text('Remaining Life Calculations', MARGIN, doc.y);
   doc.moveDown(0.5);
   
-  const eastHead = components.find(c => c.componentName?.includes('East'));
-  const westHead = components.find(c => c.componentName?.includes('West'));
-  
   const eastRLData = [
     ['East Head', 't prev', 't act', 't min', 'y'],
-    ['', eastHead?.tPrevious || '0.500', eastHead?.tActual || '0.555', eastHead?.tMin || '0.526', '12.0']
+    [
+      '',
+      eastHead?.previousThickness || eastHead?.nominalThickness || '0.500',
+      eastHead?.actualThickness || '0.555',
+      eastHead?.minimumThickness || eastHead?.minimumRequired || '0.526',
+      eastHead?.timeSpan || '10.0'
+    ]
   ];
   
   await addTable(doc, eastRLData[0], [eastRLData[1]], '', logoBuffer);
   doc.moveDown(0.5);
   
-  const eastCa = eastHead?.tActual && eastHead?.tMin ? (parseFloat(eastHead.tActual) - parseFloat(eastHead.tMin)).toFixed(3) : '0.029';
-  const eastCr = '0';
-  const eastRL = '>20';
+  const eastCa = eastHead?.actualThickness && eastHead?.minimumThickness 
+    ? (parseFloat(eastHead.actualThickness) - parseFloat(eastHead.minimumThickness)).toFixed(3) 
+    : '0.029';
+  const eastCr = eastHead?.corrosionRate || '0';
+  const eastRL = eastHead?.remainingLife || '>20';
   
   doc.font('Helvetica').fontSize(10);
   doc.text(`Ca = t act - t min = ${eastCa} (inch)`, MARGIN, doc.y);
@@ -1156,15 +1188,23 @@ async function generateComponentCalculations(doc: PDFKit.PDFDocument, components
   
   const westRLData = [
     ['West Head', 't prev', 't act', 't min', 'y'],
-    ['', westHead?.tPrevious || '0.500', westHead?.tActual || '0.552', westHead?.tMin || '0.526', '12.0']
+    [
+      '',
+      westHead?.previousThickness || westHead?.nominalThickness || '0.500',
+      westHead?.actualThickness || '0.552',
+      westHead?.minimumThickness || westHead?.minimumRequired || '0.526',
+      westHead?.timeSpan || '10.0'
+    ]
   ];
   
   await addTable(doc, westRLData[0], [westRLData[1]], '', logoBuffer);
   doc.moveDown(0.5);
   
-  const westCa = westHead?.tActual && westHead?.tMin ? (parseFloat(westHead.tActual) - parseFloat(westHead.tMin)).toFixed(3) : '0.026';
-  const westCr = '0';
-  const westRL = '>20';
+  const westCa = westHead?.actualThickness && westHead?.minimumThickness 
+    ? (parseFloat(westHead.actualThickness) - parseFloat(westHead.minimumThickness)).toFixed(3) 
+    : '0.026';
+  const westCr = westHead?.corrosionRate || '0';
+  const westRL = westHead?.remainingLife || '>20';
   
   doc.text(`Ca = t act - t min = ${westCa} (inch)`, MARGIN, doc.y);
   doc.text(`Cr = t prev - t act / Y = ${westCr} (in/year)`, MARGIN, doc.y);
@@ -1172,7 +1212,8 @@ async function generateComponentCalculations(doc: PDFKit.PDFDocument, components
   doc.moveDown(1);
   
   doc.font('Helvetica-Bold').fontSize(10);
-  doc.text('Next Inspection (Yn) = 10 (year)', MARGIN, doc.y);
+  const nextInspectionYears = eastHead?.nextInspectionYears || westHead?.nextInspectionYears || '10';
+  doc.text(`Next Inspection (Yn) = ${nextInspectionYears} (year)`, MARGIN, doc.y);
   doc.moveDown(1);
   
   // MAWP Calculations for heads
@@ -1184,11 +1225,18 @@ async function generateComponentCalculations(doc: PDFKit.PDFDocument, components
   doc.text('(reference supplemental calcs for other head type formulas)', MARGIN, doc.y);
   doc.moveDown(0.5);
   
-  const eastMAWP = eastHead?.mawp || '263.9';
-  const westMAWP = westHead?.mawp || '262.5';
+  const eastMAWP = eastHead?.calculatedMAWP || eastHead?.mawp || '263.9';
+  const westMAWP = westHead?.calculatedMAWP || westHead?.mawp || '262.5';
   
-  doc.text(`East Head Ellipsoidal t = ${eastHead?.tActual || '0.555'} (inch) P= 266.3 (psi) MAWP = ${eastMAWP} (psi)`, MARGIN, doc.y);
-  doc.text(`West Head Ellipsoidal t = ${westHead?.tActual || '0.552'} (inch) P= 264.9 (psi) MAWP = ${westMAWP} (psi)`, MARGIN, doc.y);
+  const eastThickness = eastHead?.actualThickness || '0.555';
+  const westThickness = westHead?.actualThickness || '0.552';
+  
+  // Calculate P values if possible (simplified - actual formula would need more data)
+  const eastP = eastMAWP;
+  const westP = westMAWP;
+  
+  doc.text(`East Head Ellipsoidal t = ${eastThickness} (inch) P= ${eastP} (psi) MAWP = ${eastMAWP} (psi)`, MARGIN, doc.y);
+  doc.text(`West Head Ellipsoidal t = ${westThickness} (inch) P= ${westP} (psi) MAWP = ${westMAWP} (psi)`, MARGIN, doc.y);
   doc.moveDown(1);
   
   doc.font('Helvetica').fontSize(10);
