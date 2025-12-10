@@ -54,6 +54,15 @@ function getFallbackTable(materialSpec: string) {
     .sort((a, b) => a.temperatureF - b.temperatureF);
 }
 
+function interpolateStress(lower: StressRow, upper: StressRow, temperatureF: number) {
+  const tempRange = upper.temperatureF - lower.temperatureF;
+  if (tempRange === 0) return null;
+  const stressRange = upper.allowableStress - lower.allowableStress;
+  const tempDiff = temperatureF - lower.temperatureF;
+  const allowableStress = Math.round(lower.allowableStress + (stressRange * tempDiff) / tempRange);
+  return { allowableStress, lower, upper };
+}
+
 export const materialStressRouter = router({
   /**
    * Get all unique materials
@@ -112,8 +121,8 @@ export const materialStressRouter = router({
         const upper = table.find((row) => row.temperatureF >= roundedTemp);
 
         if (lower && upper) {
-          const tempRange = upper.temperatureF - lower.temperatureF;
-          if (tempRange === 0) {
+          const interpolated = interpolateStress(lower, upper, input.temperatureF);
+          if (!interpolated) {
             return {
               allowableStress: lower.allowableStress,
               temperatureF: lower.temperatureF,
@@ -124,24 +133,21 @@ export const materialStressRouter = router({
               note: "Using nearest available temperature",
             };
           }
-          const stressRange = upper.allowableStress - lower.allowableStress;
-          const tempDiff = input.temperatureF - lower.temperatureF;
-          const interpolatedStress = Math.round(lower.allowableStress + (stressRange * tempDiff) / tempRange);
 
           return {
-            allowableStress: interpolatedStress,
+            allowableStress: interpolated.allowableStress,
             temperatureF: input.temperatureF,
-            materialSpec: lower.materialSpec,
-            materialGrade: lower.materialGrade,
-            materialCategory: lower.materialCategory,
+            materialSpec: interpolated.lower.materialSpec,
+            materialGrade: interpolated.lower.materialGrade,
+            materialCategory: interpolated.lower.materialCategory,
             interpolated: true,
             lowerBound: {
-              temperatureF: lower.temperatureF,
-              allowableStress: lower.allowableStress,
+              temperatureF: interpolated.lower.temperatureF,
+              allowableStress: interpolated.lower.allowableStress,
             },
             upperBound: {
-              temperatureF: upper.temperatureF,
-              allowableStress: upper.allowableStress,
+              temperatureF: interpolated.upper.temperatureF,
+              allowableStress: interpolated.upper.allowableStress,
             },
           };
         }

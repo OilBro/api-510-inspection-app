@@ -6,6 +6,7 @@ import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 const isTestEnv = process.env.NODE_ENV === 'test';
+// Deterministic mock URL used in tests; no real network calls are performed
 const MOCK_R2_BASE_URL = 'https://pub-00403c9b844b4ab5a932e46119e654c8.r2.dev';
 const mockR2Store = new Map<string, Buffer>();
 
@@ -180,6 +181,10 @@ function getR2PublicUrl(): string | null {
   return process.env.R2_PUBLIC_URL || null;
 }
 
+/**
+ * Mock R2 PUT used during tests when real credentials are unavailable.
+ * Stores data in-memory and returns a deterministic public URL.
+ */
 function mockR2Put(
   relKey: string,
   data: Buffer | Uint8Array | string,
@@ -190,6 +195,10 @@ function mockR2Put(
   return { key, url: `${MOCK_R2_BASE_URL}/${key}` };
 }
 
+/**
+ * Mock R2 GET used during tests when real credentials are unavailable.
+ * Returns a deterministic URL without performing any network calls.
+ */
 function mockR2Get(relKey: string): { key: string; url: string } {
   const key = normalizeKey(relKey);
   return { key, url: `${MOCK_R2_BASE_URL}/${key}` };
