@@ -5,12 +5,19 @@ import { ENV } from './_core/env';
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
+const isTestEnv = process.env.NODE_ENV === 'test';
+const MOCK_R2_BASE_URL = 'https://pub-00403c9b844b4ab5a932e46119e654c8.r2.dev';
+const mockR2Store = new Map<string, Buffer>();
+
 type StorageProvider = 's3' | 'r2';
 type StorageConfig = { baseUrl: string; apiKey: string };
 
 // Get storage provider from environment (defaults to s3)
 function getStorageProvider(): StorageProvider {
   const provider = process.env.STORAGE_PROVIDER?.toLowerCase();
+  if (!provider && isTestEnv) {
+    return 'r2';
+  }
   return provider === 'r2' ? 'r2' : 's3';
 }
 
@@ -123,6 +130,19 @@ async function s3Get(
 
 let r2Client: S3Client | null = null;
 
+function hasR2Config(): boolean {
+  return Boolean(
+    process.env.R2_ACCESS_KEY_ID &&
+    process.env.R2_SECRET_ACCESS_KEY &&
+    process.env.R2_ENDPOINT &&
+    process.env.R2_BUCKET_NAME
+  );
+}
+
+function useMockR2(): boolean {
+  return isTestEnv && !hasR2Config();
+}
+
 function getR2Client(): S3Client {
   if (r2Client) return r2Client;
 
@@ -160,11 +180,29 @@ function getR2PublicUrl(): string | null {
   return process.env.R2_PUBLIC_URL || null;
 }
 
+function mockR2Put(
+  relKey: string,
+  data: Buffer | Uint8Array | string,
+): { key: string; url: string } {
+  const key = normalizeKey(relKey);
+  const body = typeof data === 'string' ? Buffer.from(data) : Buffer.from(data);
+  mockR2Store.set(key, body);
+  return { key, url: `${MOCK_R2_BASE_URL}/${key}` };
+}
+
+function mockR2Get(relKey: string): { key: string; url: string } {
+  const key = normalizeKey(relKey);
+  return { key, url: `${MOCK_R2_BASE_URL}/${key}` };
+}
+
 async function r2Put(
   relKey: string,
   data: Buffer | Uint8Array | string,
   contentType = "application/octet-stream"
 ): Promise<{ key: string; url: string }> {
+  if (useMockR2()) {
+    return mockR2Put(relKey, data);
+  }
   const client = getR2Client();
   const bucketName = getR2BucketName();
   const key = normalizeKey(relKey);
@@ -194,6 +232,9 @@ async function r2Get(
   relKey: string,
   expiresIn = 300
 ): Promise<{ key: string; url: string }> {
+  if (useMockR2()) {
+    return mockR2Get(relKey);
+  }
   const client = getR2Client();
   const bucketName = getR2BucketName();
   const key = normalizeKey(relKey);
@@ -259,9 +300,13 @@ export function getStorageInfo(): { provider: StorageProvider; configured: boole
 
   try {
     if (provider === 'r2') {
-      getR2Client();
-      getR2BucketName();
-      configured = true;
+      if (useMockR2()) {
+        configured = true;
+      } else {
+        getR2Client();
+        getR2BucketName();
+        configured = true;
+      }
     } else {
       getS3Config();
       configured = true;

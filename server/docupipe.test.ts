@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-describe("DOCUPIPE API Integration", () => {
+const hasDocupipeKey = Boolean(process.env.DOCUPIPE_API_KEY);
+const suite = hasDocupipeKey ? describe : describe.skip;
+
+suite("DOCUPIPE API Integration", () => {
   it("should have valid DOCUPIPE API credentials configured", async () => {
     const DOCUPIPE_API_KEY = process.env.DOCUPIPE_API_KEY;
     const DOCUPIPE_API_URL = "https://app.docupipe.ai";
