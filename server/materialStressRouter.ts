@@ -113,6 +113,17 @@ export const materialStressRouter = router({
 
         if (lower && upper) {
           const tempRange = upper.temperatureF - lower.temperatureF;
+          if (tempRange === 0) {
+            return {
+              allowableStress: lower.allowableStress,
+              temperatureF: lower.temperatureF,
+              materialSpec: lower.materialSpec,
+              materialGrade: lower.materialGrade,
+              materialCategory: lower.materialCategory,
+              interpolated: false,
+              note: "Using nearest available temperature",
+            };
+          }
           const stressRange = upper.allowableStress - lower.allowableStress;
           const tempDiff = input.temperatureF - lower.temperatureF;
           const interpolatedStress = Math.round(lower.allowableStress + (stressRange * tempDiff) / tempRange);

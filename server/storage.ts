@@ -185,7 +185,7 @@ function mockR2Put(
   data: Buffer | Uint8Array | string,
 ): { key: string; url: string } {
   const key = normalizeKey(relKey);
-  const body = typeof data === 'string' ? Buffer.from(data) : Buffer.from(data);
+  const body = Buffer.from(data as any);
   mockR2Store.set(key, body);
   return { key, url: `${MOCK_R2_BASE_URL}/${key}` };
 }
