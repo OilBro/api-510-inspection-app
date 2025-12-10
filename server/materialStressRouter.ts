@@ -232,28 +232,33 @@ export const materialStressRouter = router({
         const lower = lowerBound[0];
         const upper = upperBound[0];
 
-        // Linear interpolation
-        const tempRange = upper.temperatureF - lower.temperatureF;
-        const stressRange = upper.allowableStress - lower.allowableStress;
-        const tempDiff = input.temperatureF - lower.temperatureF;
-        const interpolatedStress = Math.round(
-          lower.allowableStress + (stressRange * tempDiff) / tempRange
-        );
+        const interpolated = interpolateStress(lower, upper, input.temperatureF);
+        if (!interpolated) {
+          return {
+            allowableStress: lower.allowableStress,
+            temperatureF: lower.temperatureF,
+            materialSpec: lower.materialSpec,
+            materialGrade: lower.materialGrade,
+            materialCategory: lower.materialCategory,
+            interpolated: false,
+            note: "Using nearest available temperature",
+          };
+        }
 
         return {
-          allowableStress: interpolatedStress,
+          allowableStress: interpolated.allowableStress,
           temperatureF: input.temperatureF,
-          materialSpec: lower.materialSpec,
-          materialGrade: lower.materialGrade,
-          materialCategory: lower.materialCategory,
+          materialSpec: interpolated.lower.materialSpec,
+          materialGrade: interpolated.lower.materialGrade,
+          materialCategory: interpolated.lower.materialCategory,
           interpolated: true,
           lowerBound: {
-            temperatureF: lower.temperatureF,
-            allowableStress: lower.allowableStress,
+            temperatureF: interpolated.lower.temperatureF,
+            allowableStress: interpolated.lower.allowableStress,
           },
           upperBound: {
-            temperatureF: upper.temperatureF,
-            allowableStress: upper.allowableStress,
+            temperatureF: interpolated.upper.temperatureF,
+            allowableStress: interpolated.upper.allowableStress,
           },
         };
       }
