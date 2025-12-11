@@ -937,3 +937,20 @@
 **Known Issues:**
 - 6 materialStress tests fail when database is empty (expected behavior - fallback works when db is null, not when db is empty)
 - 14 audit tests skipped (require database seeding)
+
+
+## P1 - MATERIAL STRESS DATABASE SEEDING (Dec 11, 2025) ✅ COMPLETE
+- [x] Create seed-material-stress.mjs script
+- [x] Use FALLBACK_STRESS_VALUES as data source (32 records across 4 materials)
+- [x] Add ASME table and edition metadata (Table 1A, 2023 edition)
+- [x] Run seed script to populate materialStressValues table (--force flag to clear old data)
+- [x] Verify data inserted correctly (4 materials: SA-240 Type 304/316, SA-455, SA-516 Grade 70)
+- [x] Run materialStress tests to confirm all 7 tests pass ✅
+- [x] Update package.json with seed script command (pnpm db:seed:material-stress)
+- [ ] Push changes to GitHub
+
+**Seeded Materials:**
+- SA-240 Type 304: 9 temperature points (-20°F to 800°F, 15000-20000 psi)
+- SA-240 Type 316: 9 temperature points (-20°F to 800°F, 14000-20000 psi)
+- SA-455: 6 temperature points (-20°F to 500°F, 16500-18000 psi)
+- SA-516 Grade 70: 8 temperature points (-20°F to 650°F, 13500-17500 psi)
