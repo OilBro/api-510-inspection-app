@@ -6,8 +6,8 @@ import { eq, and, lte, gte, sql } from "drizzle-orm";
 
 type StressRow = {
   materialSpec: string;
-  materialGrade: string;
-  materialCategory: string;
+  materialGrade: string | null;
+  materialCategory: string | null;
   temperatureF: number;
   allowableStress: number;
 };
