@@ -1,0 +1,90 @@
+{
+  "query": "SELECT DISTINCT materialSpec, COUNT(*) as count FROM materialStressValues GROUP BY materialSpec ORDER BY materialSpec LIMIT 20",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2vRv1t5JdAedAFZ.807c3fab4c80 --database A4XPjAmiHcgmrps2ZTa96H --execute SELECT DISTINCT materialSpec, COUNT(*) as count FROM materialStressValues GROUP BY materialSpec ORDER BY materialSpec LIMIT 20",
+  "rows": [
+    {
+      "materialSpec": "SA-105",
+      "count": "8"
+    },
+    {
+      "materialSpec": "SA-106 Gr B",
+      "count": "9"
+    },
+    {
+      "materialSpec": "SA-182 F304",
+      "count": "9"
+    },
+    {
+      "materialSpec": "SA-182 F316",
+      "count": "9"
+    },
+    {
+      "materialSpec": "SA-203 Gr D",
+      "count": "7"
+    },
+    {
+      "materialSpec": "SA-240 Type 304L",
+      "count": "9"
+    },
+    {
+      "materialSpec": "SA-240 Type 316L",
+      "count": "9"
+    },
+    {
+      "materialSpec": "SA-240 Type 321",
+      "count": "9"
+    },
+    {
+      "materialSpec": "SA-240 Type 347",
+      "count": "9"
+    },
+    {
+      "materialSpec": "SA-285 Gr A",
+      "count": "7"
+    },
+    {
+      "materialSpec": "SA-285 Gr B",
+      "count": "7"
+    },
+    {
+      "materialSpec": "SA-333 Gr 6",
+      "count": "8"
+    },
+    {
+      "materialSpec": "SA-335 P11",
+      "count": "10"
+    },
+    {
+      "materialSpec": "SA-335 P22",
+      "count": "11"
+    },
+    {
+      "materialSpec": "SA-387 Gr 11 Cl 2",
+      "count": "11"
+    },
+    {
+      "materialSpec": "SA-387 Gr 22 Cl 2",
+      "count": "13"
+    },
+    {
+      "materialSpec": "SA-515 Gr 60",
+      "count": "9"
+    },
+    {
+      "materialSpec": "SA-515 Gr 70",
+      "count": "9"
+    },
+    {
+      "materialSpec": "SA-516 Gr 55",
+      "count": "8"
+    },
+    {
+      "materialSpec": "SA-516 Gr 60",
+      "count": "8"
+    }
+  ],
+  "messages": [],
+  "stdout": "materialSpec\tcount\nSA-105\t8\nSA-106 Gr B\t9\nSA-182 F304\t9\nSA-182 F316\t9\nSA-203 Gr D\t7\nSA-240 Type 304L\t9\nSA-240 Type 316L\t9\nSA-240 Type 321\t9\nSA-240 Type 347\t9\nSA-285 Gr A\t7\nSA-285 Gr B\t7\nSA-333 Gr 6\t8\nSA-335 P11\t10\nSA-335 P22\t11\nSA-387 Gr 11 Cl 2\t11\nSA-387 Gr 22 Cl 2\t13\nSA-515 Gr 60\t9\nSA-515 Gr 70\t9\nSA-516 Gr 55\t8\nSA-516 Gr 60\t8\n",
+  "stderr": "",
+  "execution_time_ms": 1262
+}

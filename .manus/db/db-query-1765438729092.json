@@ -1,0 +1,31 @@
+{
+  "query": "SELECT materialSpec FROM materialStressValues WHERE materialSpec LIKE '%304%' OR materialSpec LIKE '%316%' OR materialSpec LIKE '%516%' GROUP BY materialSpec",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2vRv1t5JdAedAFZ.807c3fab4c80 --database A4XPjAmiHcgmrps2ZTa96H --execute SELECT materialSpec FROM materialStressValues WHERE materialSpec LIKE '%304%' OR materialSpec LIKE '%316%' OR materialSpec LIKE '%516%' GROUP BY materialSpec",
+  "rows": [
+    {
+      "materialSpec": "SA-516 Gr 60"
+    },
+    {
+      "materialSpec": "SA-516 Gr 55"
+    },
+    {
+      "materialSpec": "SA-240 Type 316L"
+    },
+    {
+      "materialSpec": "SA-240 Type 304L"
+    },
+    {
+      "materialSpec": "SA-516 Gr 65"
+    },
+    {
+      "materialSpec": "SA-182 F304"
+    },
+    {
+      "materialSpec": "SA-182 F316"
+    }
+  ],
+  "messages": [],
+  "stdout": "materialSpec\nSA-516 Gr 60\nSA-516 Gr 55\nSA-240 Type 316L\nSA-240 Type 304L\nSA-516 Gr 65\nSA-182 F304\nSA-182 F316\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}
