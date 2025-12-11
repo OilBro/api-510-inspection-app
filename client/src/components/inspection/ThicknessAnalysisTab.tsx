@@ -30,6 +30,19 @@ export default function ThicknessAnalysisTab({ inspectionId }: ThicknessAnalysis
 
   const { data: inspection } = trpc.inspections.get.useQuery({ id: inspectionId });
   
+  // Fetch material allowable stress if material and temperature are available
+  const materialSpec = inspection?.materialSpec;
+  const designTemperature = inspection?.designTemperature ? parseFloat(String(inspection.designTemperature)) : undefined;
+  const { data: materialStressData } = trpc.materialStress.getMaterialStressValue.useQuery(
+    { 
+      materialSpec: materialSpec || '', 
+      temperatureF: designTemperature || 0 
+    },
+    { 
+      enabled: !!materialSpec && designTemperature !== undefined 
+    }
+  );
+  
   const [newReading, setNewReading] = useState({
     tmlId: "",
     component: "",
@@ -44,8 +57,11 @@ export default function ThicknessAnalysisTab({ inspectionId }: ThicknessAnalysis
     
     const P = parseFloat(inspection.designPressure || "0");
     const R = inspection.insideDiameter ? parseFloat(inspection.insideDiameter) / 2 : 0;
-    const S = 15000; // Default allowable stress for carbon steel at ambient
-    const E = 0.85; // Default joint efficiency
+    // Use actual allowable stress from material database or inspection, fallback to 15000
+    const S = materialStressData?.allowableStress || 
+              (inspection.allowableStress ? parseFloat(String(inspection.allowableStress)) : 15000);
+    // Use actual joint efficiency from inspection, fallback to 0.85
+    const E = inspection.jointEfficiency ? parseFloat(String(inspection.jointEfficiency)) : 0.85;
     
     if (!P || !R) return null;
     
@@ -89,8 +105,10 @@ export default function ThicknessAnalysisTab({ inspectionId }: ThicknessAnalysis
       }
 
       if (previous && current) {
-        // Assuming 5 years between inspections
-        corrosionRate = (((previous - current) * 1000) / 5).toFixed(2);
+        // Note: Server will calculate actual corrosion rate based on inspection dates
+        // This is just a preliminary calculation for display (mils per year assuming 1 year)
+        const thicknessLossMils = (previous - current) * 1000;
+        corrosionRate = thicknessLossMils.toFixed(2);
       }
 
       await createMutation.mutateAsync({

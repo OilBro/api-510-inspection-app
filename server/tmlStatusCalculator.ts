@@ -11,6 +11,7 @@ interface StatusInput {
   materialSpec: string;
   designTemperature: number;
   corrosionAllowance?: number;
+  jointEfficiency?: number;
 }
 
 /**
@@ -27,15 +28,15 @@ export function calculateTMLStatus(input: StatusInput): "good" | "monitor" | "cr
       materialSpec: input.materialSpec,
       nominalThickness: input.nominalThickness,
       actualThickness: input.currentThickness,
-      corrosionAllowance: input.corrosionAllowance || 0.125,
-      jointEfficiency: 0.85,
+      corrosionAllowance: input.corrosionAllowance ?? 0.125, // Default to 1/8" if not provided
+      jointEfficiency: input.jointEfficiency ?? 0.85, // Default to 0.85 if not provided
       componentType: 'shell',
       corrosionRate: 0
     });
     
     const minRequired = calc.minimumRequiredThickness;
     const current = input.currentThickness;
-    const ca = input.corrosionAllowance || 0.125;
+    const ca = input.corrosionAllowance ?? 0.125;
     
     if (current < minRequired) {
       return "critical";
