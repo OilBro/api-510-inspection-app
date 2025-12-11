@@ -377,13 +377,20 @@ export const appRouter = router({
         
         // Calculate corrosion rate in mpy (mils per year)
         if (!calculatedCorrosionRate && previous && current) {
-          let timeSpanYears = 1; // Default to 1 year
+          let timeSpanYears = 1; // Default to 1 year if dates not available
           
-          // TODO: Calculate time span from inspection dates
-          // For now, use default 1 year
-          const monthsDiff = 12;
-          if (monthsDiff > 0) {
-            timeSpanYears = monthsDiff / 12;
+          // Calculate time span from inspection dates
+          const prevDate = existing?.previousInspectionDate;
+          const currDate = existing?.currentInspectionDate;
+          
+          if (prevDate && currDate) {
+            const prevTime = new Date(prevDate).getTime();
+            const currTime = new Date(currDate).getTime();
+            const diffMs = currTime - prevTime;
+            const diffYears = diffMs / (1000 * 60 * 60 * 24 * 365.25);
+            if (diffYears > 0) {
+              timeSpanYears = diffYears;
+            }
           }
           
           const thicknessLoss = previous - current;
@@ -396,7 +403,8 @@ export const appRouter = router({
         if (!calculatedStatus && current !== null && nominal !== null) {
           // Get inspection data for status calculation
           const inspection = await db.getInspection(existing?.inspectionId || '');
-          if (inspection && inspection.designPressure && inspection.insideDiameter) {
+          if (inspection && inspection.designPressure && inspection.insideDiameter && 
+              inspection.materialSpec && inspection.designTemperature) {
             const { calculateTMLStatus } = require('./tmlStatusCalculator');
             try {
               calculatedStatus = calculateTMLStatus({
@@ -404,9 +412,10 @@ export const appRouter = router({
                 nominalThickness: nominal,
                 designPressure: parseFloat(String(inspection.designPressure)),
                 insideDiameter: parseFloat(String(inspection.insideDiameter)),
-                materialSpec: String(inspection.materialSpec || 'SA-516-70'),
-                designTemperature: parseFloat(String(inspection.designTemperature || 500)),
-                corrosionAllowance: 0.125
+                materialSpec: String(inspection.materialSpec),
+                designTemperature: parseFloat(String(inspection.designTemperature)),
+                corrosionAllowance: undefined, // Optional: will be fetched from calculations if needed
+                jointEfficiency: inspection.jointEfficiency ? parseFloat(String(inspection.jointEfficiency)) : undefined
               });
             } catch (error) {
               console.error('[TML Update] Status calculation failed:', error);

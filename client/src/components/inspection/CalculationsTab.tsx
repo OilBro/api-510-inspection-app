@@ -112,27 +112,37 @@ export default function CalculationsTab({ inspectionId }: CalculationsTabProps) 
   useEffect(() => {
     if (inspection) {
       const radius = inspection.insideDiameter ? (parseFloat(inspection.insideDiameter) / 2).toString() : "";
+      const jointEff = inspection.jointEfficiency ? String(inspection.jointEfficiency) : "1.0";
+      const allowStress = inspection.allowableStress ? String(inspection.allowableStress) : "15000";
       
       setShellMinThickness((prev) => ({
         ...prev,
         designPressure: inspection.designPressure || "",
         insideRadius: radius,
+        jointEfficiency: jointEff,
+        allowableStress: allowStress,
       }));
 
       setShellMAWP((prev) => ({
         ...prev,
         insideRadius: radius,
+        jointEfficiency: jointEff,
+        allowableStress: allowStress,
       }));
 
       setHeadMinThickness((prev) => ({
         ...prev,
         designPressure: inspection.designPressure || "",
         insideRadius: radius,
+        jointEfficiency: jointEff,
+        allowableStress: allowStress,
       }));
 
       setHeadMAWP((prev) => ({
         ...prev,
         insideRadius: radius,
+        jointEfficiency: jointEff,
+        allowableStress: allowStress,
       }));
     }
   }, [inspection]);
@@ -140,13 +150,17 @@ export default function CalculationsTab({ inspectionId }: CalculationsTabProps) 
   // Load saved calculations
   useEffect(() => {
     if (calculations) {
+      // Use inspection values as fallback for calculations
+      const jointEff = inspection?.jointEfficiency ? String(inspection.jointEfficiency) : "1.0";
+      const allowStress = inspection?.allowableStress ? String(inspection.allowableStress) : "15000";
+      
       // Pre-fill shell minimum thickness fields from imported data
       setShellMinThickness(prev => ({
         ...prev,
         designPressure: calculations.minThicknessDesignPressure || prev.designPressure,
         insideRadius: calculations.mawpInsideRadius || prev.insideRadius,
-        allowableStress: calculations.minThicknessAllowableStress || "15000",
-        jointEfficiency: calculations.minThicknessJointEfficiency || "1.0",
+        allowableStress: calculations.minThicknessAllowableStress || allowStress,
+        jointEfficiency: calculations.minThicknessJointEfficiency || jointEff,
         corrosionAllowance: calculations.minThicknessCorrosionAllowance || "",
         result: calculations.minThicknessResult || "",
       }));
@@ -156,17 +170,18 @@ export default function CalculationsTab({ inspectionId }: CalculationsTabProps) 
         setShellMAWP(prev => ({
           ...prev,
           insideRadius: String(calculations.mawpInsideRadius || ''),
-          allowableStress: String(calculations.mawpAllowableStress || "15000"),
-          jointEfficiency: String(calculations.mawpJointEfficiency || "1.0"),
+          allowableStress: String(calculations.mawpAllowableStress || allowStress),
+          jointEfficiency: String(calculations.mawpJointEfficiency || jointEff),
         }));
       }
 
       if (calculations.mawpResult) {
+        const jointEff = inspection?.jointEfficiency ? String(inspection.jointEfficiency) : "1.0";
         setShellMAWP({
           actualThickness: calculations.mawpActualThickness || "",
           insideRadius: calculations.mawpInsideRadius || "",
           allowableStress: calculations.mawpAllowableStress || "",
-          jointEfficiency: calculations.mawpJointEfficiency || "1.0",
+          jointEfficiency: calculations.mawpJointEfficiency || jointEff,
           corrosionAllowance: calculations.mawpCorrosionAllowance || "",
           result: calculations.mawpResult || "",
         });
@@ -183,7 +198,7 @@ export default function CalculationsTab({ inspectionId }: CalculationsTabProps) 
         });
       }
     }
-  }, [calculations]);
+  }, [calculations, inspection]);
 
   // Shell minimum thickness calculation (ASME Section VIII Div 1, UG-27)
   const calculateShellMinThickness = () => {
