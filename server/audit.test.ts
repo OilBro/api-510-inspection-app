@@ -10,7 +10,10 @@ import * as professionalReportDb from './professionalReportDb';
 import { inspections, componentCalculations, tmlReadings, nozzleEvaluations } from '../drizzle/schema';
 import { eq } from 'drizzle-orm';
 
-describe('API 510 Inspection App - Comprehensive Audit', () => {
+const hasDatabase = Boolean(process.env.DATABASE_URL);
+const suite = hasDatabase ? describe : describe.skip;
+
+suite('API 510 Inspection App - Comprehensive Audit', () => {
   let db: Awaited<ReturnType<typeof getDb>>;
   let testInspectionId: string;
   let testReportId: string;
