@@ -414,7 +414,7 @@ export const appRouter = router({
                 insideDiameter: parseFloat(String(inspection.insideDiameter)),
                 materialSpec: String(inspection.materialSpec),
                 designTemperature: parseFloat(String(inspection.designTemperature)),
-                corrosionAllowance: undefined, // Optional: will be fetched from calculations if needed
+                corrosionAllowance: undefined, // Optional: defaults to 0.125 in calculateTMLStatus
                 jointEfficiency: inspection.jointEfficiency ? parseFloat(String(inspection.jointEfficiency)) : undefined
               });
             } catch (error) {

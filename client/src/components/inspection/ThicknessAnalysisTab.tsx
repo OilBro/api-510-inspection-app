@@ -106,8 +106,9 @@ export default function ThicknessAnalysisTab({ inspectionId }: ThicknessAnalysis
 
       if (previous && current) {
         // Note: Server will calculate actual corrosion rate based on inspection dates
-        // This is just a preliminary calculation for display
-        corrosionRate = (((previous - current) * 1000) / 1).toFixed(2);
+        // This is just a preliminary calculation for display (mils per year assuming 1 year)
+        const thicknessLossMils = (previous - current) * 1000;
+        corrosionRate = thicknessLossMils.toFixed(2);
       }
 
       await createMutation.mutateAsync({

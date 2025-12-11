@@ -176,7 +176,6 @@ export default function CalculationsTab({ inspectionId }: CalculationsTabProps) 
       }
 
       if (calculations.mawpResult) {
-        const jointEff = inspection?.jointEfficiency ? String(inspection.jointEfficiency) : "1.0";
         setShellMAWP({
           actualThickness: calculations.mawpActualThickness || "",
           insideRadius: calculations.mawpInsideRadius || "",
