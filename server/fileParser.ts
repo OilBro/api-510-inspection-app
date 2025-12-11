@@ -291,7 +291,18 @@ export async function parsePDFFile(buffer: Buffer, parserType?: "docupipe" | "ma
         },
     });
 
+    // Validate LLM response
+    if (!llmResponse || !llmResponse.choices || llmResponse.choices.length === 0) {
+      console.error("[PDF Parser] Invalid LLM response:", JSON.stringify(llmResponse, null, 2));
+      throw new Error("LLM returned empty or invalid response");
+    }
+    
     const messageContent = llmResponse.choices[0].message.content;
+    if (!messageContent) {
+      console.error("[PDF Parser] Empty message content in LLM response");
+      throw new Error("LLM returned empty message content");
+    }
+    
     const contentStr = typeof messageContent === 'string' ? messageContent : JSON.stringify(messageContent);
     const extracted = JSON.parse(contentStr || "{}");
     console.log("[PDF Parser] LLM extraction completed");

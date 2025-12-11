@@ -42,10 +42,23 @@ interface ConsolidatedTMLReading {
  * Groups and consolidates TML readings to eliminate duplicates
  */
 export function consolidateTMLReadings(readings: ParsedTMLReading[]): ConsolidatedTMLReading[] {
+  // Validate input
+  if (!readings || !Array.isArray(readings)) {
+    console.warn('[CML Dedup] Invalid readings input:', readings);
+    return [];
+  }
+  
+  // Filter out null/undefined readings
+  const validReadings = readings.filter(r => r !== null && r !== undefined);
+  if (validReadings.length === 0) {
+    console.warn('[CML Dedup] No valid readings to process');
+    return [];
+  }
+  
   // Group readings by unique CML identifier
   const groupedReadings = new Map<string, ParsedTMLReading[]>();
   
-  for (const reading of readings) {
+  for (const reading of validReadings) {
     const cmlNumber = String(reading.cmlNumber || reading.tmlId || reading.location || 'N/A');
     const componentType = String(reading.component || 'Unknown');
     const location = String(reading.location || reading.cmlNumber || 'N/A');
@@ -85,6 +98,10 @@ export function consolidateTMLReadings(readings: ParsedTMLReading[]): Consolidat
     }
     
     // Use first reading for metadata
+    if (sortedGroup.length === 0) {
+      console.warn('[CML Dedup] Empty sorted group for:', groupKey);
+      continue;
+    }
     const firstReading = sortedGroup[0];
     
     // Build consolidated record

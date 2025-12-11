@@ -954,3 +954,24 @@
 - SA-240 Type 316: 9 temperature points (-20°F to 800°F, 14000-20000 psi)
 - SA-455: 6 temperature points (-20°F to 500°F, 16500-18000 psi)
 - SA-516 Grade 70: 8 temperature points (-20°F to 650°F, 13500-17500 psi)
+
+
+## P0 - PDF IMPORT ERROR FIX (Dec 11, 2025) ✅ FIXED
+**Error:** "Cannot read properties of undefined (reading '0')" when uploading 54-11-005 report
+**Impact:** PDF import fails completely for certain reports
+**Root Cause:** LLM response validation missing - llmResponse.choices[0] accessed without checking if choices array exists
+
+- [x] Analyze error stack trace to find exact location (fileParser.ts line 294)
+- [x] Check PDF import router for array access without validation
+- [x] Add defensive checks for undefined/null arrays in consolidateTMLReadings
+- [x] Add LLM response validation in fileParser.ts
+- [x] Add better error messages for debugging
+- [ ] Test fix with 54-11-005 report (requires UI testing)
+- [ ] Verify other reports still import correctly (requires UI testing)
+- [ ] Push fix to GitHub
+
+**Fixes Applied:**
+1. Added input validation to consolidateTMLReadings() - filters null/undefined readings
+2. Added empty sorted group check to prevent accessing first element of empty array
+3. Added LLM response validation - checks if choices array exists before accessing [0]
+4. Added detailed error logging for LLM response failures
