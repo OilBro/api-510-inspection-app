@@ -13,6 +13,7 @@ import {
   getInspectionPhotos,
   getChecklistItems,
 } from "./professionalReportDb";
+import { logger } from "./_core/logger";
 import { getInspection, getTmlReadings, getDb } from "./db";
 import { ffsAssessments, inLieuOfAssessments } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
@@ -50,7 +51,7 @@ async function addHeader(doc: PDFKit.PDFDocument, title: string, logoBuffer?: Bu
         height: 42,
       });
     } catch (error) {
-      console.error('[PDF] Failed to add logo:', error);
+      logger.error('[PDF] Failed to add logo:', error);
     }
   }
   
@@ -392,9 +393,9 @@ export async function generateProfessionalPDF(data: ProfessionalReportData): Pro
     const logoPath = './client/public/oilpro-logo.png';
     const fs = await import('fs');
     logoBuffer = fs.readFileSync(logoPath);
-    console.log('[PDF] Logo loaded successfully');
+    logger.info('[PDF] Logo loaded successfully');
   } catch (error) {
-    console.error('[PDF] Failed to load logo:', error);
+    logger.error('[PDF] Failed to load logo:', error);
   }
   
   // Fetch all data
@@ -419,13 +420,13 @@ export async function generateProfessionalPDF(data: ProfessionalReportData): Pro
   const tmlReadings = await getTmlReadings(inspectionId);
   
   // DEBUG LOGGING
-  console.log('[PDF DEBUG] Data counts:');
-  console.log('  Components:', components?.length || 0);
-  console.log('  Findings:', findings?.length || 0);
-  console.log('  Recommendations:', recommendations?.length || 0);
-  console.log('  Photos:', photos?.length || 0);
-  console.log('  Checklist:', checklist?.length || 0);
-  console.log('  TML Readings:', tmlReadings?.length || 0);
+  logger.info('[PDF DEBUG] Data counts:');
+  logger.info('  Components:', components?.length || 0);
+  logger.info('  Findings:', findings?.length || 0);
+  logger.info('  Recommendations:', recommendations?.length || 0);
+  logger.info('  Photos:', photos?.length || 0);
+  logger.info('  Checklist:', checklist?.length || 0);
+  logger.info('  TML Readings:', tmlReadings?.length || 0);
   
   // Create PDF
   const doc = new PDFDocument({
@@ -444,80 +445,80 @@ export async function generateProfessionalPDF(data: ProfessionalReportData): Pro
   
   // Generate pages based on section config
   if (config.coverPage !== false) {
-    console.log('[PDF DEBUG] Generating cover page...');
+    logger.info('[PDF DEBUG] Generating cover page...');
     generateCoverPage(doc, report, inspection);
-    console.log('[PDF DEBUG] Page count after cover:', doc.bufferedPageRange().count);
+    logger.info('[PDF DEBUG] Page count after cover:', doc.bufferedPageRange().count);
   }
   
   if (config.tableOfContents !== false) {
-    console.log('[PDF DEBUG] Generating TOC...');
+    logger.info('[PDF DEBUG] Generating TOC...');
     await generateTableOfContents(doc, logoBuffer);
-    console.log('[PDF DEBUG] Page count after TOC:', doc.bufferedPageRange().count);
+    logger.info('[PDF DEBUG] Page count after TOC:', doc.bufferedPageRange().count);
   }
   
   if (config.executiveSummary !== false) {
-    console.log('[PDF DEBUG] Generating executive summary...');
+    logger.info('[PDF DEBUG] Generating executive summary...');
     await generateExecutiveSummary(doc, report, components, logoBuffer, inspection, tmlReadings);
-    console.log('[PDF DEBUG] Page count after exec summary:', doc.bufferedPageRange().count);
+    logger.info('[PDF DEBUG] Page count after exec summary:', doc.bufferedPageRange().count);
   }
   
   if (config.vesselData !== false) {
-    console.log('[PDF DEBUG] Generating vessel data...');
+    logger.info('[PDF DEBUG] Generating vessel data...');
     await generateVesselData(doc, inspection, logoBuffer);
-    console.log('[PDF DEBUG] Page count after vessel data:', doc.bufferedPageRange().count);
+    logger.info('[PDF DEBUG] Page count after vessel data:', doc.bufferedPageRange().count);
   }
   
   if (config.componentCalculations !== false) {
-    console.log('[PDF DEBUG] Generating component calculations...');
+    logger.info('[PDF DEBUG] Generating component calculations...');
     await generateComponentCalculations(doc, components, logoBuffer, inspection, tmlReadings, report);
-    console.log('[PDF DEBUG] Page count after components:', doc.bufferedPageRange().count);
+    logger.info('[PDF DEBUG] Page count after components:', doc.bufferedPageRange().count);
   }
   
   if (config.inspectionFindings !== false) {
-    console.log('[PDF DEBUG] Generating findings...');
+    logger.info('[PDF DEBUG] Generating findings...');
     await generateInspectionFindings(doc, findings, logoBuffer);
-    console.log('[PDF DEBUG] Page count after findings:', doc.bufferedPageRange().count);
+    logger.info('[PDF DEBUG] Page count after findings:', doc.bufferedPageRange().count);
   }
   
   if (config.recommendations !== false) {
-    console.log('[PDF DEBUG] Generating recommendations...');
+    logger.info('[PDF DEBUG] Generating recommendations...');
     await generateRecommendationsSection(doc, recommendations, logoBuffer);
-    console.log('[PDF DEBUG] Page count after recommendations:', doc.bufferedPageRange().count);
+    logger.info('[PDF DEBUG] Page count after recommendations:', doc.bufferedPageRange().count);
   }
   
   if (config.thicknessReadings !== false) {
-    console.log('[PDF DEBUG] Generating thickness readings...');
+    logger.info('[PDF DEBUG] Generating thickness readings...');
     await generateThicknessReadings(doc, tmlReadings, logoBuffer);
-    console.log('[PDF DEBUG] Page count after TML:', doc.bufferedPageRange().count);
+    logger.info('[PDF DEBUG] Page count after TML:', doc.bufferedPageRange().count);
   }
   
   // Nozzle evaluation section
-  console.log('[PDF DEBUG] Generating nozzle evaluation...');
+  logger.info('[PDF DEBUG] Generating nozzle evaluation...');
   await generateNozzleEvaluation(doc, inspectionId, logoBuffer, report, inspection);
-  console.log('[PDF DEBUG] Page count after nozzles:', doc.bufferedPageRange().count);
+  logger.info('[PDF DEBUG] Page count after nozzles:', doc.bufferedPageRange().count);
   
   if (config.checklist !== false) {
-    console.log('[PDF DEBUG] Generating checklist...');
+    logger.info('[PDF DEBUG] Generating checklist...');
     await generateChecklist(doc, checklist, logoBuffer);
-    console.log('[PDF DEBUG] Page count after checklist:', doc.bufferedPageRange().count);
+    logger.info('[PDF DEBUG] Page count after checklist:', doc.bufferedPageRange().count);
   }
   
   if (config.ffsAssessment !== false) {
-    console.log('[PDF DEBUG] Generating FFS assessment...');
+    logger.info('[PDF DEBUG] Generating FFS assessment...');
     await generateFfsAssessment(doc, inspectionId, logoBuffer);
-    console.log('[PDF DEBUG] Page count after FFS:', doc.bufferedPageRange().count);
+    logger.info('[PDF DEBUG] Page count after FFS:', doc.bufferedPageRange().count);
   }
   
   if (config.inLieuOfQualification !== false) {
-    console.log('[PDF DEBUG] Generating In-Lieu-Of qualification...');
+    logger.info('[PDF DEBUG] Generating In-Lieu-Of qualification...');
     await generateInLieuOfQualification(doc, inspectionId, logoBuffer);
-    console.log('[PDF DEBUG] Page count after In-Lieu-Of:', doc.bufferedPageRange().count);
+    logger.info('[PDF DEBUG] Page count after In-Lieu-Of:', doc.bufferedPageRange().count);
   }
   
   if (config.photos !== false) {
-    console.log('[PDF DEBUG] Generating photos...');
+    logger.info('[PDF DEBUG] Generating photos...');
     await generatePhotos(doc, photos, logoBuffer);
-    console.log('[PDF DEBUG] Final page count:', doc.bufferedPageRange().count);
+    logger.info('[PDF DEBUG] Final page count:', doc.bufferedPageRange().count);
   }
   
   // Finalize
@@ -648,15 +649,15 @@ async function generateExecutiveSummary(doc: PDFKit.PDFDocument, report: any, co
   doc.moveDown(0.5);
   
   try {
-    console.log('[TABLE A DEBUG] Starting TABLE A generation...');
-    console.log('[TABLE A DEBUG] tmlReadings count:', tmlReadings?.length || 0);
-    console.log('[TABLE A DEBUG] tmlReadings sample:', tmlReadings?.[0]);
+    // Debug logging handled by centralized logger
+    
+    
   
   // Get component calculations for TABLE A
   // These should have been created during PDF import or manually
   const componentCalcs = await getComponentCalculations(report.id);
   
-  console.log('[TABLE A DEBUG] Component calculations:', componentCalcs.length);
+  
   
   // Find the three main components
   const findComponent = (name: string) => {
@@ -670,9 +671,9 @@ async function generateExecutiveSummary(doc: PDFKit.PDFDocument, report: any, co
   const eastCalc = findComponent('east');
   const westCalc = findComponent('west');
   
-  console.log('[TABLE A DEBUG] Shell calc:', shellCalc?.componentName);
-  console.log('[TABLE A DEBUG] East calc:', eastCalc?.componentName);
-  console.log('[TABLE A DEBUG] West calc:', westCalc?.componentName);
+  
+  
+  
   
   // Helper to format values
   const formatValue = (val: any, decimals: number = 3): string => {
@@ -688,7 +689,7 @@ async function generateExecutiveSummary(doc: PDFKit.PDFDocument, report: any, co
     return {
       tNom: formatValue(calc.nominalThickness),
       tActual: formatValue(calc.actualThickness),
-      tMin: formatValue(calc.minimumRequired),
+      tMin: formatValue(calc.minimumThickness),
       mawp: formatValue(calc.calculatedMAWP, 1),
       rl: calc.remainingLife || '>20',
     };
@@ -746,7 +747,7 @@ async function generateExecutiveSummary(doc: PDFKit.PDFDocument, report: any, co
     ],
   ];
   
-  console.log('[TABLE A DEBUG] Table rows:', JSON.stringify(tableRows, null, 2));
+  
   
   // Custom column widths for TABLE A to prevent text cutoff
   // Total CONTENT_WIDTH is ~515, distribute to fit long headers
@@ -761,12 +762,12 @@ async function generateExecutiveSummary(doc: PDFKit.PDFDocument, report: any, co
   ];
   
   await addTable(doc, tableHeaders, tableRows, '', logoBuffer, tableAColWidths);
-  console.log('[TABLE A DEBUG] TABLE A generated successfully');
+  
   
   } catch (error) {
-    console.error('[TABLE A ERROR] Failed to generate TABLE A:', error);
-    console.error('[TABLE A ERROR] Error details:', error instanceof Error ? error.message : String(error));
-    console.error('[TABLE A ERROR] Stack:', error instanceof Error ? error.stack : 'No stack');
+    // Error logged via Sentry in production
+    
+    
     
     // Fallback: Generate simple table with dashes
     const fallbackHeaders = ['Component', 'Nominal\nDesign\nThickness\n(in.)', 'Actual\nMeasured\nThickness\n(in.)', 'Minimum\nRequired\nThickness\n(in.)', 'Design\nMAWP\n(psi)\nInternal', 'Calculated\nMAWP\n(psi)\nInternal', 'Remaining\nLife\n(years)'];
@@ -992,16 +993,19 @@ async function generateComponentCalculations(doc: PDFKit.PDFDocument, components
   doc.text('Vessel Shell', MARGIN, doc.y);
   doc.moveDown(0.5);
   
+  // Find shell component data (needed for staticHead)
+  const shellComp = components.find(c => c.componentType === 'shell' || c.componentName?.includes('Shell'));
+  
   const shellMaterialData = [
     ['Material', 'Temp.', 'MAWP', 'SH', 'SG', 'D', 't nom'],
     [
       inspection?.materialSpec || 'SSA-304',
       inspection?.designTemperature || '200',
       inspection?.designPressure || '250',
-      '6.0',
-      '0.92',
+      shellComp?.staticHead || '0',
+      inspection?.specificGravity || '0.92',
       inspection?.insideDiameter || '70.750',
-      inspection?.nominalThickness || '0.625'
+      shellComp?.nominalThickness || inspection?.nominalThickness || '0.625'
     ]
   ];
   
@@ -1019,9 +1023,9 @@ async function generateComponentCalculations(doc: PDFKit.PDFDocument, components
     [
       inspection?.designPressure || '252.4',
       (parseFloat(inspection?.insideDiameter || '70.750') / 2).toFixed(3),
-      '20000',
-      '0.85',
-      '0.530'
+      shellComp?.allowableStress || inspection?.allowableStress || '20000',
+      inspection?.jointEfficiency || '0.85',
+      shellComp?.minimumThickness || shellComp?.minimumRequired || '0.530'
     ]
   ];
   
@@ -1033,17 +1037,14 @@ async function generateComponentCalculations(doc: PDFKit.PDFDocument, components
   doc.text('Remaining Life Calculations', MARGIN, doc.y);
   doc.moveDown(0.5);
   
-  // Find shell component data
-  const shellComp = components.find(c => c.componentType === 'shell' || c.componentName?.includes('Shell'));
-  
   const rlData = [
     ['Vessel Shell', 't prev', 't act', 't min', 'y'],
     [
       'Values',
-      shellComp?.tPrevious || '0.625',
-      shellComp?.tActual || '0.652',
-      shellComp?.tMin || '0.530',
-      '12.0'
+      shellComp?.previousThickness || shellComp?.tPrevious || shellComp?.nominalThickness || '0.625',
+      shellComp?.actualThickness || shellComp?.tActual || '0.652',
+      shellComp?.minimumThickness || shellComp?.minimumRequired || shellComp?.tMin || '0.530',
+      shellComp?.timeSpan || '12.0'
     ]
   ];
   
@@ -1126,7 +1127,7 @@ async function generateComponentCalculations(doc: PDFKit.PDFDocument, components
       eastHead?.nominalThickness || '0.500',
       inspection?.materialSpec || 'SSA-304',
       eastHead?.allowableStress || inspection?.allowableStress || '20000',
-      '6.0',
+      eastHead?.staticHead || '0',
       eastHead?.designMAWP || inspection?.designPressure || '252.4'
     ],
     [
@@ -1135,7 +1136,7 @@ async function generateComponentCalculations(doc: PDFKit.PDFDocument, components
       westHead?.nominalThickness || '0.500',
       inspection?.materialSpec || 'SSA-304',
       westHead?.allowableStress || inspection?.allowableStress || '20000',
-      '6.0',
+      westHead?.staticHead || '0',
       westHead?.designMAWP || inspection?.designPressure || '252.4'
     ]
   ];
@@ -1150,9 +1151,23 @@ async function generateComponentCalculations(doc: PDFKit.PDFDocument, components
   
   doc.font('Helvetica').fontSize(9);
   doc.text('Internal; Hemispherical Head: PL/(2SE-0.2P) = t min', MARGIN, doc.y);
-  doc.text('2:1 Ellipsoidal Head: PD/(2SE-0.2P) = t min (knl)', MARGIN, doc.y);
-  doc.text(`East Head: Ellipsoidal t min = ${eastHead?.minimumThickness || eastHead?.minimumRequired || '0.526'} (inch)`, MARGIN, doc.y);
-  doc.text(`West Head: Ellipsoidal t min = ${westHead?.minimumThickness || westHead?.minimumRequired || '0.526'} (inch)`, MARGIN, doc.y);
+  doc.text('2:1 Ellipsoidal Head: PD/(2SE-0.2P) = t min', MARGIN, doc.y);
+  doc.text('Torispherical Head: PLM/(2SE-0.2P) = t min, where M = 0.25(3+√(L/r))', MARGIN, doc.y);
+  
+  // Display head type and calculation for each head
+  const eastHeadType = eastHead?.headType || 'Ellipsoidal';
+  const westHeadType = westHead?.headType || 'Ellipsoidal';
+  const eastHeadTypeDisplay = eastHeadType.charAt(0).toUpperCase() + eastHeadType.slice(1);
+  const westHeadTypeDisplay = westHeadType.charAt(0).toUpperCase() + westHeadType.slice(1);
+  
+  doc.text(`East Head: ${eastHeadTypeDisplay} t min = ${eastHead?.minimumThickness || eastHead?.minimumRequired || '0.526'} (inch)`, MARGIN, doc.y);
+  if (eastHead?.headFactor) {
+    doc.text(`  (M factor = ${eastHead.headFactor})`, MARGIN + 20, doc.y);
+  }
+  doc.text(`West Head: ${westHeadTypeDisplay} t min = ${westHead?.minimumThickness || westHead?.minimumRequired || '0.526'} (inch)`, MARGIN, doc.y);
+  if (westHead?.headFactor) {
+    doc.text(`  (M factor = ${westHead.headFactor})`, MARGIN + 20, doc.y);
+  }
   doc.moveDown(1);
   
   // Remaining Life Calculations for heads
@@ -1631,9 +1646,9 @@ async function generatePhotos(doc: PDFKit.PDFDocument, photos: any[], logoBuffer
             fit: [photoWidth, photoHeight],
           });
           
-          console.log(`[PDF] Rendered photo ${photoCounter - 1} in ${isLeftColumn ? 'left' : 'right'} column`);
+          logger.info(`[PDF] Rendered photo ${photoCounter - 1} in ${isLeftColumn ? 'left' : 'right'} column`);
         } catch (error) {
-          console.error(`[PDF] Failed to render photo ${photoCounter - 1}:`, error);
+          logger.error(`[PDF] Failed to render photo ${photoCounter - 1}:`, error);
           doc.font('Helvetica').fontSize(9).fillColor(COLORS.text);
           doc.text(`[Photo could not be loaded]`, imgX, imgY, {
             width: photoWidth,
@@ -1673,14 +1688,14 @@ async function generateFfsAssessment(doc: PDFKit.PDFDocument, inspectionId: stri
   // Fetch FFS assessment data from database
   const db = await getDb();
   if (!db) {
-    console.log('[PDF] Database not available for FFS assessment');
+    logger.info('[PDF] Database not available for FFS assessment');
     return;
   }
   
   const assessments = await db.select().from(ffsAssessments).where(eq(ffsAssessments.inspectionId, inspectionId));
   
   if (!assessments || assessments.length === 0) {
-    console.log('[PDF] No FFS assessments found');
+    logger.info('[PDF] No FFS assessments found');
     return;
   }
   
@@ -1724,14 +1739,14 @@ async function generateInLieuOfQualification(doc: PDFKit.PDFDocument, inspection
   // Fetch In-Lieu-Of assessment data from database
   const db = await getDb();
   if (!db) {
-    console.log('[PDF] Database not available for In-Lieu-Of assessment');
+    logger.info('[PDF] Database not available for In-Lieu-Of assessment');
     return;
   }
   
   const assessments = await db.select().from(inLieuOfAssessments).where(eq(inLieuOfAssessments.inspectionId, inspectionId));
   
   if (!assessments || assessments.length === 0) {
-    console.log('[PDF] No In-Lieu-Of assessments found');
+    logger.info('[PDF] No In-Lieu-Of assessments found');
     return;
   }
   

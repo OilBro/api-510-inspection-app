@@ -1,4 +1,5 @@
 import { COOKIE_NAME } from "@shared/const";
+import { logger } from "./_core/logger";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
@@ -14,10 +15,14 @@ import { reportComparisonRouter } from "./routers/reportComparisonRouter";
 import { pdfImportRouter } from "./routers/pdfImportRouter";
 import { validationRouter } from "./validationRouter";
 import { materialStressRouter } from "./materialStressRouter";
+import { validationWarningsRouter } from "./validationWarningsRouter";
+import { anomalyRouter } from "./anomalyRouter";
+import { actionPlanRouter } from "./actionPlanRouter";
 import { convertToJpeg } from "./_core/freeconvert";
 import * as fieldMappingDb from "./fieldMappingDb";
 import * as professionalReportDb from "./professionalReportDb";
 import { consolidateTMLReadings } from "./cmlDeduplication";
+import { organizeReadingsByComponent, getFullComponentName } from "./componentOrganizer";
 
 /**
  * Calculate time span in years between two dates
@@ -48,6 +53,9 @@ export const appRouter = router({
   system: systemRouter,
   pdfImport: pdfImportRouter,
   materialStress: materialStressRouter,
+  validationWarnings: validationWarningsRouter,
+  anomalies: anomalyRouter,
+  actionPlans: actionPlanRouter,
 
   images: router({
     convertToJpeg: protectedProcedure
@@ -260,6 +268,14 @@ export const appRouter = router({
         return await db.getTmlReadings(input.inspectionId);
       }),
 
+    // Get TML readings organized by component
+    listOrganized: protectedProcedure
+      .input(z.object({ inspectionId: z.string() }))
+      .query(async ({ input }) => {
+        const readings = await db.getTmlReadings(input.inspectionId);
+        return organizeReadingsByComponent(readings);
+      }),
+
     // Create a new TML reading
     create: protectedProcedure
       .input(z.object({
@@ -418,7 +434,7 @@ export const appRouter = router({
                 jointEfficiency: inspection.jointEfficiency ? parseFloat(String(inspection.jointEfficiency)) : undefined
               });
             } catch (error) {
-              console.error('[TML Update] Status calculation failed:', error);
+              logger.error('[TML Update] Status calculation failed:', error);
             }
           }
         }
@@ -637,7 +653,7 @@ export const appRouter = router({
             if (inspection.userId !== ctx.user.id) {
               throw new Error("Unauthorized: Cannot modify another user's inspection");
             }
-            console.log(`[Multi-Source Import] Appending to existing inspection: ${input.inspectionId}`);
+            logger.info(`[Multi-Source Import] Appending to existing inspection: ${input.inspectionId}`);
           } else {
             // Try to find existing inspection by vessel tag number
             let existingInspection = null;
@@ -652,7 +668,7 @@ export const appRouter = router({
               // Update existing inspection with same vessel tag
               isNewInspection = false;
               inspection = existingInspection;
-              console.log(`[Multi-Source Import] Found existing vessel ${parsedData.vesselTagNumber}, updating inspection: ${inspection.id}`);
+              logger.info(`[Multi-Source Import] Found existing vessel ${parsedData.vesselTagNumber}, updating inspection: ${inspection.id}`);
             } else {
               // Create new inspection
               isNewInspection = true;
@@ -662,7 +678,7 @@ export const appRouter = router({
                 vesselTagNumber: parsedData.vesselTagNumber || `IMPORT-${Date.now()}`,
                 status: "draft" as const,
               };
-              console.log(`[Multi-Source Import] Creating new inspection: ${inspection.id}`);
+              logger.info(`[Multi-Source Import] Creating new inspection: ${inspection.id}`);
             }
           }
 
@@ -739,6 +755,37 @@ export const appRouter = router({
             }
           }
           
+          // Additional vessel parameters for calculations
+          if (parsedData.headType && (isNewInspection || !inspection.headType)) {
+            inspection.headType = String(parsedData.headType).substring(0, 255);
+            trackMapping('headType', 'headType', parsedData.headType);
+          }
+          if (parsedData.vesselConfiguration && (isNewInspection || !inspection.vesselConfiguration)) {
+            inspection.vesselConfiguration = String(parsedData.vesselConfiguration).substring(0, 255);
+            trackMapping('vesselConfiguration', 'vesselConfiguration', parsedData.vesselConfiguration);
+          }
+          if (parsedData.allowableStress && (isNewInspection || !inspection.allowableStress)) {
+            const val = parseNumeric(parsedData.allowableStress);
+            if (val) {
+              inspection.allowableStress = val;
+              trackMapping('allowableStress', 'allowableStress', parsedData.allowableStress);
+            }
+          }
+          if (parsedData.jointEfficiency && (isNewInspection || !inspection.jointEfficiency)) {
+            const val = parseNumeric(parsedData.jointEfficiency);
+            if (val) {
+              inspection.jointEfficiency = val;
+              trackMapping('jointEfficiency', 'jointEfficiency', parsedData.jointEfficiency);
+            }
+          }
+          if (parsedData.specificGravity && (isNewInspection || !inspection.specificGravity)) {
+            const val = parseNumeric(parsedData.specificGravity);
+            if (val) {
+              inspection.specificGravity = val;
+              trackMapping('specificGravity', 'specificGravity', parsedData.specificGravity);
+            }
+          }
+          
           // Save inspection date if available
           if (parsedData.inspectionDate) {
             try {
@@ -750,8 +797,18 @@ export const appRouter = router({
                 trackMapping('inspectionDate', 'inspectionDate', parsedData.inspectionDate);
               }
             } catch (e) {
-              console.warn('[PDF Import] Failed to parse inspection date:', parsedData.inspectionDate);
+              logger.warn('[PDF Import] Failed to parse inspection date:', parsedData.inspectionDate);
             }
+          }
+
+          // Extract inspection results and recommendations
+          if (parsedData.inspectionResults && (isNewInspection || !inspection.inspectionResults)) {
+            inspection.inspectionResults = String(parsedData.inspectionResults);
+            trackMapping('inspectionResults', 'inspectionResults', parsedData.inspectionResults);
+          }
+          if (parsedData.recommendations && (isNewInspection || !inspection.recommendations)) {
+            inspection.recommendations = String(parsedData.recommendations);
+            trackMapping('recommendations', 'recommendations', parsedData.recommendations);
           }
 
           // Create or update inspection
@@ -786,11 +843,11 @@ export const appRouter = router({
           // Create TML readings if available - with deduplication
           const createdTMLs: any[] = [];
           if (parsedData.tmlReadings && parsedData.tmlReadings.length > 0) {
-            console.log(`[PDF Import] Processing ${parsedData.tmlReadings.length} TML readings with deduplication`);
+            logger.info(`[PDF Import] Processing ${parsedData.tmlReadings.length} TML readings with deduplication`);
             
             // Consolidate duplicate readings into single records
             const consolidatedReadings = consolidateTMLReadings(parsedData.tmlReadings);
-            console.log(`[PDF Import] Consolidated to ${consolidatedReadings.length} unique CML records`);
+            logger.info(`[PDF Import] Consolidated to ${consolidatedReadings.length} unique CML records`);
             
             for (const consolidated of consolidatedReadings) {
               const tmlRecord: any = {
@@ -839,7 +896,7 @@ export const appRouter = router({
               createdTMLs.push(tmlRecord);
             }
             
-            console.log(`[PDF Import] Created ${createdTMLs.length} TML records (eliminated ${parsedData.tmlReadings.length - createdTMLs.length} duplicates)`);
+            logger.info(`[PDF Import] Created ${createdTMLs.length} TML records (eliminated ${parsedData.tmlReadings.length - createdTMLs.length} duplicates)`);
           }
 
           // Prepare checklist items for review (don't create yet)
@@ -954,7 +1011,7 @@ export const appRouter = router({
             calculationRecord.mawpJointEfficiency = 1.0;
             
             await db.saveCalculations(calculationRecord);
-            console.log(`[PDF Import] Auto-created calculations record for inspection ${inspection.id}`);
+            logger.info(`[PDF Import] Auto-created calculations record for inspection ${inspection.id}`);
             
             // Also create component calculation for Professional Report
             let report = await professionalReportDb.getProfessionalReportByInspection(inspection.id);
@@ -972,7 +1029,7 @@ export const appRouter = router({
                 clientName: parsedData.clientName || inspection.clientName || "",
               });
               report = await professionalReportDb.getProfessionalReportByInspection(inspection.id);
-              console.log(`[PDF Import] Auto-created professional report ${reportId}`);
+              logger.info(`[PDF Import] Auto-created professional report ${reportId}`);
             }
             
             // Create shell component calculation with imported data if report exists
@@ -1079,12 +1136,33 @@ export const appRouter = router({
                 jointEfficiency: inspection.jointEfficiency || '0.85',
                 corrosionAllowance: CA.toString(),
               });
-              console.log(`[PDF Import] Auto-created shell component calculation for report ${report.id}`);
+              logger.info(`[PDF Import] Auto-created shell component calculation for report ${report.id}`);
               
-              // Create East Head component calculation
-              const eastHeadTMLs = createdTMLs.filter((tml: any) => 
-                tml.component && (tml.component.toLowerCase().includes('east') && tml.component.toLowerCase().includes('head'))
-              );
+              // Create East Head component calculation with improved detection
+              // Matches: 'east head', 'e head', 'head 1', 'head-1', 'left head', or any head without west/right keywords
+              // IMPORTANT: Also check location field for head identification
+              const eastHeadTMLs = createdTMLs.filter((tml: any) => {
+                const comp = (tml.component || '').toLowerCase();
+                const compType = (tml.componentType || '').toLowerCase();
+                const loc = (tml.location || '').toLowerCase();
+                const combined = `${comp} ${compType}`;
+                
+                // Explicit east head matches (check location too)
+                if (combined.includes('east') || loc.includes('east head')) return true;
+                if (combined.includes('e head')) return true;
+                if (combined.includes('head 1') || combined.includes('head-1')) return true;
+                if (combined.includes('left head')) return true;
+                
+                // If it's a head but not explicitly west/right, treat as east (first head)
+                // Exclude if location indicates west head
+                if ((combined.includes('head') && !combined.includes('shell')) &&
+                    !combined.includes('west') && !combined.includes('w head') &&
+                    !combined.includes('head 2') && !combined.includes('head-2') &&
+                    !combined.includes('right') && !loc.includes('west')) {
+                  return true;
+                }
+                return false;
+              });
               
               if (eastHeadTMLs.length > 0) {
                 const eastCurrentThicknesses = eastHeadTMLs
@@ -1159,13 +1237,26 @@ export const appRouter = router({
                   jointEfficiency: inspection.jointEfficiency || '0.85',
                   corrosionAllowance: CA.toString(),
                 });
-                console.log(`[PDF Import] Auto-created East Head component calculation for report ${report.id}`);
+                logger.info(`[PDF Import] Auto-created East Head component calculation for report ${report.id}`);
               }
               
-              // Create West Head component calculation
-              const westHeadTMLs = createdTMLs.filter((tml: any) => 
-                tml.component && (tml.component.toLowerCase().includes('west') && tml.component.toLowerCase().includes('head'))
-              );
+              // Create West Head component calculation with improved detection
+              // Matches: 'west head', 'w head', 'head 2', 'head-2', 'right head'
+              // IMPORTANT: Also check location field for head identification
+              const westHeadTMLs = createdTMLs.filter((tml: any) => {
+                const comp = (tml.component || '').toLowerCase();
+                const compType = (tml.componentType || '').toLowerCase();
+                const loc = (tml.location || '').toLowerCase();
+                const combined = `${comp} ${compType}`;
+                
+                // Explicit west head matches (check location too)
+                if (combined.includes('west') || loc.includes('west head')) return true;
+                if (combined.includes('w head')) return true;
+                if (combined.includes('head 2') || combined.includes('head-2')) return true;
+                if (combined.includes('right head')) return true;
+                
+                return false;
+              });
               
               if (westHeadTMLs.length > 0) {
                 const westCurrentThicknesses = westHeadTMLs
@@ -1240,14 +1331,14 @@ export const appRouter = router({
                   jointEfficiency: inspection.jointEfficiency || '0.85',
                   corrosionAllowance: CA.toString(),
                 });
-                console.log(`[PDF Import] Auto-created West Head component calculation for report ${report.id}`);
+                logger.info(`[PDF Import] Auto-created West Head component calculation for report ${report.id}`);
               }
             }
           }
           
           // Create nozzle evaluations if available
           if (parsedData.nozzles && parsedData.nozzles.length > 0) {
-            console.log(`[PDF Import] Creating ${parsedData.nozzles.length} nozzle evaluations...`);
+            logger.info(`[PDF Import] Creating ${parsedData.nozzles.length} nozzle evaluations...`);
             for (const nozzle of parsedData.nozzles) {
               const nozzleRecord: any = {
                 id: nanoid(),
@@ -1279,7 +1370,7 @@ export const appRouter = router({
               
               await db.createNozzleEvaluation(nozzleRecord);
             }
-            console.log(`[PDF Import] Created ${parsedData.nozzles.length} nozzle evaluations`);
+            logger.info(`[PDF Import] Created ${parsedData.nozzles.length} nozzle evaluations`);
           }
 
           return {
@@ -1295,9 +1386,9 @@ export const appRouter = router({
               : `Added data to existing inspection ${inspection.id}`,
           };
         } catch (error) {
-          console.error("Error parsing file:", error);
+          logger.error("Error parsing file:", error);
           const errorMessage = error instanceof Error ? error.message : "Unknown error";
-          console.error("Full error details:", {
+          logger.error("Full error details:", {
             message: errorMessage,
             stack: error instanceof Error ? error.stack : undefined,
             fileName: input.fileName,
@@ -1357,7 +1448,7 @@ export const appRouter = router({
             itemsCreated: input.checklistItems.length,
           };
         } catch (error) {
-          console.error("Error finalizing checklist import:", error);
+          logger.error("Error finalizing checklist import:", error);
           throw new Error("Failed to finalize checklist import");
         }
       }),

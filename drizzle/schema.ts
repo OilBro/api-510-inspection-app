@@ -57,12 +57,22 @@ export const inspections = mysqlTable("inspections", {
   // Geometry
   insideDiameter: decimal("insideDiameter", { precision: 10, scale: 2 }),
   overallLength: decimal("overallLength", { precision: 10, scale: 2 }),
+  crownRadius: decimal("crownRadius", { precision: 10, scale: 3 }), // L parameter for torispherical heads
+  knuckleRadius: decimal("knuckleRadius", { precision: 10, scale: 3 }), // r parameter for torispherical heads
   
   // Status
   status: mysqlEnum("status", ["draft", "in_progress", "completed", "archived"]).default("draft").notNull(),
   
+  // Anomaly detection
+  reviewStatus: mysqlEnum("reviewStatus", ["pending_review", "reviewed", "approved"]).default("approved").notNull(),
+  anomalyCount: int("anomalyCount").default(0).notNull(),
+  
   // Inspection date - when the physical inspection occurred
   inspectionDate: timestamp("inspectionDate"),
+  
+  // Inspection findings and recommendations
+  inspectionResults: text("inspectionResults"), // Section 3.0 from PDF
+  recommendations: text("recommendations"), // Section 4.0 from PDF
   
   // Metadata
   createdAt: timestamp("createdAt").defaultNow(),
@@ -72,6 +82,89 @@ export const inspections = mysqlTable("inspections", {
 
 export type Inspection = typeof inspections.$inferSelect;
 export type InsertInspection = typeof inspections.$inferInsert;
+
+/**
+ * Report anomalies table - stores detected data quality issues
+ */
+export const reportAnomalies = mysqlTable("reportAnomalies", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  inspectionId: varchar("inspectionId", { length: 64 }).notNull(),
+  
+  // Anomaly classification
+  category: mysqlEnum("category", [
+    "thickness_below_minimum",
+    "high_corrosion_rate",
+    "missing_critical_data",
+    "calculation_inconsistency",
+    "negative_remaining_life",
+    "excessive_thickness_variation",
+    "unusual_mawp",
+    "incomplete_tml_data"
+  ]).notNull(),
+  
+  severity: mysqlEnum("severity", ["critical", "warning", "info"]).notNull(),
+  
+  // Anomaly details
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  affectedComponent: varchar("affectedComponent", { length: 255 }), // e.g., "Shell", "East Head", "CML-1"
+  detectedValue: varchar("detectedValue", { length: 255 }), // The problematic value
+  expectedRange: varchar("expectedRange", { length: 255 }), // Expected range or threshold
+  
+  // Review status
+  reviewStatus: mysqlEnum("reviewStatus", ["pending", "acknowledged", "resolved", "false_positive"]).default("pending").notNull(),
+  reviewedBy: int("reviewedBy"), // userId who reviewed
+  reviewedAt: timestamp("reviewedAt"),
+  reviewNotes: text("reviewNotes"),
+  
+  // Metadata
+  detectedAt: timestamp("detectedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ReportAnomaly = typeof reportAnomalies.$inferSelect;
+export type InsertReportAnomaly = typeof reportAnomalies.$inferInsert;
+
+/**
+ * Anomaly action plans table - tracks corrective actions for anomalies
+ */
+export const anomalyActionPlans = mysqlTable("anomalyActionPlans", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  anomalyId: varchar("anomalyId", { length: 64 }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  assignedTo: int("assignedTo"), // userId
+  assignedBy: int("assignedBy").notNull(), // userId who created the plan
+  dueDate: timestamp("dueDate"),
+  priority: mysqlEnum("priority", ["low", "medium", "high", "urgent"]).default("medium").notNull(),
+  status: mysqlEnum("status", ["pending", "in_progress", "completed", "cancelled"]).default("pending").notNull(),
+  completedAt: timestamp("completedAt"),
+  completedBy: int("completedBy"),
+  completionNotes: text("completionNotes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AnomalyActionPlan = typeof anomalyActionPlans.$inferSelect;
+export type InsertAnomalyActionPlan = typeof anomalyActionPlans.$inferInsert;
+
+/**
+ * Action plan attachments table - stores photos/documents for action plans
+ */
+export const actionPlanAttachments = mysqlTable("actionPlanAttachments", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  actionPlanId: varchar("actionPlanId", { length: 64 }).notNull(),
+  fileName: varchar("fileName", { length: 255 }).notNull(),
+  fileUrl: text("fileUrl").notNull(),
+  fileType: varchar("fileType", { length: 100 }),
+  fileSize: int("fileSize"), // bytes
+  uploadedBy: int("uploadedBy").notNull(),
+  uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
+});
+
+export type ActionPlanAttachment = typeof actionPlanAttachments.$inferSelect;
+export type InsertActionPlanAttachment = typeof actionPlanAttachments.$inferInsert;
 
 /**
  * Calculations table - stores calculation results
@@ -390,6 +483,7 @@ export const componentCalculations = mysqlTable("componentCalculations", {
   governingRateReason: text("governingRateReason"), // Explanation of why this rate was selected
   
   remainingLife: decimal("remainingLife", { precision: 10, scale: 2 }), // RL (years)
+  calculatedMAWP: decimal("calculatedMAWP", { precision: 10, scale: 2 }), // Calculated MAWP at current thickness
   
   // Data quality flags (Industry Leader Feature)
   dataQualityStatus: mysqlEnum("dataQualityStatus", ["good", "anomaly", "growth_error", "below_minimum", "confirmed"]).default("good"),

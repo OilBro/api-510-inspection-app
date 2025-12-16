@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { logger } from "./_core/logger";
 import { nanoid } from "nanoid";
 import { protectedProcedure, router } from "./_core/trpc";
 import { storagePut } from "./storage";
@@ -77,10 +78,10 @@ export const professionalReportRouter = router({
   getOrCreate: protectedProcedure
     .input(z.object({ inspectionId: z.string() }))
     .query(async ({ input, ctx }) => {
-      console.log('[Professional Report] getOrCreate called for inspection:', input.inspectionId);
+      logger.info('[Professional Report] getOrCreate called for inspection:', input.inspectionId);
       try {
         let report = await getProfessionalReportByInspection(input.inspectionId);
-        console.log('[Professional Report] Existing report found:', !!report);
+        logger.info('[Professional Report] Existing report found:', !!report);
       
         if (!report) {
         const reportId = nanoid();
@@ -107,7 +108,7 @@ export const professionalReportRouter = router({
       
         return report;
       } catch (error) {
-        console.error('[Professional Report] Error in getOrCreate:', error);
+        logger.error('[Professional Report] Error in getOrCreate:', error);
         throw error;
       }
     }),
@@ -423,7 +424,7 @@ export const professionalReportRouter = router({
         if (ext === 'heic' || ext === 'heif' || contentType.includes('heic') || contentType.includes('heif')) {
           try {
             const convert = require('heic-convert');
-            console.log('[Photo Upload] Starting HEIC conversion...');
+            logger.info('[Photo Upload] Starting HEIC conversion...');
             const jpegBuffer = await convert({
               buffer,
               format: 'JPEG',
@@ -432,10 +433,10 @@ export const professionalReportRouter = router({
             buffer = Buffer.from(jpegBuffer);
             contentType = 'image/jpeg';
             ext = 'jpg';
-            console.log('[Photo Upload] Successfully converted HEIC to JPEG');
+            logger.info('[Photo Upload] Successfully converted HEIC to JPEG');
           } catch (error) {
-            console.error('[Photo Upload] HEIC conversion failed:', error);
-            console.log('[Photo Upload] Uploading original HEIC file as fallback (may not display in PDF)');
+            logger.error('[Photo Upload] HEIC conversion failed:', error);
+            logger.info('[Photo Upload] Uploading original HEIC file as fallback (may not display in PDF)');
             // Fallback: upload original file anyway, but warn user
             // Don't throw error - let upload continue
           }
@@ -545,7 +546,7 @@ export const professionalReportRouter = router({
     }))
     .mutation(async ({ input }) => {
       try {
-        console.log('[PDF Generation] Starting for inspection:', input.inspectionId);
+        logger.info('[PDF Generation] Starting for inspection:', input.inspectionId);
         
         const pdfBuffer = await generateProfessionalPDF({
           reportId: input.reportId,
@@ -553,20 +554,20 @@ export const professionalReportRouter = router({
           sectionConfig: input.sectionConfig,
         });
         
-        console.log('[PDF Generation] PDF generated successfully, size:', pdfBuffer.length, 'bytes');
+        logger.info('[PDF Generation] PDF generated successfully, size:', pdfBuffer.length, 'bytes');
         
         // Convert buffer to base64 for transmission
         const base64 = pdfBuffer.toString('base64');
         
-        console.log('[PDF Generation] Base64 encoded, size:', base64.length, 'characters');
+        logger.info('[PDF Generation] Base64 encoded, size:', base64.length, 'characters');
         
         return {
           success: true,
           pdf: base64,
         };
       } catch (error: any) {
-        console.error('[PDF Generation] Error:', error);
-        console.error('[PDF Generation] Stack:', error.stack);
+        logger.error('[PDF Generation] Error:', error);
+        logger.error('[PDF Generation] Stack:', error.stack);
         throw new Error(`Failed to generate PDF: ${error.message}`);
       }
     }),
@@ -753,7 +754,7 @@ export const professionalReportRouter = router({
         const componentTMLs = tmlReadings.filter(filter);
         
         if (componentTMLs.length === 0) {
-          console.log(`[Recalculate] No TMLs found for ${componentName}`);
+          logger.info(`[Recalculate] No TMLs found for ${componentName}`);
           return;
         }
         
@@ -782,18 +783,34 @@ export const professionalReportRouter = router({
         const CA = 0.125; // Corrosion allowance
         
         let minThickness;
+        let calculatedMAWP;
         if (P && R && S && E) {
           if (componentType === 'shell') {
-            // Shell: t_min = PR/(SE - 0.6P)
+            // Shell: t_min = PR/(SE - 0.6P) + CA
             const denominator = S * E - 0.6 * P;
             if (denominator > 0) {
-              minThickness = ((P * R) / denominator).toFixed(4);
+              minThickness = ((P * R) / denominator + CA).toFixed(4);
+            }
+            // Shell MAWP: MAWP = SEt/(R + 0.6t)
+            if (avgCurrent) {
+              const t = parseFloat(avgCurrent) - CA;
+              if (t > 0) {
+                calculatedMAWP = ((S * E * t) / (R + 0.6 * t)).toFixed(1);
+              }
             }
           } else {
-            // Head (2:1 ellipsoidal): t_min = PR/(2SE - 0.2P)
+            // Head (2:1 ellipsoidal): t_min = PD/(2SE - 0.2P) + CA
+            const D = R * 2;
             const denominator = 2 * S * E - 0.2 * P;
             if (denominator > 0) {
-              minThickness = ((P * R) / denominator).toFixed(4);
+              minThickness = ((P * D) / denominator + CA).toFixed(4);
+            }
+            // Head MAWP: MAWP = 2SEt/(D + 0.2t)
+            if (avgCurrent) {
+              const t = parseFloat(avgCurrent) - CA;
+              if (t > 0) {
+                calculatedMAWP = ((2 * S * E * t) / (D + 0.2 * t)).toFixed(1);
+              }
             }
           }
         }
@@ -850,6 +867,7 @@ export const professionalReportRouter = router({
           materialName: inspection.materialSpec,
           designTemp: inspection.designTemperature ? inspection.designTemperature.toString() : undefined,
           designMAWP: inspection.designPressure ? inspection.designPressure.toString() : undefined,
+          calculatedMAWP,
           insideDiameter: inspection.insideDiameter ? inspection.insideDiameter.toString() : undefined,
           nominalThickness: avgNominal,
           previousThickness: avgPrevious,
@@ -879,7 +897,7 @@ export const professionalReportRouter = router({
           corrosionAllowance: CA.toString(),
         });
         
-        console.log(`[Recalculate] Created ${componentName} calculation`);
+        logger.info(`[Recalculate] Created ${componentName} calculation`);
       };
       
       // Create Shell calculation
@@ -889,18 +907,56 @@ export const professionalReportRouter = router({
         (tml: any) => tml.component && tml.component.toLowerCase().includes('shell')
       );
       
-      // Create East Head calculation
+      // Create East Head calculation with improved detection
+      // Matches: 'east head', 'e head', 'head 1', 'head-1', 'left head', or any head without west/right keywords
+      // IMPORTANT: Also check location field for head identification
       await createComponentCalc(
         'head',
         'East Head',
-        (tml: any) => tml.component && tml.component.toLowerCase().includes('east') && tml.component.toLowerCase().includes('head')
+        (tml: any) => {
+          const comp = (tml.component || '').toLowerCase();
+          const compType = (tml.componentType || '').toLowerCase();
+          const loc = (tml.location || '').toLowerCase();
+          const combined = `${comp} ${compType}`;
+          
+          // Explicit east head matches (check location too)
+          if (combined.includes('east') || loc.includes('east head')) return true;
+          if (combined.includes('e head')) return true;
+          if (combined.includes('head 1') || combined.includes('head-1')) return true;
+          if (combined.includes('left head')) return true;
+          
+          // If it's a head but not explicitly west/right, treat as east (first head)
+          // Exclude if location indicates west head
+          if ((combined.includes('head') && !combined.includes('shell')) &&
+              !combined.includes('west') && !combined.includes('w head') &&
+              !combined.includes('head 2') && !combined.includes('head-2') &&
+              !combined.includes('right') && !loc.includes('west')) {
+            return true;
+          }
+          return false;
+        }
       );
       
-      // Create West Head calculation
+      // Create West Head calculation with improved detection
+      // Matches: 'west head', 'w head', 'head 2', 'head-2', 'right head'
+      // IMPORTANT: Also check location field for head identification
       await createComponentCalc(
         'head',
         'West Head',
-        (tml: any) => tml.component && tml.component.toLowerCase().includes('west') && tml.component.toLowerCase().includes('head')
+        (tml: any) => {
+          const comp = (tml.component || '').toLowerCase();
+          const compType = (tml.componentType || '').toLowerCase();
+          const loc = (tml.location || '').toLowerCase();
+          const combined = `${comp} ${compType}`;
+          
+          // Explicit west head matches (check location too)
+          if (combined.includes('west') || loc.includes('west head')) return true;
+          if (combined.includes('w head')) return true;
+          if (combined.includes('head 2') || combined.includes('head-2')) return true;
+          if (combined.includes('right head')) return true;
+          
+          return false;
+        }
       );
       
       return { success: true, message: 'Component calculations regenerated successfully' };

@@ -1,4 +1,5 @@
 import { ENV } from './_core/env';
+import { logger } from "./_core/logger";
 import { invokeLLM } from './_core/llm';
 import { storagePut } from './storage';
 
@@ -11,9 +12,9 @@ const MANUS_API_KEY = ENV.forgeApiKey;
 
 // Log API key status on module load
 if (MANUS_API_KEY) {
-  console.log("[Manus Parser] API key loaded successfully:", MANUS_API_KEY.substring(0, 10) + "...");
+  logger.info("[Manus Parser] API key loaded successfully:", MANUS_API_KEY.substring(0, 10) + "...");
 } else {
-  console.warn("[Manus Parser] WARNING: API key not found in environment variables");
+  logger.warn("[Manus Parser] WARNING: API key not found in environment variables");
 }
 
 interface ManusParseResponse {
@@ -37,7 +38,7 @@ export async function parseWithManusAPI(
   fileBuffer: Buffer,
   filename: string
 ): Promise<ManusParseResponse> {
-  console.log("[Manus Parser] Starting independent PDF text extraction...");
+  logger.info("[Manus Parser] Starting independent PDF text extraction...");
   
   try {
     // Use pdfjs-dist directly for PDF parsing
@@ -61,7 +62,7 @@ export async function parseWithManusAPI(
       fullText += pageText + '\n';
     }
     
-    console.log("[Manus Parser] Text extraction successful, pages:", numPages, "length:", fullText.length);
+    logger.info("[Manus Parser] Text extraction successful, pages:", numPages, "length:", fullText.length);
 
     return {
       text: fullText,
@@ -71,7 +72,7 @@ export async function parseWithManusAPI(
       },
     };
   } catch (error) {
-    console.error("[Manus Parser] Failed to parse PDF:", error);
+    logger.error("[Manus Parser] Failed to parse PDF:", error);
     throw error;
   }
 }
@@ -84,16 +85,16 @@ export async function parseAndStandardizeWithManus(
   fileBuffer: Buffer,
   filename: string
 ): Promise<any> {
-  console.log("[Manus Parser] Starting parse and standardization workflow...");
+  logger.info("[Manus Parser] Starting parse and standardization workflow...");
 
   // Step 1: Parse PDF with Manus API
   const parseResult = await parseWithManusAPI(fileBuffer, filename);
   const fullText = parseResult.text;
 
-  console.log("[Manus Parser] Text extracted, length:", fullText.length);
+  logger.info("[Manus Parser] Text extracted, length:", fullText.length);
 
   // Step 2: Use LLM to extract structured data
-  console.log("[Manus Parser] Extracting structured data with LLM...");
+  logger.info("[Manus Parser] Extracting structured data with LLM...");
 
   const llmResponse = await invokeLLM({
     messages: [
@@ -139,9 +140,11 @@ Extract all available information and return it as structured JSON matching this
     "headType": "string (e.g. 2:1 Ellipsoidal, Hemispherical, Torispherical)",
     "insulationType": "string",
     "allowableStress": "string",
-    "jointEfficiency": "string",
+    "jointEfficiency": "string (E value - look in vessel metadata AND in minimum thickness calculation tables, typically 0.85, 1.0, or other values)",
     "radiographyType": "string (RT-1, RT-2, RT-3, or RT-4)",
-    "specificGravity": "string"
+    "specificGravity": "string",
+    "crownRadius": "string (L parameter for torispherical heads, in inches)",
+    "knuckleRadius": "string (r parameter for torispherical heads, in inches)"
   },
   "executiveSummary": "string",
   "tmlReadings": [
@@ -164,12 +167,25 @@ Extract all available information and return it as structured JSON matching this
       "itemText": "string",
       "status": "string"
     }
+  ],
+  "nozzles": [
+    {
+      "nozzleNumber": "string (e.g. N1, N2, Manway)",
+      "service": "string (e.g. Manway, Relief, Vapor Out)",
+      "size": "string (e.g. 18\" NPS, 2\" NPS)",
+      "schedule": "string (e.g. STD, 40, 80)",
+      "actualThickness": "number",
+      "nominalThickness": "number",
+      "minimumRequired": "number",
+      "acceptable": "boolean",
+      "notes": "string"
+    }
   ]
 }`,
       },
       {
         role: "user",
-        content: `Extract vessel inspection data from this API 510 report:\n\n${fullText.substring(0, 15000)}`,
+        content: `Extract vessel inspection data from this API 510 report:\n\n${fullText.substring(0, 50000)}`,
       },
     ],
     response_format: {
@@ -231,11 +247,15 @@ Extract all available information and return it as structured JSON matching this
                 jointEfficiency: { type: "string" },
                 radiographyType: { type: "string" },
                 specificGravity: { type: "string" },
+                crownRadius: { type: "string" },
+                knuckleRadius: { type: "string" },
               },
               required: [],
               additionalProperties: false,
             },
             executiveSummary: { type: "string" },
+            inspectionResults: { type: "string", description: "Section 3.0 Inspection Results - all findings, observations, and condition assessments" },
+            recommendations: { type: "string", description: "Section 4.0 Recommendations - all recommendations for repairs, replacements, next inspection date, or continued service" },
             tmlReadings: {
               type: "array",
               items: {
@@ -269,8 +289,28 @@ Extract all available information and return it as structured JSON matching this
                 additionalProperties: false,
               },
             },
+            nozzles: {
+              type: "array",
+              description: "Nozzle evaluation data from PDF",
+              items: {
+                type: "object",
+                properties: {
+                  nozzleNumber: { type: "string", description: "Nozzle identifier (e.g., N1, N2, Manway)" },
+                  service: { type: "string", description: "Nozzle service (e.g., Manway, Relief, Vapor Out)" },
+                  size: { type: "string", description: "Nozzle size (e.g., 18\" NPS, 2\" NPS)" },
+                  schedule: { type: "string", description: "Pipe schedule (e.g., STD, 40, 80)" },
+                  actualThickness: { type: "number", description: "Measured thickness in inches" },
+                  nominalThickness: { type: "number", description: "Nominal thickness in inches" },
+                  minimumRequired: { type: "number", description: "Minimum required thickness in inches" },
+                  acceptable: { type: "boolean", description: "Whether nozzle passes evaluation" },
+                  notes: { type: "string", description: "Additional notes or observations" },
+                },
+                required: [],
+                additionalProperties: false,
+              },
+            },
           },
-          required: ["reportInfo", "clientInfo", "vesselData", "executiveSummary", "tmlReadings", "inspectionChecklist"],
+          required: ["reportInfo", "clientInfo", "vesselData", "executiveSummary", "inspectionResults", "recommendations", "tmlReadings", "inspectionChecklist", "nozzles"],
           additionalProperties: false,
         },
       },
@@ -280,7 +320,7 @@ Extract all available information and return it as structured JSON matching this
   const messageContent = llmResponse.choices[0].message.content;
   const contentText = typeof messageContent === 'string' ? messageContent : JSON.stringify(messageContent);
   const extractedData = JSON.parse(contentText || "{}");
-  console.log("[Manus Parser] Structured data extracted successfully");
+  logger.info("[Manus Parser] Structured data extracted successfully");
 
   return extractedData;
 }
@@ -293,7 +333,7 @@ export async function parseDocumentWithManus(
   fileBuffer: Buffer,
   filename: string
 ): Promise<{ result: { text: string; pages: any[] } }> {
-  console.log("[Manus Parser] Simple text extraction...");
+  logger.info("[Manus Parser] Simple text extraction...");
   
   const parseResult = await parseWithManusAPI(fileBuffer, filename);
   

@@ -1,4 +1,5 @@
 import { eq, or, and } from "drizzle-orm";
+import { logger } from "./_core/logger";
 import { getDb } from "./db";
 import {
   professionalReports,
@@ -408,18 +409,57 @@ export async function generateDefaultCalculationsForInspection(inspectionId: str
 
   // Helper: Create Calculation
   const createCalc = async (type: 'shell' | 'head', name: string, keyword: string) => {
-    // Filter TMLs for this component
-    const relevantTMLs = tmlResults.filter(t => 
-      t.componentType?.toLowerCase().includes(keyword) || 
-      t.component?.toLowerCase().includes(keyword)
-    );
+    // Filter TMLs for this component with improved head detection
+    // IMPORTANT: Check component, componentType, AND location fields
+    const relevantTMLs = tmlResults.filter(t => {
+      const compType = (t.componentType || '').toLowerCase();
+      const comp = (t.component || '').toLowerCase();
+      const loc = (t.location || '').toLowerCase();
+      
+      if (keyword === 'shell') {
+        // Shell: match 'shell' but exclude heads
+        return (compType.includes('shell') || comp.includes('shell')) && 
+               !compType.includes('head') && !comp.includes('head') &&
+               !loc.includes('head');
+      } else if (keyword === 'east') {
+        // East Head: match 'east head', 'e head', 'head 1', 'head-1', 'left head'
+        // Also check location field for 'east head'
+        if (compType.includes('east') || comp.includes('east') || loc.includes('east head')) return true;
+        if (compType.includes('e head') || comp.includes('e head')) return true;
+        if (compType.includes('head 1') || comp.includes('head 1')) return true;
+        if (compType.includes('head-1') || comp.includes('head-1')) return true;
+        if (compType.includes('left head') || comp.includes('left head')) return true;
+        // If only one head mentioned and it's the first occurrence (exclude west)
+        if ((compType.includes('head') || comp.includes('head')) && 
+            !compType.includes('west') && !comp.includes('west') &&
+            !compType.includes('w head') && !comp.includes('w head') &&
+            !compType.includes('right') && !comp.includes('right') &&
+            !loc.includes('west')) return true;
+        return false;
+      } else if (keyword === 'west') {
+        // West Head: match 'west head', 'w head', 'head 2', 'head-2', 'right head'
+        // Also check location field for 'west head'
+        if (compType.includes('west') || comp.includes('west') || loc.includes('west head')) return true;
+        if (compType.includes('w head') || comp.includes('w head')) return true;
+        if (compType.includes('head 2') || comp.includes('head 2')) return true;
+        if (compType.includes('head-2') || comp.includes('head-2')) return true;
+        if (compType.includes('right head') || comp.includes('right head')) return true;
+        return false;
+      }
+      return compType.includes(keyword) || comp.includes(keyword);
+    });
     
-    // Determine thicknesses (average of relevant TMLs or default)
+    // Determine thicknesses (MINIMUM of relevant TMLs for conservative API 510 calculations)
     const validCurrent = relevantTMLs.map(t => parseFloat(t.tActual || t.currentThickness || '0')).filter(v => v > 0);
     const validPrev = relevantTMLs.map(t => parseFloat(t.previousThickness || '0')).filter(v => v > 0);
+    const validNominal = relevantTMLs.map(t => parseFloat(t.nominalThickness || '0')).filter(v => v > 0);
     
-    const avgCurrent = validCurrent.length ? (validCurrent.reduce((a, b) => a + b, 0) / validCurrent.length) : (type === 'shell' ? 0.652 : 0.555);
-    const avgPrev = validPrev.length ? (validPrev.reduce((a, b) => a + b, 0) / validPrev.length) : (type === 'shell' ? 0.625 : 0.500);
+    // Use MINIMUM thickness (most conservative for safety calculations)
+    const avgCurrent = validCurrent.length ? Math.min(...validCurrent) : (type === 'shell' ? 0.652 : 0.555);
+    // For previous/nominal: prefer actual previous readings, then nominal, then defaults
+    const avgPrev = validPrev.length ? Math.min(...validPrev) : 
+                    (validNominal.length ? Math.min(...validNominal) : (type === 'shell' ? 0.625 : 0.500));
+    const avgNominal = validNominal.length ? Math.min(...validNominal) : avgPrev;
     
     // Default design params
     const P = parseFloat(inspection.designPressure || '250');
@@ -447,17 +487,107 @@ export async function generateDefaultCalculationsForInspection(inspectionId: str
     
     // Calculate Min Thickness using total pressure (design + static head)
     let tMin = 0;
+    let headTypeUsed = 'ellipsoidal'; // Default
+    let headFactor = null;
+    
     if (type === 'shell') {
       tMin = (totalP * R) / (S * E - 0.6 * totalP);
     } else {
-      // Ellipsoidal Head (2:1)
-      tMin = (totalP * D) / (2 * S * E - 0.2 * totalP);
+      // Head calculation - detect head type
+      const headTypeStr = (inspection.headType || '').toLowerCase();
+      
+      if (headTypeStr.includes('torispherical')) {
+        // Torispherical Head: t = PLM / (2SE - 0.2P)
+        headTypeUsed = 'torispherical';
+        
+        // Get crown radius (L) and knuckle radius (r) from inspection
+        // Common defaults: L = D (inside diameter), r = 0.06D (6% of diameter)
+        const L = parseFloat(inspection.crownRadius as any) || D;
+        const r = parseFloat(inspection.knuckleRadius as any) || (0.06 * D);
+        
+        // Calculate M factor: M = 0.25 * (3 + sqrt(L/r))
+        const M = 0.25 * (3 + Math.sqrt(L / r));
+        headFactor = M;
+        
+        tMin = (totalP * L * M) / (2 * S * E - 0.2 * totalP);
+        
+        logger.info(`[Calc] Torispherical head: L=${L.toFixed(2)}, r=${r.toFixed(2)}, M=${M.toFixed(4)}, t_min=${tMin.toFixed(4)}`);
+      } else if (headTypeStr.includes('hemispherical')) {
+        // Hemispherical Head: t = PR / (2SE - 0.2P)
+        headTypeUsed = 'hemispherical';
+        tMin = (totalP * R) / (2 * S * E - 0.2 * totalP);
+      } else {
+        // Default: 2:1 Ellipsoidal Head: t = PD / (2SE - 0.2P)
+        headTypeUsed = 'ellipsoidal';
+        tMin = (totalP * D) / (2 * S * E - 0.2 * totalP);
+      }
     }
     
     const tMinStr = tMin.toFixed(4);
     const CA = (avgCurrent - tMin).toFixed(3);
-    const CR = validPrev.length ? ((avgPrev - avgCurrent) / 10).toFixed(6) : '0.00000'; // Assume 10 years if no dates
-    const RL = parseFloat(CR) > 0 ? (parseFloat(CA) / parseFloat(CR)).toFixed(2) : '>20';
+    
+    // Calculate time between inspections from dates (if available)
+    let yearsBetween = 10; // Default assumption
+    if (inspection.inspectionDate && inspection.previousInspectionId) {
+      try {
+        const prevInspectionResult = await db.select().from(inspections)
+          .where(eq(inspections.id, inspection.previousInspectionId)).limit(1);
+        if (prevInspectionResult[0]?.inspectionDate) {
+          const current = new Date(inspection.inspectionDate);
+          const previous = new Date(prevInspectionResult[0].inspectionDate);
+          const diffMs = current.getTime() - previous.getTime();
+          yearsBetween = diffMs / (1000 * 60 * 60 * 24 * 365.25);
+          logger.info(`[Calc] Time between inspections: ${yearsBetween.toFixed(2)} years`);
+        }
+      } catch (e) {
+        logger.error('[Calc] Error fetching previous inspection date:', e);
+      }
+    }
+    
+    const CR = validPrev.length ? ((avgPrev - avgCurrent) / yearsBetween).toFixed(6) : '0.00000';
+    let RL: string;
+    if (parseFloat(CR) > 0) {
+      const calculatedRL = parseFloat(CA) / parseFloat(CR);
+      RL = calculatedRL > 20 ? '20.00' : calculatedRL.toFixed(2);
+    } else {
+      RL = '20.00'; // Use 20.00 instead of >20 for database compatibility
+    }
+    
+    // Calculate MAWP at current thickness
+    // Per ASME VIII-1 UG-27(c), evaluate BOTH stress cases and use minimum
+    let calculatedMAWP = 0;
+    if (type === 'shell') {
+      // UG-27(c)(1): Circumferential (hoop) stress: P = S*E*t / (R + 0.6*t)
+      const P_hoop = (S * E * avgCurrent) / (R + 0.6 * avgCurrent);
+      
+      // UG-27(c)(2): Longitudinal stress: P = 2*S*E*t / (R - 0.4*t)
+      const denom_long = R - 0.4 * avgCurrent;
+      const P_long = denom_long > 0 ? (2 * S * E * avgCurrent) / denom_long : P_hoop;
+      
+      // Use minimum (governing) MAWP, then subtract static head
+      calculatedMAWP = Math.min(P_hoop, P_long) - staticHead;
+    } else {
+      // Head MAWP calculations per ASME UG-32
+      if (headTypeUsed === 'torispherical' && headFactor) {
+        // Torispherical: MAWP = (2 × S × E × t) / (L × M + 0.2t) - static head
+        const L = parseFloat(inspection.crownRadius as any) || D;
+        calculatedMAWP = (2 * S * E * avgCurrent) / (L * headFactor + 0.2 * avgCurrent) - staticHead;
+      } else if (headTypeUsed === 'hemispherical') {
+        // Hemispherical: MAWP = (2 × S × E × t) / (R + 0.2t) - static head
+        calculatedMAWP = (2 * S * E * avgCurrent) / (R + 0.2 * avgCurrent) - staticHead;
+      } else {
+        // Ellipsoidal (2:1): MAWP = (2 × S × E × t) / (D + 0.2t) - static head
+        calculatedMAWP = (2 * S * E * avgCurrent) / (D + 0.2 * avgCurrent) - staticHead;
+      }
+    }
+    const calculatedMAWPStr = calculatedMAWP.toFixed(2);
+    
+    // Check if component is below minimum thickness
+    const isBelowMinimum = avgCurrent < parseFloat(tMinStr);
+    const dataQualityStatus = isBelowMinimum ? 'below_minimum' : 'good';
+    const dataQualityNotes = isBelowMinimum 
+      ? `Component thickness (${avgCurrent.toFixed(4)}") is below minimum required (${tMinStr}"). Immediate attention required.`
+      : null;
     
     // API 510 requirement: Next inspection at lesser of 10 years OR 1/2 remaining life
     let nextInspectionYears = '10.00';
@@ -479,14 +609,21 @@ export async function generateDefaultCalculationsForInspection(inspectionId: str
       allowableStress: inspection.allowableStress || '20000',
       jointEfficiency: inspection.jointEfficiency || '0.85',
       staticHead: staticHead.toFixed(2),
-      nominalThickness: avgPrev.toFixed(3),
+      headType: type === 'head' ? headTypeUsed : null,
+      headFactor: headFactor ? headFactor.toFixed(4) : null,
+      crownRadius: type === 'head' && inspection.crownRadius ? parseFloat(inspection.crownRadius as any).toFixed(3) : null,
+      knuckleRadius: type === 'head' && inspection.knuckleRadius ? parseFloat(inspection.knuckleRadius as any).toFixed(3) : null,
+      nominalThickness: avgNominal.toFixed(3),
       previousThickness: avgPrev.toFixed(3),
       actualThickness: avgCurrent.toFixed(3),
       minimumThickness: tMinStr,
       corrosionAllowance: CA,
       corrosionRate: CR,
       remainingLife: RL,
+      calculatedMAWP: calculatedMAWPStr,
       nextInspectionYears: nextInspectionYears,
+      dataQualityStatus: dataQualityStatus as any,
+      dataQualityNotes: dataQualityNotes,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -497,7 +634,7 @@ export async function generateDefaultCalculationsForInspection(inspectionId: str
   await createCalc('head', 'East Head', 'east');
   await createCalc('head', 'West Head', 'west');
   
-  console.log('[Calculations] Generated default calculations for report', reportId);
+  logger.info('[Calculations] Generated default calculations for report', reportId);
 }
 
 // ============================================================================
