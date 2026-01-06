@@ -15,35 +15,35 @@ import { logger } from "../_core/logger";
  */
 
 // Comprehensive extraction prompt for API 510 reports
-const COMPREHENSIVE_EXTRACTION_PROMPT = `You are an expert at extracting data from API 510 pressure vessel inspection reports.
+const COMPREHENSIVE_EXTRACTION_PROMPT = `You are an expert at extracting data from API 510 pressure vessel inspection reports. Your job is to extract EVERY piece of compliance and technical data from the PDF.
 
-Analyze this inspection report PDF and extract ALL the following information in JSON format:
+ANALYZE THIS PDF THOROUGHLY AND EXTRACT ALL INFORMATION IN JSON FORMAT:
 
 {
   "vesselData": {
-    "vesselTagNumber": "string - vessel tag/ID (REQUIRED)",
+    "vesselTagNumber": "string - vessel tag/ID (REQUIRED) - look for 'Tag No', 'Equipment ID', 'Unit ID'",
     "vesselName": "string - vessel description/name",
     "manufacturer": "string - vessel manufacturer",
-    "yearBuilt": "number - year vessel was built",
+    "yearBuilt": "number - year vessel was built - look for 'Date Built', 'Mfg Date'",
     "designPressure": "number (psig) - design/MAWP pressure",
     "designTemperature": "number (°F) - design temperature",
-    "operatingPressure": "number (psig) - operating pressure",
-    "operatingTemperature": "number (°F) - operating temperature",
-    "mdmt": "number (°F) - Minimum Design Metal Temperature",
-    "serialNumber": "string - vessel serial number",
-    "materialSpec": "string - material specification (e.g., SA-516 Gr 70, SA-240 Type 304)",
-    "allowableStress": "number (psi) - allowable stress at design temperature",
-    "jointEfficiency": "number (0.6-1.0) - weld joint efficiency factor (E value)",
-    "radiographyType": "string (RT-1, RT-2, RT-3, or RT-4) - radiographic examination type",
-    "specificGravity": "number - specific gravity of vessel contents",
-    "vesselType": "string - type of vessel",
-    "insideDiameter": "number (inches) - inside diameter",
+    "operatingPressure": "number (psig) - operating pressure - often on nameplate",
+    "operatingTemperature": "number (°F) - operating temperature - often on nameplate",
+    "mdmt": "number (°F) - Minimum Design Metal Temperature - CRITICAL for compliance",
+    "serialNumber": "string - vessel serial number - look for 'Serial No', 'S/N'",
+    "materialSpec": "string - material specification (e.g., SA-516 Gr 70, SA-240 Type 304) - from Vessel/Material section",
+    "allowableStress": "number (psi) - allowable stress at design temperature - use ASME Section II Part D if not stated",
+    "jointEfficiency": "number (0.6-1.0) - weld joint efficiency factor (E value) - CRITICAL, look in calculations or vessel spec",
+    "radiographyType": "string (RT-1, RT-2, RT-3, or RT-4) - radiographic examination type - from construction code",
+    "specificGravity": "number - specific gravity of vessel contents - for hydrostatic head calcs",
+    "vesselType": "string - type of vessel (Horizontal/Vertical, Pressure/Storage)",
+    "insideDiameter": "number (inches) - inside diameter - labeled as 'ID' or 'Inside Diameter'",
     "overallLength": "number (inches) - overall length/height",
-    "product": "string - vessel contents/service",
-    "constructionCode": "string (e.g., ASME S8 D1)",
+    "product": "string - vessel contents/service - look for 'Product', 'Service', 'Contents'",
+    "constructionCode": "string (e.g., ASME Section VIII Div 1) - construction standard code",
     "vesselConfiguration": "string (Horizontal or Vertical)",
-    "headType": "string (e.g., 2:1 Ellipsoidal, Hemispherical, Torispherical)",
-    "insulationType": "string (e.g., None, Fiberglass)",
+    "headType": "string (2:1 Ellipsoidal, Hemispherical, Torispherical, Flat) - TYPE for EACH head",
+    "insulationType": "string (None, Fiberglass, Foam, etc.) - from vessel spec",
     "nbNumber": "string - National Board Number",
     "crownRadius": "number - L parameter for torispherical heads (inches)",
     "knuckleRadius": "number - r parameter for torispherical heads (inches)"
@@ -51,30 +51,30 @@ Analyze this inspection report PDF and extract ALL the following information in 
   "inspectionData": {
     "inspectionDate": "YYYY-MM-DD - date inspection was performed",
     "inspector": "string - inspector name",
-    "inspectorCertification": "string - inspector certification number",
+    "inspectorCertification": "string - inspector certification number - look for 'Cert No', 'API-510'",
     "reportNumber": "string - report/inspection number",
     "reportDate": "YYYY-MM-DD - date report was issued",
     "client": "string - client/owner company name",
     "clientLocation": "string - facility/plant location",
-    "inspectionType": "string - type of inspection (Internal, External, On-Stream)"
+    "inspectionType": "string - type of inspection (Internal, External, On-Stream, General)"
   },
-  "executiveSummary": "string - full executive summary text",
-  "inspectionResults": "string - Section 3.0 Inspection Results - all findings and observations",
-  "recommendations": "string - Section 4.0 Recommendations - all recommendations",
+  "executiveSummary": "string - complete executive summary from beginning of report",
+  "inspectionResults": "string - Section 3.0 Inspection Results - ALL findings and observations from entire section",
+  "recommendations": "string - Section 4.0 Recommendations - ALL recommendations from entire section",
   "thicknessMeasurements": [
     {
-      "cml": "string - CML number (e.g., '1', '2', 'CML-1')",
-      "component": "string - FULL component name (e.g., 'Vessel Shell', '2\" East Head Seam - Head Side')",
-      "location": "string - specific location description",
-      "readings": [0.000] - array of ALL thickness readings for this CML in inches,
+      "cml": "string - CML number (e.g., '1', '2', 'CML-1') - from Measurement Location column",
+      "component": "string - FULL component name (e.g., 'Vessel Shell', '2 inch East Head Seam - Head Side', 'Nozzle A-1')",
+      "location": "string - specific location description (e.g., 'East End, 12 o'clock')",
+      "readings": [0.000] - array of ALL thickness readings for this CML in inches - ALL angles (0°, 90°, 180°, 270° if present)",
       "minThickness": "number - minimum of all readings",
-      "nominalThickness": "number - nominal/design thickness if available",
-      "previousThickness": "number - previous inspection thickness if available"
+      "nominalThickness": "number - nominal/design thickness if available - from specification",
+      "previousThickness": "number - previous inspection thickness if available - from prior inspection column"
     }
   ],
   "findings": [
     {
-      "section": "string - section of report (e.g., Shell, Heads, Nozzles)",
+      "section": "string - section of report (e.g., Shell, Heads, Nozzles, Supports)",
       "finding": "string - detailed finding description",
       "severity": "acceptable|monitor|critical"
     }
@@ -82,29 +82,29 @@ Analyze this inspection report PDF and extract ALL the following information in 
   "checklistItems": [
     {
       "category": "string - category (External Visual, Internal Visual, Foundation, etc.)",
-      "itemNumber": "string - item number if available",
-      "itemText": "string - checklist item description",
-      "status": "string - Satisfactory, Unsatisfactory, N/A, Not Checked",
+      "itemNumber": "string - item number if available (e.g., '1.1', '1.2')",
+      "itemText": "string - checklist item description - FULL text",
+      "status": "string - Satisfactory, Unsatisfactory, N/A, Not Checked - EXACT status from report",
       "notes": "string - any notes or comments"
     }
   ],
   "nozzles": [
     {
-      "nozzleNumber": "string - nozzle identifier (N1, N2, MW-1, etc.)",
-      "service": "string - nozzle service (Manway, Relief, Inlet, Outlet, etc.)",
-      "size": "string - nozzle size (e.g., 18\", 2\", 24\" NPS)",
-      "schedule": "string - pipe schedule (STD, 40, 80, etc.)",
-      "actualThickness": "number - measured thickness in inches",
-      "nominalThickness": "number - nominal pipe thickness in inches",
+      "nozzleNumber": "string - nozzle identifier (N1, N2, MW-1, Vent-1, etc.)",
+      "service": "string - nozzle service (Manway, Relief, Inlet, Outlet, Vent, etc.)",
+      "size": "string - nozzle size (e.g., 18 inch, 2 inch, 24 inch NPS, 1/2 inch)",
+      "schedule": "string - pipe schedule (STD, 40, 80, XS, etc.)",
+      "actualThickness": "number - measured thickness in inches - CURRENT inspection",
+      "nominalThickness": "number - nominal pipe thickness in inches - from pipe spec",
       "minimumRequired": "number - minimum required thickness in inches",
-      "acceptable": "boolean - true if passes evaluation"
+      "acceptable": "boolean - true if passes evaluation, false if failed"
     }
   ],
   "tableA": {
     "description": "Executive Summary TABLE A - Component Calculations",
     "components": [
       {
-        "componentName": "string - component name (Vessel Shell, East Head, West Head)",
+        "componentName": "string - component name (Vessel Shell, East Head, West Head, etc.)",
         "nominalThickness": "number - nominal thickness (inches)",
         "actualThickness": "number - actual measured thickness (inches)",
         "minimumRequiredThickness": "number - minimum required thickness (inches)",
@@ -117,16 +117,63 @@ Analyze this inspection report PDF and extract ALL the following information in 
   }
 }
 
-CRITICAL EXTRACTION RULES:
-1. Extract EVERYTHING - search the entire document thoroughly
-2. For thickness measurements: Each CML should be ONE entry with ALL readings in the 'readings' array
-3. Do NOT create separate entries for each angle measurement (0°, 90°, 180°, 270°)
-4. Extract the FULL component name (e.g., '2" East Head Seam - Head Side', not just 'East Head')
-5. Joint Efficiency (E value) is CRITICAL - look in vessel metadata AND calculation tables
-6. Extract ALL checklist items with their exact status
-7. Extract ALL nozzle data from nozzle evaluation tables
-8. For missing numeric values, use null rather than guessing
-9. Search the ENTIRE document - data may be scattered across multiple pages`;
+CRITICAL EXTRACTION RULES AND REQUIREMENTS:
+
+1. VESSEL DATA COMPLETENESS:
+   - designPressure, designTemperature, operatingPressure, operatingTemperature are ALL required
+   - MDMT is CRITICAL for API 510 compliance - SEARCH THOROUGHLY (often in construction code or material section)
+   - Product/Service and Configuration (Horizontal/Vertical) MUST be extracted
+   - Head Type: Extract for BOTH heads if applicable (e.g., "2:1 Ellipsoidal" for both, or mix)
+   - Construction Code must specify ASME Section, Division, and type
+
+2. THICKNESS MEASUREMENTS - CRITICAL:
+   - Each UNIQUE CML gets ONE entry with ALL readings in the 'readings' array
+   - DEDUPLICATE: If CML-1 appears in multiple places, combine all readings
+   - Do NOT create separate entries for 0°, 90°, 180°, 270° - COMBINE into one 'readings' array
+   - Extract FULL component names: '2 inch East Head Seam - Head Side' not just 'East Head'
+   - Location must be specific: '12 o'clock position' or 'Top weld seam' not just 'East End'
+   - Include ALL thickness data from ALL tables in document
+
+3. MULTI-PAGE TABLE HANDLING:
+   - Tables may span multiple pages - collect ALL rows even if split across pages
+   - Look for "Continued from previous page" or similar indicators
+   - Combine nozzle data from multiple sections
+   - Ensure no data is lost due to page breaks
+
+4. JOINT EFFICIENCY (E value):
+   - CRITICAL for calculations - search everywhere
+   - Look in: Vessel Data section, Construction Code section, Calculation tables
+   - Values typically: 1.0 (Full RT), 0.85 (Spot RT), 0.70 (No RT)
+   - If not explicitly stated, infer from radiography type
+
+5. NOZZLES:
+   - Extract EVERY nozzle from nozzle evaluation tables
+   - Include ALL sizes mentioned (18", 2", 24", etc.)
+   - Include service type for identification
+   - Extract acceptability status clearly
+
+6. CHECKLIST:
+   - Extract ALL checklist items with their EXACT status from report
+   - Do not infer or assume - use exact text from document
+   - Include all categories present
+
+7. TABLE A:
+   - Extract data exactly as shown in Executive Summary table
+   - Include ALL components listed (Shell, Head 1, Head 2, etc.)
+   - Preserve all calculation results
+
+8. GENERAL RULES:
+   - For missing values: use null, NOT zeros or guesses
+   - Search ENTIRE document - data scattered across multiple pages
+   - If a field exists in document, extract it regardless of completeness
+   - Dates must be in YYYY-MM-DD format
+   - Numbers should be actual values without units in JSON
+   - PRESERVE ALL DATA EXACTLY as it appears
+
+9. SECTION EXTRACTION:
+   - inspectionResults: COMPLETE Section 3.0 text - all findings for Shell, Heads, Nozzles, Supports
+   - recommendations: COMPLETE Section 4.0 text - all recommendations
+   - executiveSummary: Full summary including governing component`;
 
 export const pdfImportRouter = router({
   /**

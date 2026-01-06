@@ -304,7 +304,7 @@ export default function ProfessionalReportTab({ inspectionId }: ProfessionalRepo
         </TabsList>
 
         {/* Report Information Tab */}
-        <TabsContent value="info" className="space-y-4">
+        <TabsContent value="overview" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Report Information</CardTitle>
