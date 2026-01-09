@@ -259,3 +259,32 @@ Database fields in `componentCalculations`:
 - `hierarchyLevel` — tree depth (0=vessel, 1=component, 2=CML)
 
 **Life-limiting analysis**: Identifies component with shortest remaining life for prioritization.
+
+## Hybrid PDF Parser (NEW - Mixed Content Support)
+
+\\server/hybridPdfParser.ts\\ - Auto-detects and handles mixed text/scanned PDFs:
+
+\\\	ypescript
+// Detection algorithm:
+// 1. Extract text from all pages using pdfjs-dist
+// 2. Analyze each page - if <100 chars, mark as scanned
+// 3. Choose strategy based on scanned ratio:
+//    - >50% scanned  full vision parsing
+//    - 0% scanned  standard text parsing  
+//    - Mixed  hybrid extraction with merge
+
+// Merge priority:
+// - Text extraction takes priority (more accurate for text)
+// - Vision fills gaps for scanned content
+// - TML readings deduplicated by CML number
+// - Larger checklist/nozzle arrays preferred
+\\\
+
+**Parser Selection (UI dropdown):**
+| Option | Use Case |
+|--------|----------|
+| **Hybrid Auto-Detect** (default) | Mixed text + scanned PDFs |
+| Manus AI | Pure text-based PDFs |
+| Vision Parser | Fully scanned/handwritten PDFs |
+| Docupipe | Legacy |
+

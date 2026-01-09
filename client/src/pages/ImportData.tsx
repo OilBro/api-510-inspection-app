@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,7 +20,7 @@ export default function ImportData() {
   const [parseResult, setParseResult] = useState<any>(null);
   const [showChecklistReview, setShowChecklistReview] = useState(false);
   const [checklistItems, setChecklistItems] = useState<any[]>([]);
-  const [parserType, setParserType] = useState<"docupipe" | "manus" | "vision">("docupipe");
+  const [parserType, setParserType] = useState<"docupipe" | "manus" | "vision" | "hybrid">("hybrid");
   const [existingInspectionId, setExistingInspectionId] = useState<string | null>(null);
   const [continueMode, setContinueMode] = useState(false);
   
@@ -150,19 +150,19 @@ export default function ImportData() {
             <CardContent>
               <ul className="space-y-2 text-sm text-gray-600">
                 <li className="flex items-start">
-                  <span className="text-primary mr-2">✓</span>
+                  <span className="text-primary mr-2">âœ“</span>
                   <span>Automatically extracts vessel identification</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-primary mr-2">✓</span>
+                  <span className="text-primary mr-2">âœ“</span>
                   <span>Parses design specifications</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-primary mr-2">✓</span>
+                  <span className="text-primary mr-2">âœ“</span>
                   <span>Extracts thickness measurement data</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-primary mr-2">✓</span>
+                  <span className="text-primary mr-2">âœ“</span>
                   <span>AI-powered intelligent parsing</span>
                 </li>
               </ul>
@@ -178,19 +178,19 @@ export default function ImportData() {
             <CardContent>
               <ul className="space-y-2 text-sm text-gray-600">
                 <li className="flex items-start">
-                  <span className="text-primary mr-2">✓</span>
+                  <span className="text-primary mr-2">âœ“</span>
                   <span>Supports .xlsx and .xls formats</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-primary mr-2">✓</span>
+                  <span className="text-primary mr-2">âœ“</span>
                   <span>Multi-sheet workbook processing</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-primary mr-2">✓</span>
+                  <span className="text-primary mr-2">âœ“</span>
                   <span>Bulk TML reading import</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-primary mr-2">✓</span>
+                  <span className="text-primary mr-2">âœ“</span>
                   <span>Flexible column header matching</span>
                 </li>
               </ul>
@@ -206,17 +206,18 @@ export default function ImportData() {
           <CardContent className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="parser">PDF Parser (for PDF files only)</Label>
-              <Select value={parserType} onValueChange={(value: "docupipe" | "manus" | "vision") => setParserType(value)}>
+              <Select value={parserType} onValueChange={(value: "docupipe" | "manus" | "vision" | "hybrid") => setParserType(value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="docupipe">Docupipe API (Recommended)</SelectItem>
+                  <SelectItem value="hybrid">Hybrid Auto-Detect (Recommended)</SelectItem>
+                  <SelectItem value="docupipe">Docupipe API</SelectItem>
                   <SelectItem value="manus">Manus Built-in API</SelectItem>
                   <SelectItem value="vision">Vision Parser (For Scanned PDFs)</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-gray-500">Choose which parser to use for PDF extraction. Use Vision Parser for scanned documents with images.</p>
+              <p className="text-xs text-gray-500">Hybrid Auto-Detect handles mixed text/scanned PDFs automatically. Use Vision Parser for fully scanned documents.</p>
             </div>
 
             <div className="space-y-2">
@@ -276,7 +277,7 @@ export default function ImportData() {
                   </Button>
                 </div>
                 <p className="text-xs text-green-600">
-                  💡 You can upload more files to add additional data to this inspection
+                  ðŸ’¡ You can upload more files to add additional data to this inspection
                 </p>
               </div>
             )}
@@ -454,4 +455,8 @@ export default function ImportData() {
     </div>
   );
 }
+
+
+
+
 

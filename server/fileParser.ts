@@ -1,4 +1,4 @@
-import * as XLSX from "xlsx";
+﻿import * as XLSX from "xlsx";
 import * as pdf from "pdf-parse";
 import { invokeLLM } from "./_core/llm";
 import { logger } from "./_core/logger";
@@ -244,10 +244,10 @@ Extract ALL available information and return it as JSON matching this schema:
   "yearBuilt": "number - year vessel was built",
   "nbNumber": "string - National Board Number",
   "designPressure": "string - design pressure in psig",
-  "designTemperature": "string - design temperature in °F",
+  "designTemperature": "string - design temperature in Â°F",
   "operatingPressure": "string - operating pressure in psig",
-  "operatingTemperature": "string - operating temperature in °F",
-  "mdmt": "string - Minimum Design Metal Temperature in °F",
+  "operatingTemperature": "string - operating temperature in Â°F",
+  "mdmt": "string - Minimum Design Metal Temperature in Â°F",
   "materialSpec": "string - material specification (e.g., SA-516 Gr 70)",
   "allowableStress": "string - allowable stress in psi",
   "jointEfficiency": "string - joint efficiency factor (E value)",
@@ -342,13 +342,61 @@ CRITICAL RULES:
 /**
  * Parse PDF file using Manus API + LLM extraction
  */
-export async function parsePDFFile(buffer: Buffer, parserType?: "docupipe" | "manus" | "vision"): Promise<ParsedVesselData> {
+export async function parsePDFFile(buffer: Buffer, parserType?: "docupipe" | "manus" | "vision" | "hybrid"): Promise<ParsedVesselData> {
   const selectedParser = parserType || "manus";
   logger.info(`[PDF Parser] Using parser: ${selectedParser}`);
   
   try {
     // If vision parser is requested, use vision-based extraction
-    if (selectedParser === "vision") {
+    
+    // If hybrid parser is requested, use hybrid mixed-content parsing
+    if (selectedParser === "hybrid") {
+      logger.info("[PDF Parser] Using hybrid parser for mixed text/scanned documents...");
+      const { parseWithHybrid } = await import('./hybridPdfParser');
+      const hybridData = await parseWithHybrid(buffer, "inspection-report.pdf");
+      
+      // Normalize the hybrid data to ParsedVesselData format
+      return {
+        vesselTagNumber: hybridData.vesselData?.vesselTagNumber || hybridData.vesselInfo?.vesselTag || '',
+        vesselName: hybridData.vesselData?.vesselName || hybridData.vesselInfo?.vesselDescription || '',
+        manufacturer: hybridData.vesselData?.manufacturer || hybridData.vesselInfo?.manufacturer || '',
+        serialNumber: hybridData.vesselData?.serialNumber || hybridData.vesselInfo?.serialNumber || '',
+        yearBuilt: hybridData.vesselData?.yearBuilt || (hybridData.vesselInfo?.yearBuilt ? parseInt(hybridData.vesselInfo.yearBuilt, 10) : undefined),
+        designPressure: hybridData.vesselData?.designPressure || hybridData.vesselInfo?.designPressure || '',
+        designTemperature: hybridData.vesselData?.designTemperature || hybridData.vesselInfo?.designTemperature || '',
+        operatingPressure: hybridData.vesselData?.operatingPressure || hybridData.vesselInfo?.operatingPressure || '',
+        operatingTemperature: hybridData.vesselData?.operatingTemperature || hybridData.vesselInfo?.operatingTemperature || '',
+        mdmt: hybridData.vesselData?.mdmt || hybridData.vesselInfo?.mdmt || '',
+        materialSpec: hybridData.vesselData?.materialSpec || hybridData.vesselInfo?.materialSpec || '',
+        allowableStress: hybridData.vesselData?.allowableStress || hybridData.vesselInfo?.allowableStress || '',
+        jointEfficiency: hybridData.vesselData?.jointEfficiency || hybridData.vesselInfo?.jointEfficiency || '',
+        insideDiameter: hybridData.vesselData?.insideDiameter || hybridData.vesselInfo?.insideDiameter || '',
+        overallLength: hybridData.vesselData?.overallLength || hybridData.vesselInfo?.overallLength || '',
+        headType: hybridData.vesselData?.headType || hybridData.vesselInfo?.headType || '',
+        vesselConfiguration: hybridData.vesselData?.vesselConfiguration || hybridData.vesselInfo?.vesselConfiguration || '',
+        constructionCode: hybridData.vesselData?.constructionCode || hybridData.vesselInfo?.constructionCode || '',
+        nbNumber: hybridData.vesselData?.nbNumber || hybridData.vesselInfo?.nbNumber || '',
+        product: hybridData.vesselData?.product || hybridData.vesselInfo?.product || '',
+        insulationType: hybridData.vesselData?.insulationType || hybridData.vesselInfo?.insulationType || '',
+        corrosionAllowance: hybridData.vesselData?.corrosionAllowance || hybridData.vesselInfo?.corrosionAllowance || '',
+        reportNumber: hybridData.reportInfo?.reportNumber || hybridData.inspectionInfo?.reportNumber || '',
+        reportDate: hybridData.reportInfo?.reportDate || hybridData.inspectionInfo?.reportDate || '',
+        inspectionDate: hybridData.reportInfo?.inspectionDate || hybridData.inspectionInfo?.inspectionDate || '',
+        inspectionType: hybridData.reportInfo?.inspectionType || hybridData.inspectionInfo?.inspectionType || '',
+        inspectorName: hybridData.reportInfo?.inspectorName || hybridData.inspectionInfo?.inspectorName || '',
+        inspectorCert: hybridData.reportInfo?.inspectorCert || hybridData.inspectionInfo?.inspectorCertification || '',
+        clientName: hybridData.clientInfo?.clientName || hybridData.inspectionInfo?.clientName || '',
+        clientLocation: hybridData.clientInfo?.clientLocation || hybridData.inspectionInfo?.clientLocation || '',
+        executiveSummary: hybridData.executiveSummary || '',
+        inspectionResults: hybridData.inspectionResults || '',
+        recommendations: hybridData.recommendations || '',
+        tmlReadings: hybridData.tmlReadings || hybridData.thicknessMeasurements || [],
+        checklistItems: hybridData.inspectionChecklist || hybridData.checklistItems || [],
+        nozzles: hybridData.nozzles || [],
+        tableA: hybridData.tableA,
+      };
+    }
+if (selectedParser === "vision") {
       logger.info("[PDF Parser] Using vision LLM parser for scanned documents...");
       const { parseWithVision } = await import('./visionPdfParser');
       const visionData = await parseWithVision(buffer);
@@ -597,3 +645,5 @@ export async function parsePDFFile(buffer: Buffer, parserType?: "docupipe" | "ma
     throw new Error(`Failed to parse PDF file: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 }
+
+

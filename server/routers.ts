@@ -1,4 +1,4 @@
-import { COOKIE_NAME } from "@shared/const";
+﻿import { COOKIE_NAME } from "@shared/const";
 import { logger } from "./_core/logger";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
@@ -598,7 +598,7 @@ export const appRouter = router({
         fileData: z.string(), // Base64 encoded file
         fileName: z.string(),
         fileType: z.enum(["pdf", "excel"]),
-        parserType: z.enum(["docupipe", "manus", "vision"]).optional(), // Optional parser selection
+        parserType: z.enum(["docupipe", "manus", "vision", "hybrid"]).optional(), // Optional parser selection
         inspectionId: z.string().optional(), // Optional: append to existing inspection
       }))
       .mutation(async ({ ctx, input }) => {
@@ -1478,4 +1478,5 @@ export const appRouter = router({
 });
 
 export type AppRouter = typeof appRouter;
+
 
